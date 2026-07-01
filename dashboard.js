@@ -3,12 +3,9 @@
 // ===============================
 
 // ---------- Supabase ----------
-
-// dashboard.js கோப்பின் மேல் பகுதியில் இப்படி மாற்றுங்கள்:
 const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
 
-// இங்க supabase-க்கு பதிலா supabaseClient
 const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
@@ -16,10 +13,9 @@ const supabaseClient = window.supabase.createClient(
 
 
 // ---------- Load User ----------
-
 async function loadUser() {
-
-    const { data, error } = await supabase.auth.getSession();
+    // இங்க supabaseClient-ன்னு மாத்தியாச்சு
+    const { data, error } = await supabaseClient.auth.getSession();
 
     if (error) {
         console.log(error);
@@ -43,7 +39,6 @@ loadUser();
 
 
 // ---------- Logout ----------
-
 const logoutBtn = document.getElementById("logoutBtn");
 
 if (logoutBtn) {
@@ -53,8 +48,8 @@ if (logoutBtn) {
         e.preventDefault();
 
         if (confirm("Logout from your account?")) {
-
-            await supabase.auth.signOut();
+            // இங்கயும் supabaseClient-ன்னு மாத்தியாச்சு
+            await supabaseClient.auth.signOut();
 
             window.location.href = "login.html";
 
@@ -66,7 +61,6 @@ if (logoutBtn) {
 
 
 // ---------- Instagram ----------
-
 const instaBtn = document.getElementById("connectInstagram");
 
 if (instaBtn) {
@@ -84,7 +78,6 @@ if (instaBtn) {
 
 
 // ---------- Facebook ----------
-
 const fbBtn = document.getElementById("connectFacebook");
 
 if (fbBtn) {
@@ -102,7 +95,6 @@ if (fbBtn) {
 
 
 // ---------- Auto DM ----------
-
 const autoDM = document.getElementById("autoDM");
 
 if (autoDM) {
@@ -117,7 +109,6 @@ if (autoDM) {
 
 
 // ---------- Auto Reply ----------
-
 const autoReply = document.getElementById("autoReply");
 
 if (autoReply) {
@@ -132,7 +123,6 @@ if (autoReply) {
 
 
 // ---------- Keywords ----------
-
 const keywordBtn = document.getElementById("keywordBtn");
 
 if (keywordBtn) {
@@ -153,7 +143,6 @@ if (keywordBtn) {
 
 
 // ---------- Automation Status ----------
-
 const automationStatus = document.getElementById("automationStatus");
 
 if (automationStatus) {
@@ -166,7 +155,6 @@ if (automationStatus) {
 
 
 // ---------- Dashboard Counter ----------
-
 function random(min, max) {
 
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -187,7 +175,6 @@ numbers.forEach(item => {
 
 
 // ---------- Toast ----------
-
 function showToast(message) {
 
     const toast = document.getElementById("toast");
@@ -210,7 +197,6 @@ function showToast(message) {
 
 
 // ---------- Welcome ----------
-
 setTimeout(() => {
 
     showToast("Welcome to IMA Dashboard");
