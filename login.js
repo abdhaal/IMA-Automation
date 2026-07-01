@@ -2,34 +2,17 @@
 // IMA Automation Login.js
 // ==============================
 
-// Supabase
+// Supabase Configuration
 const SUPABASE_URL = "https://jrjigvhzkicmgketrmbr.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyamlndmh6a2ljbWdrZXRybWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NzYyODEsImV4cCI6MjA5ODE1MjI4MX0.4FHwDGywcybt_tu52Dv5e2YEgCN3uKbKI0l844RA3Og";
 
-// Guard: if the Supabase CDN script failed to load (blocked, offline,
-// slow network, CSP, etc.), window.supabase won't exist. Without this
-// check, creating the client would throw and silently stop the ENTIRE
-// script from running -- meaning every single button on the page
-// (Sign In, Google, Forgot Password, Sign Up, eye icon) stops
-// responding, because none of the addEventListener calls further down
-// would ever get a chance to run.
-let supabase = null;
+// global window object-ல் உள்ள 'supabase'-ஐ பயன்படுத்தி 'supabaseClient' உருவாக்கப்பட்டுள்ளது
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
 
-if (window.supabase && typeof window.supabase.createClient === "function") {
-    try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch (err) {
-        console.error("Failed to initialize Supabase client:", err);
-    }
-} else {
-    console.error(
-        "Supabase library not found on window. Check that the CDN script " +
-        "tag (@supabase/supabase-js) loaded successfully before login.js runs."
-    );
-}
-
-// Elements (each is looked up individually so a missing/renamed id in
-// the HTML breaks only that one feature, not every button on the page)
+// HTML Elements
 const authForm = document.getElementById("authForm");
 const email = document.getElementById("email");
 const password = document.getElementById("password");
@@ -50,22 +33,9 @@ const togglePassword = document.getElementById("togglePassword");
 
 let signupMode = false;
 
-function requireSupabase() {
-    if (!supabase) {
-        alert(
-            "Login service failed to load. Please refresh the page, check " +
-            "your internet connection, or disable any ad-blocker/script " +
-            "blocker for this site."
-        );
-        return false;
-    }
-    return true;
-}
-
 // =========================
-// Password Toggle
+// Password Toggle (Password-ஐ காட்டி/மறைக்க)
 // =========================
-
 if (togglePassword) {
 
     togglePassword.addEventListener("click", function () {
@@ -89,9 +59,8 @@ if (togglePassword) {
 }
 
 // =========================
-// Login / Signup Switch
+// Login / Signup Switch (பக்கத்தை மாற்றுதல்)
 // =========================
-
 switchMode.addEventListener("click", function (e) {
 
     e.preventDefault();
@@ -127,14 +96,11 @@ switchMode.addEventListener("click", function (e) {
 });
 
 // =========================
-// Login / Signup
+// Login / Signup Form Submit
 // =========================
-
 authForm.addEventListener("submit", async function (e) {
 
     e.preventDefault();
-
-    if (!requireSupabase()) return;
 
     submitBtn.disabled = true;
     submitBtn.innerText = "Please Wait...";
@@ -143,11 +109,9 @@ authForm.addEventListener("submit", async function (e) {
 
         if (signupMode) {
 
-            const { error } = await supabase.auth.signUp({
-
+            const { error } = await supabaseClient.auth.signUp({
                 email: email.value,
                 password: password.value
-
             });
 
             if (error) throw error;
@@ -159,11 +123,9 @@ authForm.addEventListener("submit", async function (e) {
 
         } else {
 
-            const { error } = await supabase.auth.signInWithPassword({
-
+            const { error } = await supabaseClient.auth.signInWithPassword({
                 email: email.value,
                 password: password.value
-
             });
 
             if (error) throw error;
@@ -186,14 +148,11 @@ authForm.addEventListener("submit", async function (e) {
 });
 
 // =========================
-// Forgot Password
+// Forgot Password (கடவுச்சொல் மறதி)
 // =========================
-
 forgotPassword.addEventListener("click", async function (e) {
 
     e.preventDefault();
-
-    if (!requireSupabase()) return;
 
     if (email.value === "") {
 
@@ -202,7 +161,7 @@ forgotPassword.addEventListener("click", async function (e) {
 
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email.value);
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email.value);
 
     if (error) {
 
@@ -219,15 +178,10 @@ forgotPassword.addEventListener("click", async function (e) {
 // =========================
 // Google Login
 // =========================
-
 googleLogin.addEventListener("click", async function () {
 
-    if (!requireSupabase()) return;
-
-    const { error } = await supabase.auth.signInWithOAuth({
-
+    const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: "google"
-
     });
 
     if (error) {
@@ -239,14 +193,11 @@ googleLogin.addEventListener("click", async function () {
 });
 
 // =========================
-// Auto Login
+// Auto Login (ஏற்கனவே லாகின் செய்திருந்தால்)
 // =========================
-
 (async () => {
 
-    if (!supabase) return;
-
-    const { data } = await supabase.auth.getSession();
+    const { data } = await supabaseClient.auth.getSession();
 
     if (data.session) {
 
