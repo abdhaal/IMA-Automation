@@ -186,17 +186,24 @@ forgotPassword.addEventListener("click", async function (e) {
 // =========================
 googleLogin.addEventListener("click", async function () {
 
+    // தற்போதைய பக்கத்தின் URL-ஐ எடுத்து, அதில் 'login.html'-க்கு பதிலாக 'dashboard.html'-ஐ மாற்றுகிறது
+    const currentUrl = window.location.href;
+    const redirectTarget = currentUrl.replace("login.html", "dashboard.html");
+
     const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: "google"
+        provider: "google",
+        options: {
+            // தானாகவே கணக்கிடப்பட்ட சரியான GitHub Pages URL-க்கு திருப்பிவிடும்
+            redirectTo: redirectTarget 
+        }
     });
 
     if (error) {
-
         alert(error.message);
-
     }
 
 });
+
 
 // =========================
 // Auto Login (ஏற்கனவே லாகின் செய்திருந்தால்)
