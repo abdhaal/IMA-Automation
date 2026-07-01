@@ -12,9 +12,9 @@ const supabaseClient = window.supabase.createClient(
 );
 
 
-// ---------- Load User ----------
+// ---------- Load User & Integrations ----------
 async function loadUser() {
-    // இங்க supabaseClient-ன்னு மாத்தியாச்சு
+    // 1. பயனர் செஷனை எடுத்தல்
     const { data, error } = await supabaseClient.auth.getSession();
 
     if (error) {
@@ -27,15 +27,41 @@ async function loadUser() {
         return;
     }
 
-    document.getElementById("userEmail").innerText =
-        data.session.user.email;
+    // பயனரின் மின்னஞ்சல் விவரங்களைக் காட்டுதல்
+    document.getElementById("userEmail").innerText = data.session.user.email;
+    document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-    document.getElementById("userName").innerText =
-        data.session.user.email.split("@")[0];
+    // 2. 💡 டேட்டாபேஸில் இருந்து இந்த பயனரின் ப்ரொஃபைல்/டோக்கன் விவரங்களை எடுத்தல்
+    const userUuid = data.session.user.id;
+    const { data: profileData, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('instagram_access_token, facebook_access_token')
+        .eq('id', userUuid)
+        .single();
 
+    if (!profileError && profileData) {
+        // இன்ஸ்டாகிராம் டோக்கன் ஏற்கனவே இருந்தால் "Connected" என்று காட்டும்
+        if (profileData.instagram_access_token) {
+            const instaStatus = document.getElementById("instagramStatus");
+            if (instaStatus) {
+                instaStatus.innerHTML = "Connected ✅";
+                instaStatus.style.color = "#22c55e";
+            }
+        }
+
+        // ஃபேஸ்புக் டோக்கன் ஏற்கனவே இருந்தால் "Connected" என்று காட்டும்
+        if (profileData.facebook_access_token) {
+            const fbStatus = document.getElementById("facebookStatus");
+            if (fbStatus) {
+                fbStatus.innerHTML = "Connected ✅";
+                fbStatus.style.color = "#22c55e";
+            }
+        }
+    }
 }
 
 loadUser();
+
 
 
 // ---------- Logout ----------
