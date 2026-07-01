@@ -60,21 +60,76 @@ if (logoutBtn) {
 }
 
 
-// ---------- Instagram ----------
+// ==========================================
+// ---------- Instagram / Meta OAuth ----------
+// ==========================================
+
+// 1. Meta SDK-ஐ இனிஷியலைஸ் செய்தல்
+window.fbAsyncInit = function() {
+    FB.init({
+        appId      : '1021418946936223', // உங்கள் Meta App ID-ஐ இங்கு போடவும்
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v20.0' // தற்போதைய மெட்டா API வெர்ஷன்
+    });
+};
+
 const instaBtn = document.getElementById("connectInstagram");
 
 if (instaBtn) {
 
     instaBtn.addEventListener("click", () => {
 
-        alert("Instagram OAuth will be connected in the next step.");
+        document.getElementById("instagramStatus").innerHTML = "Connecting...";
 
-        document.getElementById("instagramStatus").innerHTML =
-            "Connecting...";
+        // மெட்டா லாகின் விண்டோவை ஓபன் செய்தல்
+        FB.login(function(response) {
+            if (response.authResponse) {
+                console.log('Welcome! Fetching your access token...', response);
+                
+                const accessToken = response.authResponse.accessToken;
+                const userId = response.authResponse.userID;
+
+                alert("Instagram Connected Successfully!");
+                document.getElementById("instagramStatus").innerHTML = "Connected ✅";
+                document.getElementById("instagramStatus").style.color = "#22c55e";
+
+                // 💡 இந்த Access Token-ஐ உங்கள் சுபாபேஸ் டேபிளில் சேமிக்க வேண்டும் (பின்வரும் ஸ்டெப்பில் பார்க்கலாம்)
+                saveInstagramToken(userId, accessToken);
+
+            } else {
+                alert('User cancelled login or did not fully authorize.');
+                document.getElementById("instagramStatus").innerHTML = "Failed ❌";
+                document.getElementById("instagramStatus").style.color = "#ef4444";
+            }
+        }, {
+            // இன்ஸ்டாகிராம் ஆட்டோமேஷன் மற்றும் மெசேஜ் அனுப்ப தேவையான அனுமதிகள் (Permissions)
+            scope: 'instagram_basic,instagram_manage_messages,pages_manage_metadata,pages_show_list,pages_messaging'
+        });
 
     });
 
 }
+
+// சுபாபேஸ் டேபிளில் டோக்கனைச் சேமிக்கும் ஃபங்க்ஷன்
+async function saveInstagramToken(metaUserId, token) {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (sessionData.session) {
+        const userUuid = sessionData.session.user.id;
+
+        // உங்கள் 'profiles' அல்லது புதிய 'integrations' டேபிளில் சேமிக்கலாம்
+        const { error } = await supabaseClient
+            .from('profiles') 
+            .update({ 
+                instagram_user_id: metaUserId,
+                instagram_access_token: token 
+            })
+            .eq('id', userUuid);
+
+        if (error) console.error("Error saving token:", error);
+    }
+}
+
 
 
 // ---------- Facebook ----------
