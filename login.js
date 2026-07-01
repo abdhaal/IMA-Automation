@@ -1,6 +1,6 @@
-// ==========================
-// IMA Automation Login
-// ==========================
+// ==============================
+// IMA Automation Login.js
+// ==============================
 
 // Supabase
 const SUPABASE_URL = "https://jrjigvhzkicmgketrmbr.supabase.co";
@@ -32,27 +32,25 @@ const togglePassword = document.getElementById("togglePassword");
 
 let signupMode = false;
 
-// ==========================
-// Password Eye Toggle
-// ==========================
+// =========================
+// Password Toggle
+// =========================
 
-if (togglePassword && password) {
+if (togglePassword) {
 
-    togglePassword.addEventListener("click", () => {
+    togglePassword.addEventListener("click", function () {
 
         if (password.type === "password") {
 
             password.type = "text";
-
-            togglePassword.classList.remove("fa-eye");
-            togglePassword.classList.add("fa-eye-slash");
+            this.classList.remove("fa-eye");
+            this.classList.add("fa-eye-slash");
 
         } else {
 
             password.type = "password";
-
-            togglePassword.classList.remove("fa-eye-slash");
-            togglePassword.classList.add("fa-eye");
+            this.classList.remove("fa-eye-slash");
+            this.classList.add("fa-eye");
 
         }
 
@@ -60,11 +58,11 @@ if (togglePassword && password) {
 
 }
 
-// ==========================
+// =========================
 // Login / Signup Switch
-// ==========================
+// =========================
 
-switchMode.addEventListener("click", (e) => {
+switchMode.addEventListener("click", function (e) {
 
     e.preventDefault();
 
@@ -73,7 +71,7 @@ switchMode.addEventListener("click", (e) => {
     if (signupMode) {
 
         title.textContent = "Create Account";
-        subtitle.textContent = "Start your automation";
+        subtitle.textContent = "Create your automation account";
 
         submitBtn.textContent = "Sign Up";
 
@@ -98,11 +96,11 @@ switchMode.addEventListener("click", (e) => {
 
 });
 
-// ==========================
-// Email Login / Signup
-// ==========================
+// =========================
+// Login / Signup
+// =========================
 
-authForm.addEventListener("submit", async (e) => {
+authForm.addEventListener("submit", async function (e) {
 
     e.preventDefault();
 
@@ -124,6 +122,7 @@ authForm.addEventListener("submit", async (e) => {
 
             alert("Account Created Successfully!");
 
+            signupMode = false;
             location.reload();
 
         } else {
@@ -136,6 +135,8 @@ authForm.addEventListener("submit", async (e) => {
             });
 
             if (error) throw error;
+
+            alert("Login Successful");
 
             window.location.href = "dashboard.html";
 
@@ -152,15 +153,15 @@ authForm.addEventListener("submit", async (e) => {
 
 });
 
-// ==========================
+// =========================
 // Forgot Password
-// ==========================
+// =========================
 
-forgotPassword.addEventListener("click", async (e) => {
+forgotPassword.addEventListener("click", async function (e) {
 
     e.preventDefault();
 
-    if (!email.value) {
+    if (email.value === "") {
 
         alert("Enter your email first.");
         return;
@@ -175,29 +176,35 @@ forgotPassword.addEventListener("click", async (e) => {
 
     } else {
 
-        alert("Password reset email sent.");
+        alert("Password Reset Email Sent");
 
     }
 
 });
 
-// ==========================
+// =========================
 // Google Login
-// ==========================
+// =========================
 
-googleLogin.addEventListener("click", async () => {
+googleLogin.addEventListener("click", async function () {
 
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
 
         provider: "google"
 
     });
 
+    if (error) {
+
+        alert(error.message);
+
+    }
+
 });
 
-// ==========================
-// Auto Session Check
-// ==========================
+// =========================
+// Auto Login
+// =========================
 
 (async () => {
 
