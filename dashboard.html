@@ -17,7 +17,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 
 <body>
 
-<!-- Sidebar -->
+<!-- ================= Sidebar ================= -->
 
 <div class="sidebar">
 
@@ -25,47 +25,75 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 ⚡ IMA
 </div>
 
-<ul class="menu">
+<ul>
 
-<li>
+<li class="active">
 <a href="#">
 <i class="fa-solid fa-house"></i>
-Dashboard
+<span>Dashboard</span>
 </a>
 </li>
 
 <li>
 <a href="#">
 <i class="fa-brands fa-instagram"></i>
-Instagram
+<span>Instagram</span>
 </a>
 </li>
 
 <li>
 <a href="#">
 <i class="fa-brands fa-facebook"></i>
-Facebook
+<span>Facebook</span>
 </a>
 </li>
 
 <li>
 <a href="#">
 <i class="fa-solid fa-robot"></i>
-Automation
+<span>Automation</span>
+</a>
+</li>
+
+<li>
+<a href="#">
+<i class="fa-solid fa-comment"></i>
+<span>Comments</span>
+</a>
+</li>
+
+<li>
+<a href="#">
+<i class="fa-solid fa-paper-plane"></i>
+<span>Auto DM</span>
+</a>
+</li>
+
+<li>
+<a href="#">
+<i class="fa-solid fa-key"></i>
+<span>Keywords</span>
 </a>
 </li>
 
 <li>
 <a href="#">
 <i class="fa-solid fa-chart-line"></i>
-Analytics
+<span>Analytics</span>
+</a>
+</li>
+
+<li>
+<a href="#">
+<i class="fa-solid fa-gear"></i>
+<span>Settings</span>
 </a>
 </li>
 
 <li>
 <a href="#" id="logoutBtn">
 <i class="fa-solid fa-right-from-bracket"></i>
-Logout
+<span>Logout</span>
 </a>
 </li>
 
@@ -73,17 +101,35 @@ Logout
 
 </div>
 
-<!-- Main -->
+<!-- ================= Main ================= -->
 
 <div class="main">
 
-<div class="header">
+<!-- Topbar -->
 
-<h1>Meta Automation Dashboard</h1>
+<div class="topbar">
 
-<div class="user">
+<div>
+
+<h1 class="gradient-text">
+Meta Automation Dashboard
+</h1>
+
+<p style="color:#94a3b8;margin-top:6px;">
+Manage Facebook & Instagram Automation
+</p>
+
+</div>
+
+<div class="profile">
 
 <i class="fa-solid fa-user"></i>
+
+<div>
+
+<h4 id="userName">
+Welcome
+</h4>
 
 <span id="userEmail">
 Loading...
@@ -93,18 +139,45 @@ Loading...
 
 </div>
 
-<!-- Cards -->
+</div>
 
+<!-- Dashboard Summary -->
+
+<div class="glass" style="padding:25px;border-radius:20px;margin-bottom:30px;">
+
+<h2 style="margin-bottom:10px;">
+🚀 Dashboard Overview
+</h2>
+
+<p style="color:#b8c0d4;line-height:28px;">
+
+Welcome to the IMA Automation Dashboard.
+
+Connect your Facebook Page and Instagram Business Account,
+create Auto DM rules, automate comment replies,
+track analytics and manage everything from one place.
+
+</p>
+
+</div>
+
+<!-- KPI Cards will start here -->
 <div class="cards">
+  <!-- ================= KPI Card 1 ================= -->
 
 <div class="card">
 
-<h2>
 <i class="fa-brands fa-instagram"></i>
-Instagram
-</h2>
 
-<p>Connect your Instagram Business Account.</p>
+<h2>Instagram</h2>
+
+<p>
+Business Account Status
+</p>
+
+<h3 class="warning" id="instagramStatus">
+Not Connected
+</h3>
 
 <button id="connectInstagram">
 Connect Instagram
@@ -112,14 +185,21 @@ Connect Instagram
 
 </div>
 
+<!-- ================= KPI Card 2 ================= -->
+
 <div class="card">
 
-<h2>
 <i class="fa-brands fa-facebook"></i>
-Facebook
-</h2>
 
-<p>Connect your Facebook Page.</p>
+<h2>Facebook</h2>
+
+<p>
+Facebook Page Status
+</p>
+
+<h3 class="warning" id="facebookStatus">
+Not Connected
+</h3>
 
 <button id="connectFacebook">
 Connect Facebook
@@ -127,66 +207,440 @@ Connect Facebook
 
 </div>
 
+<!-- ================= KPI Card 3 ================= -->
+
 <div class="card">
 
-<h2>
+<i class="fa-solid fa-paper-plane"></i>
+
+<h2>Auto DM</h2>
+
+<p>
+Automatic Direct Messages
+</p>
+
+<h3 class="success">
+Enabled
+</h3>
+
+<button id="autoDM">
+Configure Auto DM
+</button>
+
+</div>
+
+<!-- ================= KPI Card 4 ================= -->
+
+<div class="card">
+
 <i class="fa-solid fa-robot"></i>
-Automation
+
+<h2>Automation</h2>
+
+<p>
+Automation Engine
+</p>
+
+<h3>
+<span class="online-dot"></span>
+
+<span id="automationStatus">
+
+Running
+
+</span>
+
+</h3>
+
+<button id="automationSettings">
+
+Manage Automation
+
+</button>
+
+</div>
+
+<!-- ================= KPI Card 5 ================= -->
+
+<div class="card">
+
+<i class="fa-solid fa-envelope"></i>
+
+<h2>Messages Today</h2>
+
+<p>
+
+Messages Sent Today
+
+</p>
+
+<h1>
+
+0
+
+</h1>
+
+<button>
+
+View Report
+
+</button>
+
+</div>
+
+<!-- ================= KPI Card 6 ================= -->
+
+<div class="card">
+
+<i class="fa-solid fa-user-group"></i>
+
+<h2>Leads</h2>
+
+<p>
+
+Total Leads Generated
+
+</p>
+
+<h1>
+
+0
+
+</h1>
+
+<button>
+
+Open CRM
+
+</button>
+
+</div>
+
+</div>
+
+<!-- ================= Analytics ================= -->
+
+<div class="analytics">
+
+<h2>
+
+Dashboard Analytics
+
 </h2>
 
-<p>Status :
-<span id="automationStatus">
-Offline
+<div class="stats">
+
+<div class="box">
+
+<h3>
+
+0
+
+</h3>
+
+<span>
+
+Comments Replied
+
 </span>
+
+</div>
+
+<div class="box">
+
+<h3>
+
+0
+
+</h3>
+
+<span>
+
+DM Sent
+
+</span>
+
+</div>
+
+<div class="box">
+
+<h3>
+
+0
+
+</h3>
+
+<span>
+
+Keyword Triggers
+
+</span>
+
+</div>
+
+<div class="box">
+
+<h3>
+
+0
+
+</h3>
+
+<span>
+
+Conversions
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+  <!-- ================= RECENT ACTIVITY ================= -->
+
+<div class="activity">
+
+<h2>Recent Activity</h2>
+
+<div class="table-wrapper">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Platform</th>
+<th>Action</th>
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+<td>--/--/----</td>
+<td>Instagram</td>
+<td>Auto DM</td>
+<td><span class="success">Success</span></td>
+</tr>
+
+<tr>
+<td>--/--/----</td>
+<td>Facebook</td>
+<td>Comment Reply</td>
+<td><span class="success">Success</span></td>
+</tr>
+
+<tr>
+<td>--/--/----</td>
+<td>Instagram</td>
+<td>Keyword Trigger</td>
+<td><span class="warning">Pending</span></td>
+</tr>
+
+<tr>
+<td>--/--/----</td>
+<td>Facebook</td>
+<td>Lead Generated</td>
+<td><span class="success">Completed</span></td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- ================= NOTIFICATIONS ================= -->
+
+<div class="notifications">
+
+<h2>Notifications</h2>
+
+<div class="notice">
+<i class="fa-solid fa-circle-check"></i>
+<div>
+<h4>System Ready</h4>
+<p>Your automation system is ready.</p>
+</div>
+</div>
+
+<div class="notice">
+<i class="fa-brands fa-facebook"></i>
+<div>
+<h4>Facebook</h4>
+<p>Connect your Facebook Page to start automation.</p>
+</div>
+</div>
+
+<div class="notice">
+<i class="fa-brands fa-instagram"></i>
+<div>
+<h4>Instagram</h4>
+<p>Connect your Instagram Business account.</p>
+</div>
+</div>
+
+<div class="notice">
+<i class="fa-solid fa-bell"></i>
+<div>
+<h4>No New Alerts</h4>
+<p>Everything is running normally.</p>
+</div>
+</div>
+
+</div>
+
+<!-- ================= AUTOMATION PROGRESS ================= -->
+
+<div class="progress-card">
+
+<h2>Automation Progress</h2>
+
+<div class="progress">
+
+<div class="progress-title">
+<span>Instagram Connected</span>
+<span>0%</span>
+</div>
+
+<div class="progress-bar">
+<div class="progress-fill" style="width:0%;"></div>
+</div>
+
+</div>
+
+<div class="progress">
+
+<div class="progress-title">
+<span>Facebook Connected</span>
+<span>0%</span>
+</div>
+
+<div class="progress-bar">
+<div class="progress-fill" style="width:0%;"></div>
+</div>
+
+</div>
+
+<div class="progress">
+
+<div class="progress-title">
+<span>Automation Setup</span>
+<span>10%</span>
+</div>
+
+<div class="progress-bar">
+<div class="progress-fill" style="width:10%;"></div>
+</div>
+
+</div>
+
+<div class="progress">
+
+<div class="progress-title">
+<span>Overall Completion</span>
+<span>5%</span>
+</div>
+
+<div class="progress-bar">
+<div class="progress-fill" style="width:5%;"></div>
+</div>
+
+</div>
+
+</div>
+<!-- ================= LIVE ANALYTICS ================= -->
+
+<div class="analytics" style="margin-top:30px;">
+
+<h2>Live Analytics</h2>
+
+<div class="stats">
+
+<div class="box">
+<h3>0%</h3>
+<span>Instagram Growth</span>
+</div>
+
+<div class="box">
+<h3>0%</h3>
+<span>Facebook Growth</span>
+</div>
+
+<div class="box">
+<h3>0%</h3>
+<span>Automation Success</span>
+</div>
+
+<div class="box">
+<h3>0%</h3>
+<span>Engagement Rate</span>
+</div>
+
+</div>
+
+</div>
+
+<!-- ================= AUTOMATION SETTINGS ================= -->
+
+<div class="activity">
+
+<h2>Automation Settings</h2>
+
+<div class="cards">
+
+<div class="card">
+
+<i class="fa-solid fa-paper-plane"></i>
+
+<h2>Auto DM</h2>
+
+<p>
+Automatically send a DM when users comment on your posts.
 </p>
 
 <button id="autoDM">
-Enable Auto DM
+Configure
 </button>
 
 </div>
 
 <div class="card">
 
-<h2>
-<i class="fa-solid fa-comment"></i>
-Auto Reply
-</h2>
+<i class="fa-solid fa-comment-dots"></i>
 
-<p>Automatically reply to comments.</p>
+<h2>Comment Reply</h2>
+
+<p>
+Automatically reply to comments using custom templates.
+</p>
 
 <button id="autoReply">
-Enable Auto Reply
+Configure
 </button>
 
 </div>
 
 <div class="card">
 
-<h2>
-<i class="fa-solid fa-comments"></i>
-Comment Automation
-</h2>
+<i class="fa-solid fa-key"></i>
 
-<p>Trigger DM from comments.</p>
+<h2>Keyword Trigger</h2>
 
-<button id="commentAutomation">
-Enable
-</button>
+<p>
+Send messages when users comment with selected keywords.
+</p>
 
-</div>
-
-<div class="card logout">
-
-<h2>
-<i class="fa-solid fa-right-from-bracket"></i>
-Logout
-</h2>
-
-<p>Sign out from your account.</p>
-
-<button id="logoutButton">
-Logout
+<button id="keywordBtn">
+Setup Keywords
 </button>
 
 </div>
@@ -195,14 +649,115 @@ Logout
 
 </div>
 
-<!-- Supabase -->
+<!-- ================= ACCOUNT STATUS ================= -->
+
+<div class="notifications">
+
+<h2>Account Status</h2>
+
+<div class="notice">
+
+<i class="fa-brands fa-instagram"></i>
+
+<div>
+
+<h4>Instagram</h4>
+
+<p id="instagramAccountStatus">
+
+Not Connected
+
+</p>
+
+</div>
+
+</div>
+
+<div class="notice">
+
+<i class="fa-brands fa-facebook"></i>
+
+<div>
+
+<h4>Facebook</h4>
+
+<p id="facebookAccountStatus">
+
+Not Connected
+
+</p>
+
+</div>
+
+</div>
+
+<div class="notice">
+
+<i class="fa-solid fa-robot"></i>
+
+<div>
+
+<h4>Automation Engine</h4>
+
+<p>
+
+<span class="online-dot"></span>
+
+Running
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ================= FOOTER ================= -->
+
+<div class="footer">
+
+<p>
+
+© 2026 IMA Automation • Powered by Meta Graph API & Supabase
+
+</p>
+
+</div>
+
+</div>
+
+<!-- ================= LOADING MODAL ================= -->
+
+<div id="loadingModal" class="loading-modal" style="display:none;">
+
+    <div class="loading-box">
+
+        <i class="fa-solid fa-spinner fa-spin"></i>
+
+        <h3>Connecting...</h3>
+
+        <p>Please wait while we connect your Meta account.</p>
+
+    </div>
+
+</div>
+
+<!-- ================= TOAST ================= -->
+
+<div id="toast" class="toast">
+
+    <i class="fa-solid fa-circle-check"></i>
+
+    <span id="toastText">Success</span>
+
+</div>
+
+<!-- ================= SCRIPTS ================= -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Dashboard JS -->
 
 <script src="dashboard.js"></script>
 
 </body>
-
 </html>
