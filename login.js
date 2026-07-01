@@ -137,10 +137,16 @@ authForm.addEventListener("submit", async function (e) {
         }
 
     } catch (err) {
-
+    console.error("Full Error:", err); // கன்சோலிலும் எரர் தெரியும்
+    
+    // எரர் மெசேஜ் இருந்தால் அதை காட்டும், இல்லையென்றால் ஆப்ஜெக்ட்டை டெக்ஸ்ட்டாக மாற்றி காட்டும்
+    if (err.message) {
         alert(err.message);
-
+    } else {
+        alert(JSON.stringify(err));
     }
+}
+
 
     submitBtn.disabled = false;
     submitBtn.innerText = signupMode ? "Sign Up" : "Sign In";
