@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>IMA Automation Dashboard</title>
+
+<link rel="stylesheet" href="dashboard.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2>⚡ IMA</h2>
+
+<ul>
+
+<li class="active">
+<i class="fa-solid fa-house"></i>
+Dashboard
+</li>
+
+<li>
+<i class="fa-brands fa-instagram"></i>
+Instagram
+</li>
+
+<li>
+<i class="fa-brands fa-facebook"></i>
+Facebook
+</li>
+
+<li>
+<i class="fa-solid fa-robot"></i>
+Automation
+</li>
+
+<li>
+<i class="fa-solid fa-chart-line"></i>
+Analytics
+</li>
+
+<li id="logoutBtn">
+<i class="fa-solid fa-right-from-bracket"></i>
+Logout
+</li>
+
+</ul>
+
+</div>
+
+<div class="main">
+
+<div class="topbar">
+
+<h1>Dashboard</h1>
+
+<div class="profile">
+
+<i class="fa-solid fa-user"></i>
+
+<span id="userEmail">
+Loading...
+</span>
+
+</div>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+
+<h3>Instagram</h3>
+
+<p>Not Connected</p>
+
+<button id="connectInstagram">
+Connect
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Facebook</h3>
+
+<p>Not Connected</p>
+
+<button id="connectFacebook">
+Connect
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Automation</h3>
+
+<p>Disabled</p>
+
+<button>
+Create Automation
+</button>
+
+</div>
+
+</div>
+
+<div class="analytics">
+
+<h2>Overview</h2>
+
+<div class="stats">
+
+<div class="box">
+
+<h3>0</h3>
+
+<span>Messages Sent</span>
+
+</div>
+
+<div class="box">
+
+<h3>0</h3>
+
+<span>Replies</span>
+
+</div>
+
+<div class="box">
+
+<h3>0</h3>
+
+<span>Leads</span>
+
+</div>
+
+<div class="box">
+
+<h3>0</h3>
+
+<span>Conversions</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL="https://jrjigvhzkicmgketrmbr.supabase.co";
+
+const SUPABASE_ANON_KEY="YOUR_ANON_KEY";
+
+const supabase=window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
+
+(async()=>{
+
+const {data}=await supabase.auth.getSession();
+
+if(!data.session){
+
+window.location.href="login.html";
+
+return;
+
+}
+
+document.getElementById("userEmail").innerText=data.session.user.email;
+
+})();
+
+document.getElementById("logoutBtn").onclick=async()=>{
+
+await supabase.auth.signOut();
+
+window.location.href="login.html";
+
+};
+
+document.getElementById("connectInstagram").onclick=()=>{
+
+alert("Instagram Graph API Connect - Coming Soon");
+
+};
+
+document.getElementById("connectFacebook").onclick=()=>{
+
+alert("Facebook Graph API Connect - Coming Soon");
+
+};
+
+</script>
+
+</body>
+
+</html>
