@@ -132,21 +132,66 @@ async function saveInstagramToken(metaUserId, token) {
 
 
 
-// ---------- Facebook ----------
+// ==========================================
+// ---------- Facebook OAuth ----------
+// ==========================================
+
 const fbBtn = document.getElementById("connectFacebook");
 
 if (fbBtn) {
 
     fbBtn.addEventListener("click", () => {
 
-        alert("Facebook OAuth will be connected in the next step.");
+        document.getElementById("facebookStatus").innerHTML = "Connecting...";
 
-        document.getElementById("facebookStatus").innerHTML =
-            "Connecting...";
+        // மெட்டா லாகின் விண்டோவை ஓபன் செய்தல்
+        FB.login(function(response) {
+            if (response.authResponse) {
+                console.log('Facebook Login Successful!', response);
+                
+                const accessToken = response.authResponse.accessToken;
+                const userId = response.authResponse.userID;
+
+                alert("Facebook Connected Successfully!");
+                document.getElementById("facebookStatus").innerHTML = "Connected ✅";
+                document.getElementById("facebookStatus").style.color = "#22c55e";
+
+                // லாகின் ஆன பிறகு இந்த டோக்கனை சுபாபேஸில் சேமிக்கலாம்
+                saveFacebookToken(userId, accessToken);
+
+            } else {
+                alert('User cancelled login or did not fully authorize.');
+                document.getElementById("facebookStatus").innerHTML = "Failed ❌";
+                document.getElementById("facebookStatus").style.color = "#ef4444";
+            }
+        }, {
+            // ஃபேஸ்புக் பக்கங்கள் மற்றும் மெசேஜ்களை நிர்வகிக்க தேவையான அனுமதிகள் (Scopes)
+            scope: 'pages_manage_metadata,pages_messaging,pages_read_engagement,public_profile,email'
+        });
 
     });
 
 }
+
+// சுபாபேஸ் டேபிளில் பேஸ்புக் டோக்கனைச் சேமிக்கும் ஃபங்க்ஷன்
+async function saveFacebookToken(metaUserId, token) {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (sessionData.session) {
+        const userUuid = sessionData.session.user.id;
+
+        // ப்ரொஃபைல் டேபிளில் பேஸ்புக் விவரங்களை அப்டேட் செய்தல்
+        const { error } = await supabaseClient
+            .from('profiles') 
+            .update({ 
+                facebook_user_id: metaUserId,
+                facebook_access_token: token 
+            })
+            .eq('id', userUuid);
+
+        if (error) console.error("Error saving FB token:", error);
+    }
+}
+
 
 
 // ---------- Auto DM ----------
