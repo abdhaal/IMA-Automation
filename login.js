@@ -1,8 +1,8 @@
-// =========================
-// IMA Automation Auth
-// =========================
+// ==========================
+// IMA Automation Login
+// ==========================
 
-// 🔹 Replace with your Supabase details
+// Supabase
 const SUPABASE_URL = "https://jrjigvhzkicmgketrmbr.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyamlndmh6a2ljbWdrZXRybWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NzYyODEsImV4cCI6MjA5ODE1MjI4MX0.4FHwDGywcybt_tu52Dv5e2YEgCN3uKbKI0l844RA3Og";
 
@@ -32,206 +32,181 @@ const togglePassword = document.getElementById("togglePassword");
 
 let signupMode = false;
 
-// --------------------
-// Password Toggle
-// --------------------
+// ==========================
+// Password Eye Toggle
+// ==========================
 
-togglePassword.onclick = () => {
+if (togglePassword && password) {
 
-if(password.type==="password"){
+    togglePassword.addEventListener("click", () => {
 
-password.type="text";
+        if (password.type === "password") {
 
-togglePassword.className="fa-solid fa-eye-slash";
+            password.type = "text";
 
-}else{
+            togglePassword.classList.remove("fa-eye");
+            togglePassword.classList.add("fa-eye-slash");
 
-password.type="password";
+        } else {
 
-togglePassword.className="fa-solid fa-eye";
+            password.type = "password";
 
-}
+            togglePassword.classList.remove("fa-eye-slash");
+            togglePassword.classList.add("fa-eye");
 
-};
+        }
 
-// --------------------
-// Switch Login / Signup
-// --------------------
-
-switchMode.onclick=(e)=>{
-
-e.preventDefault();
-
-signupMode=!signupMode;
-
-if(signupMode){
-
-title.innerText="Create Account";
-
-subtitle.innerText="Start your automation";
-
-submitBtn.innerText="Sign Up";
-
-switchText.innerText="Already have an account?";
-
-switchMode.innerText="Sign In";
-
-forgotPassword.style.display="none";
-
-}else{
-
-title.innerText="Welcome Back";
-
-subtitle.innerText="Sign in to continue";
-
-submitBtn.innerText="Sign In";
-
-switchText.innerText="Don't have an account?";
-
-switchMode.innerText="Sign Up";
-
-forgotPassword.style.display="block";
+    });
 
 }
 
-};
+// ==========================
+// Login / Signup Switch
+// ==========================
 
-// --------------------
-// Email Auth
-// --------------------
+switchMode.addEventListener("click", (e) => {
 
-authForm.addEventListener("submit",async(e)=>{
+    e.preventDefault();
 
-e.preventDefault();
+    signupMode = !signupMode;
 
-submitBtn.disabled=true;
+    if (signupMode) {
 
-submitBtn.innerText="Please Wait...";
+        title.textContent = "Create Account";
+        subtitle.textContent = "Start your automation";
 
-if(signupMode){
+        submitBtn.textContent = "Sign Up";
 
-const {error}=await supabase.auth.signUp({
+        switchText.textContent = "Already have an account?";
+        switchMode.textContent = "Sign In";
 
-email:email.value,
+        forgotPassword.style.display = "none";
 
-password:password.value
+    } else {
+
+        title.textContent = "Welcome Back";
+        subtitle.textContent = "Sign in to continue";
+
+        submitBtn.textContent = "Sign In";
+
+        switchText.textContent = "Don't have an account?";
+        switchMode.textContent = "Sign Up";
+
+        forgotPassword.style.display = "block";
+
+    }
 
 });
 
-if(error){
+// ==========================
+// Email Login / Signup
+// ==========================
 
-alert(error.message);
+authForm.addEventListener("submit", async (e) => {
 
-}else{
+    e.preventDefault();
 
-alert("Account Created Successfully.");
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Please Wait...";
 
-signupMode=false;
+    try {
 
-location.reload();
+        if (signupMode) {
 
-}
+            const { error } = await supabase.auth.signUp({
 
-}else{
+                email: email.value,
+                password: password.value
 
-const {error}=await supabase.auth.signInWithPassword({
+            });
 
-email:email.value,
+            if (error) throw error;
 
-password:password.value
+            alert("Account Created Successfully!");
+
+            location.reload();
+
+        } else {
+
+            const { error } = await supabase.auth.signInWithPassword({
+
+                email: email.value,
+                password: password.value
+
+            });
+
+            if (error) throw error;
+
+            window.location.href = "dashboard.html";
+
+        }
+
+    } catch (err) {
+
+        alert(err.message);
+
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.innerText = signupMode ? "Sign Up" : "Sign In";
 
 });
 
-if(error){
-
-alert(error.message);
-
-}else{
-
-window.location.href="dashboard.html";
-
-}
-
-}
-
-submitBtn.disabled=false;
-
-submitBtn.innerText=signupMode?"Sign Up":"Sign In";
-
-});
-
-// --------------------
+// ==========================
 // Forgot Password
-// --------------------
+// ==========================
 
-forgotPassword.onclick=async(e)=>{
+forgotPassword.addEventListener("click", async (e) => {
 
-e.preventDefault();
+    e.preventDefault();
 
-if(email.value==""){
+    if (!email.value) {
 
-alert("Enter Email First");
+        alert("Enter your email first.");
+        return;
 
-return;
+    }
 
-}
+    const { error } = await supabase.auth.resetPasswordForEmail(email.value);
 
-const {error}=await supabase.auth.resetPasswordForEmail(
+    if (error) {
 
-email.value,
+        alert(error.message);
 
-{
+    } else {
 
-redirectTo:window.location.origin+"/reset.html"
+        alert("Password reset email sent.");
 
-}
-
-);
-
-if(error){
-
-alert(error.message);
-
-}else{
-
-alert("Password Reset Email Sent");
-
-}
-
-};
-
-// --------------------
-// Google Login
-// --------------------
-
-googleLogin.onclick=async()=>{
-
-await supabase.auth.signInWithOAuth({
-
-provider:"google",
-
-options:{
-
-redirectTo:window.location.origin+"/dashboard.html"
-
-}
+    }
 
 });
 
-};
+// ==========================
+// Google Login
+// ==========================
 
-// --------------------
-// Auto Session
-// --------------------
+googleLogin.addEventListener("click", async () => {
 
-(async()=>{
+    await supabase.auth.signInWithOAuth({
 
-const {data}=await supabase.auth.getSession();
+        provider: "google"
 
-if(data.session){
+    });
 
-window.location.href="dashboard.html";
+});
 
-}
+// ==========================
+// Auto Session Check
+// ==========================
+
+(async () => {
+
+    const { data } = await supabase.auth.getSession();
+
+    if (data.session) {
+
+        window.location.href = "dashboard.html";
+
+    }
 
 })();
