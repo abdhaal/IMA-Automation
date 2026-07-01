@@ -1,89 +1,215 @@
 // ===============================
-// Meta Automation Dashboard JS
+// IMA Automation Dashboard
 // ===============================
 
-document.addEventListener("DOMContentLoaded", () => {
+// ---------- Supabase ----------
 
-    // Automation Status
-    const status = document.getElementById("automationStatus");
+const SUPABASE_URL = "https://jrjigvhzkicmgketrmbr.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
-    if (status) {
-        status.innerHTML = "🟢 Online";
-        status.style.color = "#00ff88";
+const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+// ---------- Load User ----------
+
+async function loadUser() {
+
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) {
+        console.log(error);
+        return;
     }
 
-    // Instagram Connect
-    const instagram = document.getElementById("connectInstagram");
-
-    if (instagram) {
-        instagram.addEventListener("click", () => {
-
-            alert("Instagram Graph API integration will be added in the next step.");
-
-        });
+    if (!data.session) {
+        window.location.href = "login.html";
+        return;
     }
 
-    // Facebook Connect
-    const facebook = document.getElementById("connectFacebook");
+    document.getElementById("userEmail").innerText =
+        data.session.user.email;
 
-    if (facebook) {
-        facebook.addEventListener("click", () => {
+    document.getElementById("userName").innerText =
+        data.session.user.email.split("@")[0];
 
-            alert("Facebook Graph API integration will be added in the next step.");
+}
 
-        });
-    }
+loadUser();
 
-    // Auto DM
-    const autoDM = document.getElementById("autoDM");
 
-    if (autoDM) {
-        autoDM.addEventListener("click", () => {
+// ---------- Logout ----------
 
-            alert("Auto DM Enabled");
+const logoutBtn = document.getElementById("logoutBtn");
 
-        });
-    }
+if (logoutBtn) {
 
-    // Auto Reply
-    const autoReply = document.getElementById("autoReply");
+    logoutBtn.addEventListener("click", async (e) => {
 
-    if (autoReply) {
-        autoReply.addEventListener("click", () => {
+        e.preventDefault();
 
-            alert("Auto Reply Enabled");
+        if (confirm("Logout from your account?")) {
 
-        });
-    }
+            await supabase.auth.signOut();
 
-    // Comment Automation
-    const comment = document.getElementById("commentAutomation");
+            window.location.href = "login.html";
 
-    if (comment) {
-        comment.addEventListener("click", () => {
+        }
 
-            alert("Comment Automation Enabled");
+    });
 
-        });
-    }
+}
 
-    // Logout
-    const logout = document.getElementById("logoutBtn");
 
-    if (logout) {
+// ---------- Instagram ----------
 
-        logout.addEventListener("click", () => {
+const instaBtn = document.getElementById("connectInstagram");
 
-            if (confirm("Are you sure you want to logout?")) {
+if (instaBtn) {
 
-                localStorage.removeItem("user");
+    instaBtn.addEventListener("click", () => {
 
-                window.location.href = "login.html";
+        alert("Instagram OAuth will be connected in the next step.");
 
-            }
+        document.getElementById("instagramStatus").innerHTML =
+            "Connecting...";
 
-        });
+    });
+
+}
+
+
+// ---------- Facebook ----------
+
+const fbBtn = document.getElementById("connectFacebook");
+
+if (fbBtn) {
+
+    fbBtn.addEventListener("click", () => {
+
+        alert("Facebook OAuth will be connected in the next step.");
+
+        document.getElementById("facebookStatus").innerHTML =
+            "Connecting...";
+
+    });
+
+}
+
+
+// ---------- Auto DM ----------
+
+const autoDM = document.getElementById("autoDM");
+
+if (autoDM) {
+
+    autoDM.addEventListener("click", () => {
+
+        alert("Auto DM Enabled");
+
+    });
+
+}
+
+
+// ---------- Auto Reply ----------
+
+const autoReply = document.getElementById("autoReply");
+
+if (autoReply) {
+
+    autoReply.addEventListener("click", () => {
+
+        alert("Auto Reply Enabled");
+
+    });
+
+}
+
+
+// ---------- Keywords ----------
+
+const keywordBtn = document.getElementById("keywordBtn");
+
+if (keywordBtn) {
+
+    keywordBtn.addEventListener("click", () => {
+
+        const keyword = prompt("Enter keyword");
+
+        if (keyword) {
+
+            alert("Keyword Saved : " + keyword);
+
+        }
+
+    });
+
+}
+
+
+// ---------- Automation Status ----------
+
+const automationStatus = document.getElementById("automationStatus");
+
+if (automationStatus) {
+
+    automationStatus.innerHTML = "Running";
+
+    automationStatus.style.color = "#22c55e";
+
+}
+
+
+// ---------- Dashboard Counter ----------
+
+function random(min, max) {
+
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+
+}
+
+const numbers = document.querySelectorAll(".box h3");
+
+numbers.forEach(item => {
+
+    if (!item.innerText.includes("%")) {
+
+        item.innerText = random(0, 50);
 
     }
 
 });
+
+
+// ---------- Toast ----------
+
+function showToast(message) {
+
+    const toast = document.getElementById("toast");
+
+    const text = document.getElementById("toastText");
+
+    if (!toast || !text) return;
+
+    text.innerText = message;
+
+    toast.style.display = "flex";
+
+    setTimeout(() => {
+
+        toast.style.display = "none";
+
+    }, 3000);
+
+}
+
+
+// ---------- Welcome ----------
+
+setTimeout(() => {
+
+    showToast("Welcome to IMA Dashboard");
+
+}, 1000);
