@@ -4,13 +4,16 @@
 
 // ---------- Supabase ----------
 
+// dashboard.js கோப்பின் மேல் பகுதியில் இப்படி மாற்றுங்கள்:
 const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
 
-const supabase = window.supabase.createClient(
+// இங்க supabase-க்கு பதிலா supabaseClient
+const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
 );
+
 
 // ---------- Load User ----------
 
