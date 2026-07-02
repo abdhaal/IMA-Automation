@@ -99,6 +99,14 @@ window.fbAsyncInit = function() {
         version    : 'v20.0' // தற்போதைய மெட்டா API வெர்ஷன்
     });
 };
+window.instaAsyncInit = function() {
+    insta.init({
+        appId      : '2068980717298522', // உங்கள் நிஜமான Meta App ID
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v20.0'
+    });
+};
 
 const instaBtn = document.getElementById("connectInstagram");
 
@@ -109,7 +117,7 @@ if (instaBtn) {
         document.getElementById("instagramStatus").innerHTML = "Connecting...";
 
         // மெட்டா லாகின் விண்டோவை ஓபன் செய்தல்
-        FB.login(function(response) {
+        insta.login(function(response) {
             if (response.authResponse) {
                 console.log('Welcome! Fetching your access token...', response);
                 
