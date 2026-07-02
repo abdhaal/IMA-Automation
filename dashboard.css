@@ -1338,3 +1338,35 @@ div[class*="main"] {
     backface-visibility: hidden;
     transform: translate3d(0, 0, 0);
 }
+/* ==========================================
+   ரெண்டரிங் லேக் மற்றும் பிளாக் ஓவர்லேவை முற்றிலும் நீக்கும் பகுதி
+   ========================================== */
+
+/* 1. ஒட்டுமொத்த பக்கத்திற்கும் ஹார்டுவேர் அக்சலரேஷனை கட்டாயமாக்குதல் */
+* {
+    -webkit-perspective: 1000;
+    perspective: 1000;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+/* 2. பாடி மற்றும் மெயின் கன்டென்ட் ஸ்க்ரோலிங் சீரமைப்பு */
+html, body {
+    background-color: #0b0f19 !important; /* உங்க டேஷ்போர்டின் பின்னணி கஸ்டம் கலர் */
+    overflow-y: scroll;
+    overflow-x: hidden;
+    height: auto !important;
+}
+
+/* 3. வேகமாக ஸ்க்ரோல் செய்யும்போது லேக் ஆகும் குறிப்பிட்ட செக்ஷன்கள் */
+.main-content, 
+.dashboard-grid, 
+.card, 
+.box,
+div[class*="analytics"],
+div[class*="activity"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    background-color: inherit; /* பின்னணி நிறத்தை அப்படியே தக்க வைக்கிறது */
+}
