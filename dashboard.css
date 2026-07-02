@@ -105,12 +105,12 @@ color:#fff;
 }
 
 /* ============== Main Area ============== */
-.main{
-margin-left:260px; /* Sidebar pakkathu gap-ah cover panna correct layout entry */
-width:calc(100% - 260px);
-padding:35px;
-display: flex;
-flex-direction: column;
+.main {
+    margin-left: 260px;
+    width: calc(100% - 260px);
+    padding: 35px 25px; /* Spacing slightly optimised to fit columns */
+    display: flex;
+    flex-direction: column;
 }
 
 /* ============== Topbar (FIXED) ============== */
@@ -185,69 +185,73 @@ margin-bottom: 2px;
 width: 100%;
 }
 
-/* Tablet Layout Fixes */
+/* Tablet View (Max-width: 992px) */
 @media(max-width:992px){
-.sidebar{
-width:90px;
-padding:20px 10px;
-}
-.logo{
-font-size:18px;
-}
-.sidebar ul li a span{
-display:none;
-}
-.sidebar ul li a{
-justify-content:center;
-}
-.main{
-margin-left:90px;
-width:calc(100% - 90px);
-}
+    .sidebar{
+        width:90px;
+        padding:20px 10px;
+    }
+    .logo{
+        font-size:18px;
+    }
+    .sidebar ul li a span{
+        display:none;
+    }
+    .sidebar ul li a{
+        justify-content:center;
+    }
+    /* Inga left margin-ah correct-ah sidebar width-ku map panniyachu */
+    .main{
+        margin-left:90px !important;
+        width:calc(100% - 90px) !important;
+        padding: 25px 15px;
+    }
 }
 
-/* Mobile Layout Fixes */
+/* Mobile View (Max-width: 768px) */
 @media(max-width:768px){
-body{
-display:block;
+    body{
+        display:block;
+    }
+    .sidebar{
+        position:relative !important;
+        width:100% !important;
+        height:auto !important;
+        min-height: auto !important;
+        border-right:none;
+        border-bottom:1px solid rgba(255,255,255,.08);
+        padding: 15px;
+    }
+    .sidebar ul{
+        display:flex;
+        overflow-x:auto;
+        gap:12px;
+        padding-bottom:10px;
+    }
+    .sidebar ul li{
+        margin: 0;
+        flex:none;
+    }
+    .sidebar ul li a{
+        justify-content:center;
+        padding:12px 16px;
+    }
+    /* Mobile-la side bar top-ku poidrathala gap '0' aakiduvom */
+    .main{
+        margin-left:0 !important;
+        width:100% !important;
+        padding:20px 15px;
+    }
+    .topbar{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:18px;
+    }
+    .profile {
+        width: 100%;
+    }
 }
-.sidebar{
-position:relative !important;
-width:100% !important;
-height:auto !important;
-min-height: auto !important;
-border-right:none;
-border-bottom:1px solid rgba(255,255,255,.08);
-padding: 15px;
-}
-.sidebar ul{
-display:flex;
-overflow-x:auto;
-gap:12px;
-padding-bottom:10px;
-}
-.sidebar ul li{
-margin: 0;
-flex:none;
-}
-.sidebar ul li a{
-justify-content:center;
-padding:12px 16px;
-}
-.main{
-margin-left:0 !important;
-width:100% !important;
-padding:20px;
-}
-.topbar{
-flex-direction:column;
-align-items:flex-start;
-gap:18px;
-}
-.profile {
-width: 100%;
-}
-}
+
 
 /* ==========================================
    PART 2 - DASHBOARD CARDS & ANALYTICS
