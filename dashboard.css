@@ -1,579 +1,1262 @@
 /* ==========================================
    IMA AUTOMATION DASHBOARD
-   PART 1 - LAYOUT + GLOBAL RESET
-========================================== */
+   PART 1
+==========================================*/
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght=300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
 }
 
-html {
-    scroll-behavior: smooth;
+html{
+scroll-behavior:smooth;
 }
 
-html, body {
-    width: 100%;
-    overflow-x: hidden;
-}
+body{
 
-body {
-    background: #060b18;
-    background-image:
-        radial-gradient(circle at top left, #1b4bb8 0%, transparent 30%),
-        radial-gradient(circle at bottom right, #6d28d9 0%, transparent 35%);
-    color: #fff;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: row;
-    /* ⚡ வேகமாக ஸ்க்ரோல் செய்யும்போது கறுப்புத்திரை வராமல் தடுக்க */
-    transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
+background:
+radial-gradient(circle at top left,#143d8d 0%,transparent 30%),
+radial-gradient(circle at bottom right,#5b21b6 0%,transparent 35%),
+#060b18;
+
+color:#fff;
+
+min-height:100vh;
+
+display:flex;
+
+overflow-x:hidden;
+
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
+
+::-webkit-scrollbar{
+width:8px;
 }
 
-::-webkit-scrollbar-track {
-    background: #09111f;
+::-webkit-scrollbar-track{
+background:#09111f;
 }
 
-::-webkit-scrollbar-thumb {
-    background: #3b82f6;
-    border-radius: 20px;
+::-webkit-scrollbar-thumb{
+background:#365dff;
+border-radius:20px;
 }
 
+/* ================= Sidebar ================= */
+
+.sidebar{
+
+width:260px;
+
+height:100vh;
+
+position:fixed;
+
+left:0;
+
+top:0;
+
+padding:25px;
+
+background:rgba(255,255,255,.05);
+
+backdrop-filter:blur(25px);
+
+border-right:1px solid rgba(255,255,255,.08);
+
+box-shadow:0 0 30px rgba(0,0,0,.35);
+
+}
+
+.logo{
+
+font-size:28px;
+
+font-weight:700;
+
+margin-bottom:45px;
+
+letter-spacing:1px;
+
+text-align:center;
+
+background:linear-gradient(90deg,#3b82f6,#9333ea);
+
+-webkit-background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
+}
+
+.sidebar ul{
+
+list-style:none;
+
+}
+
+.sidebar ul li{
+
+margin:14px 0;
+
+}
+
+.sidebar ul li a{
+
+display:flex;
+
+align-items:center;
+
+gap:15px;
+
+padding:15px 18px;
+
+text-decoration:none;
+
+color:#d8d8d8;
+
+font-size:15px;
+
+font-weight:500;
+
+border-radius:14px;
+
+transition:.35s;
+
+}
+
+.sidebar ul li a i{
+
+width:22px;
+
+text-align:center;
+
+font-size:18px;
+
+}
+
+.sidebar ul li a:hover{
+
+background:linear-gradient(90deg,#2563eb,#7c3aed);
+
+color:#fff;
+
+transform:translateX(6px);
+
+box-shadow:0 10px 25px rgba(37,99,235,.35);
+
+}
+
+.sidebar ul li.active a{
+
+background:linear-gradient(90deg,#2563eb,#7c3aed);
+
+color:#fff;
+
+}
+
+/* ============== Main Area ============== */
+
+.main{
+
+margin-left:260px;
+
+width:calc(100% - 260px);
+
+padding:35px;
+
+}
+
+/* ============== Topbar ============== */
+
+.topbar{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:35px;
+
+}
+
+.topbar h1{
+
+font-size:32px;
+
+font-weight:700;
+
+}
+
+.profile{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+padding:12px 20px;
+
+border-radius:16px;
+
+background:rgba(255,255,255,.05);
+
+backdrop-filter:blur(20px);
+
+border:1px solid rgba(255,255,255,.08);
+
+}
+
+.profile i{
+
+width:42px;
+
+height:42px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+border-radius:50%;
+
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+
+font-size:18px;
+
+}
+
+.profile span{
+
+font-size:14px;
+
+font-weight:500;
+
+color:#fff;
+
+}
+
+/* Tablet */
+
+@media(max-width:992px){
+
+.sidebar{
+
+width:90px;
+
+padding:20px 10px;
+
+}
+
+.logo{
+
+font-size:18px;
+
+}
+
+.sidebar ul li a span{
+
+display:none;
+
+}
+
+.sidebar ul li a{
+
+justify-content:center;
+
+}
+
+.main{
+
+margin-left:90px;
+
+width:calc(100% - 90px);
+
+}
+
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+body{
+
+display:block;
+
+}
+
+.sidebar{
+
+position:relative;
+
+width:100%;
+
+height:auto;
+
+border-right:none;
+
+border-bottom:1px solid rgba(255,255,255,.08);
+
+}
+
+.sidebar ul{
+
+display:flex;
+
+overflow-x:auto;
+
+gap:12px;
+
+padding-bottom:10px;
+
+}
+
+.sidebar ul li{
+
+flex:none;
+
+}
+
+.sidebar ul li a{
+
+justify-content:center;
+
+padding:12px 16px;
+
+}
+
+.main{
+
+margin-left:0;
+
+width:100%;
+
+padding:20px;
+
+}
+
+.topbar{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+gap:18px;
+
+}
+
+}
 /* ==========================================
-   PART 2 - SIDEBAR & MAIN LAYOUT (RESPONSIVE)
-========================================== */
+   PART 2 - DASHBOARD CARDS & ANALYTICS
+==========================================*/
 
-/* 💻 Desktop View (Screen 769px மற்றும் அதற்கு மேல்) */
-@media (min-width: 769px) {
-    .sidebar, 
-    aside, 
-    div[class*="sidebar"] {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 260px !important;
-        height: 100vh !important;
-        min-height: 100vh !important;
-        overflow-y: auto !important;
-        z-index: 1000 !important;
-        background: rgba(255, 255, 255, .03);
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255, 255, 255, .08);
-    }
+/* Cards Grid */
 
-    .main {
-        margin-left: 260px !important; /* சைடுபார் அகலத்திற்கு சமமாக */
-        width: calc(100% - 260px) !important;
-        padding: 35px;
-        display: block !important;
-        animation: fadePage .6s ease;
-    }
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:25px;
+margin-bottom:40px;
 }
 
-/* 📱 Mobile View (Screen 768px மற்றும் அதற்கு கீழே) */
-@media (max-width: 768px) {
-    body {
-        flex-direction: column; /* மொபைலில் சைடுபார் டாப்-க்கு செல்ல */
-    }
+/* Card */
 
-    .sidebar, 
-    aside, 
-    div[class*="sidebar"] {
-        position: relative !important;
-        width: 100% !important;
-        height: auto !important;
-        min-height: auto !important;
-        padding: 15px !important;
-        z-index: 1000 !important;
-    }
+.card{
 
-    .sidebar li span {
-        display: inline-block !important; /* மொபைலில் மெனு பெயர்கள் தெரிய */
-    }
+position:relative;
 
-    .main {
-        margin-left: 0 !important;
-        width: 100% !important;
-        padding: 18px !important;
-        animation: fadePage .6s ease;
-    }
+padding:28px;
+
+border-radius:22px;
+
+background:rgba(255,255,255,.05);
+
+backdrop-filter:blur(20px);
+
+border:1px solid rgba(255,255,255,.08);
+
+overflow:hidden;
+
+transition:.35s;
+
+box-shadow:0 15px 35px rgba(0,0,0,.25);
+
 }
 
+.card::before{
+
+content:"";
+
+position:absolute;
+
+top:-80px;
+
+right:-80px;
+
+width:180px;
+
+height:180px;
+
+border-radius:50%;
+
+background:rgba(59,130,246,.12);
+
+}
+
+.card:hover{
+
+transform:translateY(-10px);
+
+box-shadow:0 20px 45px rgba(37,99,235,.35);
+
+border-color:#3b82f6;
+
+}
+
+.card h2,
+.card h3{
+
+font-size:22px;
+
+margin-bottom:15px;
+
+font-weight:600;
+
+}
+
+.card p{
+
+color:#b8c0d4;
+
+font-size:15px;
+
+line-height:1.7;
+
+margin-bottom:20px;
+
+}
+
+/* Buttons */
+
+.card button{
+
+width:100%;
+
+padding:14px;
+
+border:none;
+
+border-radius:14px;
+
+cursor:pointer;
+
+font-size:15px;
+
+font-weight:600;
+
+color:#fff;
+
+background:linear-gradient(135deg,#2563eb,#9333ea);
+
+transition:.3s;
+
+box-shadow:0 10px 25px rgba(59,130,246,.35);
+
+}
+
+.card button:hover{
+
+transform:translateY(-3px);
+
+box-shadow:0 18px 35px rgba(59,130,246,.5);
+
+}
+
+/* Status */
+
+#automationStatus{
+
+font-weight:700;
+
+color:#22c55e;
+
+}
+
+/* Analytics */
+
+.analytics{
+
+padding:30px;
+
+border-radius:22px;
+
+background:rgba(255,255,255,.05);
+
+backdrop-filter:blur(20px);
+
+border:1px solid rgba(255,255,255,.08);
+
+}
+
+.analytics h2{
+
+font-size:28px;
+
+margin-bottom:25px;
+
+}
+
+/* Stats */
+
+.stats{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+
+gap:22px;
+
+}
+
+.box{
+
+padding:25px;
+
+border-radius:18px;
+
+background:rgba(255,255,255,.04);
+
+border:1px solid rgba(255,255,255,.08);
+
+transition:.35s;
+
+text-align:center;
+
+}
+
+.box:hover{
+
+transform:translateY(-8px);
+
+background:rgba(37,99,235,.12);
+
+}
+
+.box h3{
+
+font-size:34px;
+
+margin-bottom:10px;
+
+font-weight:700;
+
+background:linear-gradient(90deg,#3b82f6,#9333ea);
+
+-webkit-background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
+}
+
+.box span{
+
+font-size:15px;
+
+color:#b8c0d4;
+
+}
+
+/* Small Card Animation */
+
+.card,
+.box{
+
+animation:fadeUp .6s ease;
+
+}
+
+@keyframes fadeUp{
+
+from{
+
+opacity:0;
+
+transform:translateY(30px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+/* Responsive */
+
+@media(max-width:768px){
+
+.cards{
+
+grid-template-columns:1fr;
+
+}
+
+.stats{
+
+grid-template-columns:1fr;
+
+}
+
+.card{
+
+padding:22px;
+
+}
+
+.analytics{
+
+padding:20px;
+
+}
+
+}
 /* ==========================================
-   PART 3 - TOPBAR & GLASS ELEMENTS
-========================================== */
+   PART 3 - TABLES, NOTIFICATIONS,
+   PROGRESS & PREMIUM EFFECTS
+==========================================*/
 
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+/* ===========================
+   Recent Activity
+=========================== */
+
+.activity{
+
+margin-top:35px;
+
+padding:28px;
+
+border-radius:22px;
+
+background:rgba(255,255,255,.05);
+
+backdrop-filter:blur(25px);
+
+border:1px solid rgba(255,255,255,.08);
+
 }
 
-.topbar h1 {
-    font-size: 42px;
-    font-weight: 700;
-    line-height: 1.3;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.activity h2{
+
+font-size:26px;
+
+margin-bottom:20px;
+
+font-weight:700;
+
 }
 
-.topbar p {
-    margin-top: 8px;
-    color: #9ca3af;
-    font-size: 16px;
+.table-wrapper{
+
+overflow-x:auto;
+
 }
 
-.profile {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 18px 22px;
-    min-width: 280px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, .05);
-    border: 1px solid rgba(255, 255, 255, .08);
-    backdrop-filter: blur(20px);
+.activity table{
+
+width:100%;
+
+border-collapse:collapse;
+
 }
 
-.profile i {
-    width: 55px;
-    height: 55px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    background: linear-gradient(135deg, #2563eb, #9333ea);
+.activity th{
+
+padding:16px;
+
+text-align:left;
+
+font-size:15px;
+
+background:rgba(59,130,246,.12);
+
+color:#fff;
+
 }
 
-.profile span {
-    display: block;
-    font-size: 14px;
-    color: #fff;
-    font-weight: 600;
-    line-height: 1.6;
+.activity td{
+
+padding:16px;
+
+border-bottom:1px solid rgba(255,255,255,.08);
+
+color:#c7d2fe;
+
 }
 
-.glass {
-    background: rgba(255, 255, 255, .05);
-    border: 1px solid rgba(255, 255, 255, .08);
-    backdrop-filter: blur(20px);
-    border-radius: 22px;
+.activity tr:hover{
+
+background:rgba(59,130,246,.06);
+
 }
 
-.success {
-    display: none !important;
+/* ===========================
+   Notifications
+=========================== */
+
+.notifications{
+
+margin-top:35px;
+
+padding:28px;
+
+border-radius:22px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(25px);
+
 }
 
+.notifications h2{
+
+margin-bottom:20px;
+
+}
+
+.notice{
+
+display:flex;
+
+align-items:center;
+
+gap:15px;
+
+padding:15px;
+
+margin-bottom:12px;
+
+border-radius:14px;
+
+background:rgba(255,255,255,.04);
+
+transition:.3s;
+
+}
+
+.notice:hover{
+
+background:rgba(59,130,246,.10);
+
+transform:translateX(6px);
+
+}
+
+.notice i{
+
+font-size:20px;
+
+color:#60a5fa;
+
+}
+
+/* ===========================
+   Progress Bars
+=========================== */
+
+.progress-card{
+
+margin-top:35px;
+
+padding:28px;
+
+border-radius:22px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+}
+
+.progress{
+
+margin:18px 0;
+
+}
+
+.progress-title{
+
+display:flex;
+
+justify-content:space-between;
+
+margin-bottom:10px;
+
+}
+
+.progress-bar{
+
+width:100%;
+
+height:10px;
+
+background:#172033;
+
+border-radius:30px;
+
+overflow:hidden;
+
+}
+
+.progress-fill{
+
+height:100%;
+
+border-radius:30px;
+
+background:linear-gradient(90deg,#2563eb,#9333ea);
+
+animation:loadBar 2s ease;
+
+}
+
+@keyframes loadBar{
+
+from{
+
+width:0;
+
+}
+
+}
+
+/* ===========================
+   Floating Glow
+=========================== */
+
+body::before{
+
+content:"";
+
+position:fixed;
+
+top:-150px;
+
+left:-150px;
+
+width:350px;
+
+height:350px;
+
+background:#2563eb;
+
+opacity:.18;
+
+filter:blur(120px);
+
+z-index:-1;
+
+}
+
+body::after{
+
+content:"";
+
+position:fixed;
+
+right:-150px;
+
+bottom:-150px;
+
+width:350px;
+
+height:350px;
+
+background:#9333ea;
+
+opacity:.18;
+
+filter:blur(120px);
+
+z-index:-1;
+
+}
+
+/* ===========================
+   Card Shine Effect
+=========================== */
+
+.card::after{
+
+content:"";
+
+position:absolute;
+
+top:-150%;
+
+left:-40%;
+
+width:120px;
+
+height:400px;
+
+background:rgba(255,255,255,.12);
+
+transform:rotate(25deg);
+
+transition:.8s;
+
+}
+
+.card:hover::after{
+
+left:140%;
+
+}
+
+/* ===========================
+   Buttons
+=========================== */
+
+button:active{
+
+transform:scale(.96);
+
+}
+
+/* ===========================
+   Fade Animation
+=========================== */
+
+@keyframes fadeIn{
+
+from{
+
+opacity:0;
+
+transform:translateY(25px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+.sidebar,
+.topbar,
+.cards,
+.analytics,
+.activity,
+.notifications,
+.progress-card{
+
+animation:fadeIn .7s ease;
+
+}
+
+/* ===========================
+   Mobile
+=========================== */
+
+@media(max-width:768px){
+
+.activity,
+.notifications,
+.progress-card{
+
+padding:18px;
+
+}
+
+.activity table{
+
+min-width:600px;
+
+}
+
+.notice{
+
+align-items:flex-start;
+
+}
+
+}
 /* ==========================================
-   PART 4 - CARDS & OVERVIEW GRID
-========================================== */
+   PART 4 - FINAL PREMIUM UI
+==========================================*/
 
-.overview {
-    margin-bottom: 30px;
-    padding: 30px;
-    border-radius: 24px;
-    background: rgba(255, 255, 255, .05);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, .08);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, .25);
+/* Premium Gradient Text */
+
+.gradient-text{
+background:linear-gradient(90deg,#3b82f6,#8b5cf6,#06b6d4);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+font-weight:700;
 }
 
-.overview h2 {
-    font-size: 32px;
-    margin-bottom: 18px;
-    font-weight: 700;
+/* Dashboard Title */
+
+.topbar h1{
+font-size:34px;
+font-weight:700;
+letter-spacing:.5px;
 }
 
-.overview p {
-    font-size: 16px;
-    line-height: 1.9;
-    color: #c4c8d8;
-    max-width: 850px;
+/* Glass Effect */
+
+.glass{
+background:rgba(255,255,255,.06);
+backdrop-filter:blur(25px);
+border:1px solid rgba(255,255,255,.08);
+box-shadow:0 15px 35px rgba(0,0,0,.25);
 }
 
-/* Responsive Grid System */
-.cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 28px;
-    margin-top: 35px;
-    margin-bottom: 40px;
+/* Premium Buttons */
+
+.btn-primary{
+
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+
+color:#fff;
+
+padding:14px 22px;
+
+border:none;
+
+border-radius:14px;
+
+font-weight:600;
+
+cursor:pointer;
+
+transition:.3s;
+
 }
 
-.card {
-    position: relative;
-    padding: 28px;
-    border-radius: 24px;
-    background: rgba(255, 255, 255, .05);
-    border: 1px solid rgba(255, 255, 255, .08);
-    backdrop-filter: blur(20px);
-    overflow: hidden;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, .28);
+.btn-primary:hover{
+
+transform:translateY(-3px);
+
+box-shadow:0 15px 35px rgba(37,99,235,.45);
+
 }
 
-.card::before {
-    content: "";
-    position: absolute;
-    top: -80px;
-    right: -80px;
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    background: rgba(59, 130, 246, .10);
+/* Success */
+
+.success{
+
+color:#22c55e;
+
+font-weight:600;
+
 }
 
-.card i {
-    font-size: 34px;
-    margin-bottom: 18px;
-    background: linear-gradient(135deg, #3b82f6, #9333ea);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+/* Warning */
+
+.warning{
+
+color:#f59e0b;
+
+font-weight:600;
+
 }
 
-.card h3 {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 12px;
+/* Error */
+
+.error{
+
+color:#ef4444;
+
+font-weight:600;
+
 }
 
-.card p {
-    font-size: 15px;
-    line-height: 1.7;
-    color: #b8c0d4;
-    margin-bottom: 18px;
+/* Online Dot */
+
+.online-dot{
+
+display:inline-block;
+
+width:10px;
+
+height:10px;
+
+border-radius:50%;
+
+background:#22c55e;
+
+margin-right:8px;
+
+animation:pulse 2s infinite;
+
 }
 
-.status {
-    display: inline-block;
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 22px;
+@keyframes pulse{
+
+0%{
+
+box-shadow:0 0 0 0 rgba(34,197,94,.7);
+
 }
 
-.status.connected { color: #22c55e; }
-.status.disconnected { color: #f59e0b; }
-.status.running { color: #22c55e; }
-.status.disabled { color: #ef4444; }
+70%{
 
-.card button {
-    width: 100%;
-    padding: 15px;
-    border: none;
-    border-radius: 15px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    color: #fff;
-    background: linear-gradient(90deg, #2563eb, #9333ea);
-    box-shadow: 0 10px 25px rgba(59, 130, 246, .35);
+box-shadow:0 0 0 15px rgba(34,197,94,0);
+
 }
 
-.card::after {
-    content: "";
-    position: absolute;
-    top: -180px;
-    left: -80px;
-    width: 100px;
-    height: 400px;
-    background: rgba(255, 255, 255, .08);
-    transform: rotate(25deg);
-    transition: .8s;
+100%{
+
+box-shadow:0 0 0 0 rgba(34,197,94,0);
+
 }
 
-.card:hover::after {
-    left: 130%;
 }
 
-/* ==========================================
-   PART 5 - ANALYTICS & STATISTICS
-========================================== */
+/* Card Hover Glow */
 
-.analytics {
-    margin-top: 40px;
-    padding: 30px;
-    border-radius: 24px;
-    background: rgba(255, 255, 255, .05);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, .08);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, .25);
+.card:hover{
+
+box-shadow:
+0 20px 50px rgba(59,130,246,.35),
+0 0 35px rgba(124,58,237,.25);
+
 }
 
-.analytics h2 {
-    font-size: 30px;
-    font-weight: 700;
-    margin-bottom: 25px;
+/* Floating Animation */
+
+.float{
+
+animation:float 4s ease-in-out infinite;
+
 }
 
-.stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 22px;
+@keyframes float{
+
+0%{
+
+transform:translateY(0);
+
 }
 
-.box {
-    padding: 28px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, .04);
-    border: 1px solid rgba(255, 255, 255, .08);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    animation: fadeUp .6s ease;
+50%{
+
+transform:translateY(-10px);
+
 }
 
-.box::before {
-    content: "";
-    position: absolute;
-    top: -70px;
-    right: -70px;
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background: rgba(59, 130, 246, .08);
+100%{
+
+transform:translateY(0);
+
 }
 
-.box i {
-    font-size: 34px;
-    margin-bottom: 18px;
-    background: linear-gradient(135deg, #2563eb, #9333ea);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
 
-.box h3 {
-    font-size: 42px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+/* Fade */
+
+.fade{
+
+animation:fade .6s ease;
+
 }
 
-.box span {
-    display: block;
-    font-size: 15px;
-    color: #c3c8d8;
+@keyframes fade{
+
+from{
+
+opacity:0;
+
 }
 
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
+to{
+
+opacity:1;
+
 }
 
-/* ==========================================
-   PART 6 - DATA TABLES & BOTTOM SECTIONS
-========================================== */
-
-.dashboard-bottom {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-    margin-top: 35px;
 }
 
-.activity, .notifications, .progress-card {
-    background: rgba(255, 255, 255, .05);
-    border: 1px solid rgba(255, 255, 255, .08);
-    backdrop-filter: blur(20px);
-    border-radius: 22px;
-    padding: 25px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, .25);
+/* Card Icons */
+
+.card i{
+
+font-size:28px;
+
+margin-bottom:15px;
+
+background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+
+-webkit-background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
 }
 
-.activity h2, .notifications h2, .progress-card h2 {
-    font-size: 26px;
-    margin-bottom: 20px;
-    font-weight: 700;
+/* Footer */
+
+.footer{
+
+margin-top:40px;
+
+padding:20px;
+
+text-align:center;
+
+color:#94a3b8;
+
+font-size:14px;
+
 }
 
-.table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+/* Responsive */
+
+@media(max-width:768px){
+
+.topbar h1{
+
+font-size:26px;
+
 }
 
-.activity table {
-    width: 100%;
-    border-collapse: collapse;
+.profile{
+
+width:100%;
+
+justify-content:center;
+
 }
 
-.activity th {
-    padding: 14px;
-    text-align: left;
-    font-size: 14px;
-    background: rgba(59, 130, 246, .10);
-    color: #fff;
+.card{
+
+padding:20px;
+
 }
 
-.activity td {
-    padding: 14px;
-    font-size: 14px;
-    color: #cbd5e1;
-    border-bottom: 1px solid rgba(255, 255, 255, .06);
+button{
+
+font-size:14px;
+
 }
 
-.badge {
-    padding: 5px 12px;
-    border-radius: 30px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.badge.success { background: #14532d; color: #4ade80; }
-.badge.pending { background: #78350f; color: #fbbf24; }
-.badge.failed { background: #7f1d1d; color: #f87171; }
-
-.notice {
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 15px;
-    margin-bottom: 14px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, .04);
-}
-
-.notice i {
-    font-size: 22px;
-    background: linear-gradient(135deg, #2563eb, #9333ea);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-top: 2px;
-}
-
-.notice h4 { font-size: 16px; margin-bottom: 4px; }
-.notice p { font-size: 13px; color: #aeb7cb; line-height: 1.6; }
-
-.progress { margin-bottom: 22px; }
-.progress-title { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; font-weight: 500; }
-.progress-bar { width: 100%; height: 10px; background: #172033; border-radius: 30px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 30px; background: linear-gradient(90deg, #2563eb, #9333ea); }
-
-.bottom-btn {
-    margin-top: 20px;
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 14px;
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-    cursor: pointer;
-    background: linear-gradient(90deg, #2563eb, #9333ea);
-}
-
-/* ==========================================
-   PART 7 - PREMIUM HOVER EFFECTS & ANIMATIONS
-========================================== */
-
-/* Globals Hover Reset */
-.card, .box, .activity, .notifications, .progress-card, .bottom-btn {
-    transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
-}
-
-.card:hover, .box:hover, .activity:hover, .notifications:hover, .progress-card:hover {
-    transform: translateY(-6px) !important;
-    border-color: rgba(59, 130, 246, 0.4) !important;
-    box-shadow:
-        0 20px 50px rgba(37, 99, 235, .20),
-        0 0 35px rgba(124, 58, 237, .15) !important;
-}
-
-.bottom-btn:hover, .card button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(59, 130, 246, .35);
-}
-
-.notice:hover {
-    background: rgba(59, 130, 246, .08);
-    transform: translateX(5px);
-}
-
-.activity tr:hover {
-    background: rgba(59, 130, 246, .08);
-}
-
-@keyframes fadePage {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* UI Extra Elements (Footer, Toast, Loading) */
-.footer {
-    margin-top: 45px;
-    padding: 20px;
-    text-align: center;
-    font-size: 14px;
-    color: #94a3b8;
-    border-top: 1px solid rgba(255, 255, 255, .08);
-}
-
-.toast {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: rgba(17, 24, 39, .95);
-    padding: 15px 22px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1px solid rgba(255, 255, 255, .08);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, .35);
-    z-index: 999;
-    animation: slideUp .4s ease;
-}
-
-.toast i { color: #22c55e; font-size: 20px; }
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.loading-modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, .65);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 9999;
-}
-
-.loading-box {
-    width: 320px; padding: 30px; text-align: center;
-    background: #111827; border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, .08);
-}
-
-.loading-box i { font-size: 40px; margin-bottom: 18px; color: #3b82f6; }
-.loading-box h3 { margin-bottom: 10px; font-size: 24px; }
-.loading-box p { color: #94a3b8; font-size: 14px; line-height: 1.7; }
-
-::selection { background: #2563eb; color: #fff; }
-
-/* 📱 Mobile Specific Tweaks */
-@media (max-width: 768px) {
-    .topbar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 18px;
-    }
-    .topbar h1 { font-size: 32px; }
-    .profile { width: 100%; }
-    .activity table { min-width: 600px; }
-    .toast { right: 15px; left: 15px; bottom: 15px; }
 }
