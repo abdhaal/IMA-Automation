@@ -1308,3 +1308,33 @@ div[class*="analytics"] {
     overflow-x: auto; /* மொபைலில் டேபிள் உடைந்தால் ஸ்க்ரோல் செய்ய */
     -webkit-overflow-scrolling: touch;
 }
+/* ==========================================
+   வேகமாக ஸ்க்ரோல் செய்யும்போது கறுப்புத் திரை வருவதைத் தடுக்கும் பகுதி
+   ========================================== */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    /* மொபைல் ஸ்க்ரோலிங்கை ஸ்மூத் ஆக்குகிறது */
+    -webkit-overflow-scrolling: touch; 
+    overflow-x: hidden;
+}
+
+body {
+    /* 💡 மிக முக்கியம்: பிரவுசரின் ஹார்டுவேர் அக்சலரேஷனை (GPU) ஆன் செய்கிறது */
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    will-change: transform;
+    
+    /* பேக்கிரவுண்ட் பிக்ஸட் ஆக இருந்தால் அதை ஸ்க்ரோல் மோடுக்கு மாற்றுகிறது (ஃப்ளிக்கரிங் தடுக்க) */
+    background-attachment: scroll !important; 
+}
+
+/* டேஷ்போர்டின் பிரதான கன்டென்ட் பகுதி */
+.main-content, 
+div[class*="main"] {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
+}
