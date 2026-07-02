@@ -110,7 +110,7 @@ if (instaBtn) {
         document.getElementById("instagramStatus").innerHTML = "Connecting...";
 
         // மெட்டா லாகின் விண்டோவை ஓபன் செய்தல்
-        fb.login(function(response) {
+        FB.login(function(response) {
             if (response.authResponse) {
                 console.log('Welcome! Fetching your access token...', response);
                 
