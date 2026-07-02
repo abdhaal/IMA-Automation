@@ -1370,3 +1370,47 @@ div[class*="activity"] {
     will-change: transform, opacity;
     background-color: inherit; /* பின்னணி நிறத்தை அப்படியே தக்க வைக்கிறது */
 }
+/* ==========================================
+   Left Sidebar Full Height Fix 
+   ========================================== */
+
+/* 1. பிரதான சைடுபார் கன்டெய்னர் */
+.sidebar, 
+aside, 
+div[class*="sidebar"], 
+div[class*="nav-side"] {
+    height: 100% !important;
+    min-height: 100vh !important; /* இது பக்கத்தை எவ்வளவு ஸ்க்ரோல் செய்தாலும் முழு உயரத்தையும் தக்க வைக்கும் */
+    position: fixed !important;   /* சைடுபார் நகராமல் ஒரே இடத்தில் பிக்ஸட் ஆக இருக்க */
+    top: 0 !important;
+    left: 0 !important;
+    overflow-y: auto !important;  /* ஒருவேளை சைடுபாருக்குள் மெனு ஐகான்கள் அதிகமாக இருந்தால் உள்ளேயே ஸ்க்ரோல் செய்ய */
+    box-sizing: border-box !important;
+}
+
+/* 2. மெயின் கன்டென்ட் பகுதி சைடுபாரை மறைக்காமல் இருக்க அதன் இடது பக்க இடைவெளி (Desktop வியூவிற்கு) */
+@media (min-width: 769px) {
+    .main-content, 
+    div[class*="main"] {
+        margin-left: 260px !important; /* உங்க சைடுபாரின் அகலத்திற்கு ஏற்ப (உதா: 240px அல்லது 260px) இதை மாற்றிக்கொள்ளலாம் */
+        width: calc(100% - 260px) !important;
+    }
+}
+
+/* 3. மொபைல் வியூவில் சைடுபார் மொபைலை மறைக்காமல் இருக்க (Mobile View Fix) */
+@media (max-width: 768px) {
+    .sidebar, 
+    aside, 
+    div[class*="sidebar"] {
+        position: relative !important; /* மொபைலில் டாப் மெனுவாகவோ அல்லது கீழே போகவோ இது உதவும் */
+        min-height: auto !important;
+        height: auto !important;
+        width: 100% !important;
+    }
+    
+    .main-content, 
+    div[class*="main"] {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
