@@ -74,26 +74,110 @@ loadUser();
 
 
 
-// ---------- Logout ----------
-const logoutBtn = document.getElementById("logoutBtn");
+// ==========================================
+// SIDEBAR BUTTONS NAVIGATION LOGIC
+// ==========================================
 
-if (logoutBtn) {
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // 1. Dashboard Link
+    const dashboardBtn = document.getElementById("dashboardBtn");
+    if (dashboardBtn) {
+        dashboardBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "dashboard.html";
+        });
+    }
 
-    logoutBtn.addEventListener("click", async (e) => {
+    // 2. Instagram Link
+    const instagramBtn = document.getElementById("instagramBtn");
+    if (instagramBtn) {
+        instagramBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "instagram.html";
+        });
+    }
 
-        e.preventDefault();
+    // 3. Facebook Link
+    const facebookBtn = document.getElementById("facebookBtn");
+    if (facebookBtn) {
+        facebookBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "facebook.html";
+        });
+    }
 
-        if (confirm("Logout from your account?")) {
-            // இங்கயும் supabaseClient-ன்னு மாத்தியாச்சு
-            await supabaseClient.auth.signOut();
+    // 4. Automation Link
+    const automationBtn = document.getElementById("automationBtn");
+    if (automationBtn) {
+        automationBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "automation.html";
+        });
+    }
 
-            window.location.href = "login.html";
+    // 5. Comments Link
+    const commentsBtn = document.getElementById("commentsBtn");
+    if (commentsBtn) {
+        commentsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "comments.html";
+        });
+    }
 
-        }
+    // 6. Auto DM Link
+    const autodmBtn = document.getElementById("autodmBtn");
+    if (autodmBtn) {
+        autodmBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "autodm.html";
+        });
+    }
 
-    });
+    // 7. Keywords Link
+    const keywordsBtn = document.getElementById("keywordsBtn");
+    if (keywordsBtn) {
+        keywordsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "keywords.html";
+        });
+    }
 
-}
+    // 8. Analytics Link
+    const analyticsBtn = document.getElementById("analyticsBtn");
+    if (analyticsBtn) {
+        analyticsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "analytics.html";
+        });
+    }
+
+    // 9. Settings Link
+    const settingsBtn = document.getElementById("settingsBtn");
+    if (settingsBtn) {
+        settingsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "settings.html";
+        });
+    }
+
+    // 10. Logout Link (Supabase SignOut உடன்)
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (confirm("Logout from your account?")) {
+                if (typeof supabaseClient !== 'undefined') {
+                    await supabaseClient.auth.signOut();
+                } else if (typeof supabase !== 'undefined') {
+                    await supabase.auth.signOut();
+                }
+                window.location.href = "login.html";
+            }
+        });
+    }
+});
+
 
 
 // ==========================================
