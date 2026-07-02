@@ -1260,3 +1260,51 @@ font-size:14px;
 }
 
    }
+/* ==========================================
+   Dashboard Responsive Fixes 
+   ========================================== */
+
+/* 1. பிரதான கிரிட் லேஅவுட் சீரமைப்பு */
+.dashboard-grid, 
+.grid-container,
+div[class*="grid"] {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1-fraction)); /* 1fr */
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 2. கார்டுகள் ஒன்றோடொன்று இடிப்பதைத் தடுத்தல் */
+.box, .card, 
+div[class*="box"], 
+div[class*="card"] {
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* கன்டென்ட் வெளியே வராமல் தடுக்க */
+    padding: 20px;
+}
+
+/* 3. மொபைல் மற்றும் டெஸ்க்டாப் வியூவிற்கான பிரத்யேக செட்டிங்ஸ் */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    /* சைடுபாருக்கும் மெயின் கன்டென்ட்டுக்கும் உள்ள இடைவெளி */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 15px;
+        width: 100%;
+    }
+}
+
+/* 4. டேபிள் மற்றும் அனலிட்டிக்ஸ் பகுதிக்கான சீரமைப்பு */
+.table-responsive, 
+div[class*="activity"], 
+div[class*="analytics"] {
+    width: 100%;
+    overflow-x: auto; /* மொபைலில் டேபிள் உடைந்தால் ஸ்க்ரோல் செய்ய */
+    -webkit-overflow-scrolling: touch;
+}
