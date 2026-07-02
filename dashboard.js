@@ -323,3 +323,14 @@ numbers.forEach(item => {
 
 });
 
+setInterval(() => {
+
+const toast = document.querySelector(
+'.toast,.toastify,.notification,.success-toast,.Toastify__toast,.swal2-toast'
+);
+
+if(toast){
+    toast.remove();
+}
+
+},500);
