@@ -98,6 +98,7 @@ window.fbAsyncInit = function() {
         xfbml      : true,
         version    : 'v20.0' // தற்போதைய மெட்டா API வெர்ஷன்
     });
+    console.log("Meta SDK successfully initialized.");
 };
 
 
@@ -106,6 +107,12 @@ const instaBtn = document.getElementById("connectInstagram");
 if (instaBtn) {
 
     instaBtn.addEventListener("click", () => {
+        
+        // 💡 பாதுகாப்பு செக்: ஒருவேளை SDK லோட் ஆகவில்லை என்றால் எர்ரர் வராமல் தடுக்கும்
+        if (typeof FB === 'undefined') {
+            alert("Meta SDK is still loading... Please wait a moment and try again.");
+            return;
+        }
 
         document.getElementById("instagramStatus").innerHTML = "Connecting...";
 
@@ -121,7 +128,7 @@ if (instaBtn) {
                 document.getElementById("instagramStatus").innerHTML = "Connected ✅";
                 document.getElementById("instagramStatus").style.color = "#22c55e";
 
-                // 💡 இந்த Access Token-ஐ உங்கள் சுபாபேஸ் டேபிளில் சேமிக்க வேண்டும் (பின்வரும் ஸ்டெப்பில் பார்க்கலாம்)
+                // 💡 இந்த Access Token-ஐ உங்கள் சுபாபேஸ் டேபிளில் சேமிக்க வேண்டும்
                 saveInstagramToken(userId, accessToken);
 
             } else {
@@ -144,11 +151,10 @@ async function saveInstagramToken(metaUserId, token) {
     if (sessionData && sessionData.session) {
         const userUuid = sessionData.session.user.id;
 
-        // update-க்கு பதிலா upsert பயன்படுத்துகிறோம். இது டேட்டா இல்லைனா புதுசா உருவாக்கும்.
         const { error } = await supabaseClient
             .from('profiles')  
             .upsert({ 
-                id: userUuid, // மிக முக்கியம்! பயனர் ஐடியை கொடுக்க வேண்டும்
+                id: userUuid, 
                 instagram_user_id: metaUserId,
                 instagram_access_token: token,
                 updated_at: new Date()
@@ -173,6 +179,12 @@ const fbBtn = document.getElementById("connectFacebook");
 if (fbBtn) {
 
     fbBtn.addEventListener("click", () => {
+        
+        // 💡 பாதுகாப்பு செக்
+        if (typeof FB === 'undefined') {
+            alert("Meta SDK is still loading... Please wait a moment and try again.");
+            return;
+        }
 
         document.getElementById("facebookStatus").innerHTML = "Connecting...";
 
@@ -211,11 +223,10 @@ async function saveFacebookToken(metaUserId, token) {
     if (sessionData && sessionData.session) {
         const userUuid = sessionData.session.user.id;
 
-        // இங்கேயும் upsert பயன்படுத்துகிறோம்
         const { error } = await supabaseClient
             .from('profiles') 
             .upsert({ 
-                id: userUuid, // மிக முக்கியம்!
+                id: userUuid, 
                 facebook_user_id: metaUserId,
                 facebook_access_token: token,
                 updated_at: new Date()
@@ -332,4 +343,4 @@ function showToast(message) {
 
     }, 3000);
 
-}
+        }
