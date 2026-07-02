@@ -322,25 +322,3 @@ numbers.forEach(item => {
     }
 
 });
-
-
-// ---------- Toast ----------
-function showToast(message) {
-
-    const toast = document.getElementById("toast");
-
-    const text = document.getElementById("toastText");
-
-    if (!toast || !text) return;
-
-    text.innerText = message;
-
-    toast.style.display = "flex";
-
-    setTimeout(() => {
-
-        toast.style.display = "none";
-
-    }, 3000);
-
-        }
