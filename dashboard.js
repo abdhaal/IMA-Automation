@@ -335,9 +335,3 @@ function showToast(message) {
 }
 
 
-// ---------- Welcome ----------
-setTimeout(() => {
-
-    showToast("Welcome to IMA Dashboard");
-
-}, 1000);
