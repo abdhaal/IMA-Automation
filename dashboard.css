@@ -42,115 +42,53 @@ background:#3b82f6;
 border-radius:20px;
 }
 
-/* Sidebar */
+/* ==========================================
+   Sidebar & Desktop/Mobile Layout Reset Fix
+   ========================================== */
 
-.sidebar{
+/* 1. Desktop View (Screen agalam 769px-ku melae irukkum podhu) */
+@media (min-width: 769px) {
+    .sidebar, 
+    aside, 
+    div[class*="sidebar"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 260px !important; /* Ungal sidebar-in unmaiyana agalam */
+        height: 100vh !important;
+        min-height: 100vh !important;
+        overflow-y: auto !important;
+        z-index: 1000 !important;
+    }
 
-position:fixed;
-
-left:0;
-
-top:0;
-
-width:230px;
-
-height:100vh;
-
-background:rgba(8,15,35,.92);
-
-backdrop-filter:blur(25px);
-
-border-right:1px solid rgba(255,255,255,.08);
-
-padding:28px 18px;
-
-z-index:100;
-
+    /* Main Content sidebar melae idikkamal pakkathil kachidhama ukara */
+    .main-content, 
+    div[class*="main"] {
+        margin-left: 260px !important; /* Sidebar agalathirku aeatrapadi */
+        width: calc(100% - 260px) !important;
+        display: block !important;
+    }
 }
 
-.sidebar h2{
+/* 2. Mobile View (Screen agalam 768px-ku keele irukkum podhu matrum) */
+@media (max-width: 768px) {
+    .sidebar, 
+    aside, 
+    div[class*="sidebar"] {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        z-index: 1000 !important;
+    }
 
-font-size:30px;
-
-font-weight:700;
-
-margin-bottom:45px;
-
-background:linear-gradient(90deg,#3b82f6,#8b5cf6);
-
--webkit-background-clip:text;
-
--webkit-text-fill-color:transparent;
-
+    .main-content, 
+    div[class*="main"] {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
 }
 
-.sidebar ul{
-
-list-style:none;
-
-}
-
-.sidebar ul li{
-
-margin-bottom:10px;
-
-}
-
-.sidebar ul li{
-
-display:flex;
-
-align-items:center;
-
-gap:14px;
-
-padding:15px 18px;
-
-border-radius:16px;
-
-cursor:pointer;
-
-color:#d6d6d6;
-
-font-size:15px;
-
-font-weight:500;
-
-transition:.35s;
-
-}
-
-.sidebar ul li i{
-
-font-size:18px;
-
-width:22px;
-
-text-align:center;
-
-}
-
-.sidebar ul li:hover{
-
-background:linear-gradient(90deg,#2563eb,#9333ea);
-
-transform:translateX(6px);
-
-color:#fff;
-
-box-shadow:0 15px 35px rgba(59,130,246,.35);
-
-}
-
-.sidebar ul li.active{
-
-background:linear-gradient(90deg,#2563eb,#9333ea);
-
-color:#fff;
-
-box-shadow:0 15px 35px rgba(59,130,246,.35);
-
-}
 
 /* Main */
 
