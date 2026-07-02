@@ -1,0 +1,225 @@
+/* ==========================================
+   IMA AUTOMATION - INSTAGRAM PAGE STYLES
+   ========================================== */
+
+/* 1. பிரதான லேஅவுட் மற்றும் பேக்ரவுண்ட் ரீசெட் */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #060b18;
+    background-image:
+        radial-gradient(circle at top left, #1b4bb8 0%, transparent 30%),
+        radial-gradient(circle at bottom right, #ee2a7b 0%, transparent 35%); /* இன்ஸ்டாகிராம் பிங்க் கலந்த க்ளோ */
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+}
+
+/* 2. டெஸ்க்டாப் மற்றும் மொபைல் சைடுபார் சீரமைப்பு */
+@media (min-width: 769px) {
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 260px !important;
+        height: 100vh !important;
+        background: rgba(255, 255, 255, .03);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, .08);
+        padding: 30px 20px;
+        z-index: 1000;
+    }
+
+    .main {
+        margin-left: 260px !important;
+        width: calc(100% - 260px) !important;
+        padding: 35px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        padding: 20px !important;
+    }
+
+    .main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 20px !important;
+    }
+}
+
+/* 3. சைடுபார் மெனு லிஸ்ட் ஸ்டைல்ஸ் */
+.sidebar h2 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 35px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 18px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    color: #94a3b8;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.sidebar ul li:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    transform: translateX(5px);
+}
+
+/* ஆக்டிவ் பக்கத்திற்கான பிரத்யேக ஸ்டைல் (Instagram-க்கு மட்டும்) */
+.sidebar ul li.active {
+    background: linear-gradient(90deg, #f9ce34, #ee2a7b, #6228d7) !important; /* இன்ஸ்டாகிராம் கிரேடியன்ட் */
+    color: #fff !important;
+    box-shadow: 0 10px 20px rgba(238, 42, 123, 0.2);
+}
+
+.sidebar ul li i {
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+}
+
+/* 4. டாப் பார் மற்றும் ப்ரொஃபைல் */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.topbar h1 {
+    font-size: 38px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #fff, #a5b4fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.profile i {
+    color: #ee2a7b;
+}
+
+/* 5. இன்ஸ்டாகிராம் கார்டுகள் கிரிட் (Cards Grid) */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.card {
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .08);
+    backdrop-filter: blur(20px);
+    border-radius: 22px;
+    padding: 28px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(238, 42, 123, 0.4);
+    box-shadow: 0 20px 40px rgba(238, 42, 123, 0.15);
+}
+
+.card h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* கார்டுக்குள் இருக்கும் இன்ஸ்டாகிராம் ஐகான் மட்டும் கலர் மாற */
+.card h2 i.fa-instagram {
+    background: linear-gradient(135deg, #f9ce34, #ee2a7b, #6228d7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.card p {
+    font-size: 15px;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+    line-height: 1.6;
+}
+
+.card p b {
+    color: #94a3b8;
+}
+
+/* 6. கனெக்ட் மற்றும் ஆட்டோமேஷன் பட்டன்கள் */
+.card button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(90deg, #ee2a7b, #6228d7); /* பிரீமியம் லுக் */
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(238, 42, 123, 0.25);
+}
+
+.card button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(238, 42, 123, 0.4);
+}
+
+/* 7. மொபைல் வியூ திருத்தங்கள் */
+@media (max-width: 768px) {
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .topbar h1 {
+        font-size: 28px;
+    }
+    
+    .profile {
+        width: 100%;
+    }
+  }
