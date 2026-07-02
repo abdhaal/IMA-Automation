@@ -137,26 +137,31 @@ if (instaBtn) {
 
 }
 
-// சுபாபேஸ் டேபிளில் டோக்கனைச் சேமிக்கும் ஃபங்க்ஷன்
+// ---------- Instagram டோக்கன் சேமிக்கும் பகுதி ----------
 async function saveInstagramToken(metaUserId, token) {
     const { data: sessionData } = await supabaseClient.auth.getSession();
-    if (sessionData.session) {
+    if (sessionData && sessionData.session) {
         const userUuid = sessionData.session.user.id;
 
-        // உங்கள் 'profiles' அல்லது புதிய 'integrations' டேபிளில் சேமிக்கலாம்
+        // update-க்கு பதிலா upsert பயன்படுத்துகிறோம். இது டேட்டா இல்லைனா புதுசா உருவாக்கும்.
         const { error } = await supabaseClient
-            .from('profiles') 
-            .update({ 
+            .from('profiles')  
+            .upsert({ 
+                id: userUuid, // மிக முக்கியம்! பயனர் ஐடியை கொடுக்க வேண்டும்
                 instagram_user_id: metaUserId,
-                instagram_access_token: token 
-            })
-            .eq('id', userUuid);
+                instagram_access_token: token,
+                updated_at: new Date()
+            });
 
-        if (error) console.error("Error saving token:", error);
+        if (error) {
+            alert("Database Error (Insta): " + error.message);
+        } else {
+            alert("Instagram data saved to Database! 🎉");
+        }
+    } else {
+        alert("User session not found! Please login again.");
     }
 }
-
-
 
 // ==========================================
 // ---------- Facebook OAuth ----------
@@ -199,22 +204,29 @@ if (fbBtn) {
 
 }
 
-// சுபாபேஸ் டேபிளில் பேஸ்புக் டோக்கனைச் சேமிக்கும் ஃபங்க்ஷன்
+// ---------- Facebook டோக்கன் சேமிக்கும் பகுதி ----------
 async function saveFacebookToken(metaUserId, token) {
     const { data: sessionData } = await supabaseClient.auth.getSession();
-    if (sessionData.session) {
+    if (sessionData && sessionData.session) {
         const userUuid = sessionData.session.user.id;
 
-        // ப்ரொஃபைல் டேபிளில் பேஸ்புக் விவரங்களை அப்டேட் செய்தல்
+        // இங்கேயும் upsert பயன்படுத்துகிறோம்
         const { error } = await supabaseClient
             .from('profiles') 
-            .update({ 
+            .upsert({ 
+                id: userUuid, // மிக முக்கியம்!
                 facebook_user_id: metaUserId,
-                facebook_access_token: token 
-            })
-            .eq('id', userUuid);
+                facebook_access_token: token,
+                updated_at: new Date()
+            });
 
-        if (error) console.error("Error saving FB token:", error);
+        if (error) {
+            alert("Database Error (FB): " + error.message);
+        } else {
+            alert("Facebook data saved to Database! 🎉");
+        }
+    } else {
+        alert("User session not found! Please login again.");
     }
 }
 
