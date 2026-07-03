@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Link Post & Automation | IMA Automation</title>
+    <title>Facebook Management | IMA Automation</title>
     <link rel="stylesheet" href="facebook.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
 
+    <!-- ⚡ பிரீமியம் சைடுபார் -->
     <div class="sidebar">
         <div class="logo">
             <i class="fa-solid fa-bolt"></i>
@@ -27,11 +28,12 @@
         </ul>
     </div>
 
+    <!-- ⚡ பிரதான உள்ளடக்கப் பகுதி -->
     <div class="main">
         <div class="topbar">
             <div>
-                <h1>Facebook Post Automation</h1>
-                <p>Configure advanced trigger logic and message media templates for linked posts</p>
+                <h1>Facebook Automation Hub</h1>
+                <p>Link your active page posts or reels to configure omnichannel reply streams</p>
             </div>
             <div class="profile">
                 <i class="fa-solid fa-user"></i>
@@ -42,11 +44,51 @@
             </div>
         </div>
 
-        <div class="card" style="min-height: auto; padding: 35px; width: 100%;">
+        <!-- 📦 கார்டு 1: POSTS & REELS LIST (முதலில் இதுதான் காட்டும்) -->
+        <div class="card" style="min-height: auto; padding: 25px; margin-bottom: 25px; width: 100%;">
+            <h3 style="font-size: 20px; display: flex; align-items: center; gap: 10px; margin-bottom: 15px;"><i class="fa-solid fa-images"></i> Latest Posts / Reels</h3>
             
+            <div style="display: flex; flex-direction: column; gap: 12px;" id="postsContainer">
+                <!-- போஸ்ட் 1 -->
+                <div class="rule-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-video" style="margin:0; font-size: 16px; -webkit-text-fill-color: #fff;"></i></div>
+                        <div>
+                            <h4 style="font-size: 15px; font-weight: 600;">Marketing Campaign Reel #01</h4>
+                            <p style="font-size: 12px; color: #94a3b8; margin: 0;">Published: June 28, 2026</p>
+                        </div>
+                    </div>
+                    <button class="link-post-btn" data-post-id="post_01" style="width: auto; padding: 8px 20px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #2563eb, #1d4ed8);">Link</button>
+                </div>
+
+                <!-- போஸ்ட் 2 -->
+                <div class="rule-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-image" style="margin:0; font-size: 16px; -webkit-text-fill-color: #fff;"></i></div>
+                        <div>
+                            <h4 style="font-size: 15px; font-weight: 600;">Product Showcase Post #02</h4>
+                            <p style="font-size: 12px; color: #94a3b8; margin: 0;">Published: June 26, 2026</p>
+                        </div>
+                    </div>
+                    <button class="link-post-btn" data-post-id="post_02" style="width: auto; padding: 8px 20px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #2563eb, #1d4ed8);">Link</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📦 கார்டு 2: ADVANCED OPTIONS FORM (லிங்க் பட்டனை அழுத்தினால் மட்டுமே இது ஓப்பன் ஆகும்) -->
+        <div class="card" id="automationOptionsCard" style="min-height: auto; padding: 35px; width: 100%; display: none;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 15px;">
+                <div>
+                    <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #3b82f6; font-weight: 700;">Configuration Stream</span>
+                    <h2 id="selectedPostTitle" style="font-size: 22px; margin-top: 2px;">Link Post Settings</h2>
+                </div>
+                <i class="fa-solid fa-circle-xmark" id="closeOptionsBtn" style="font-size: 24px; cursor: pointer; color: #ef4444; -webkit-text-fill-color: #ef4444;"></i>
+            </div>
+
+            <!-- SECTION 1: CHOOSE TRIGGER TYPE -->
             <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 25px;">
-                <h3 style="font-size: 20px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Choose Trigger Type</h3>
-                <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Choose how to activate this feature: manually select trigger keywords or apply to all comments.</p>
+                <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Choose Trigger Type</h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
                     <div style="background: #172033; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
@@ -58,18 +100,19 @@
                     </div>
                     <div id="keywordInputWrapper" style="background: #172033; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: none;">
                         <label style="display: block; font-size: 14px; color: #c7d2fe; margin-bottom: 5px;">Keywords Triggers</label>
-                        <input type="text" id="targetKeywords" placeholder="e.g., price, info, details" style="width:100%; padding:10px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
+                        <input type="text" id="targetKeywords" placeholder="e.g., price, info" style="width:100%; padding:10px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
                     </div>
                 </div>
 
                 <div style="margin-top: 15px; text-align: left;">
-                    <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Exclude Keywords (Bad, Horrible, Disappointed)</label>
-                    <input type="text" id="excludeKeywords" placeholder="Enter keywords to ignore..." style="width:100%; padding:12px; border-radius:10px; background:#172033; border:1px solid rgba(255,255,255,0.08); color:#fff; font-size:14px; outline:none;">
+                    <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Exclude Keywords</label>
+                    <input type="text" id="excludeKeywords" placeholder="Bad, Horrible, Disappointed" style="width:100%; padding:12px; border-radius:10px; background:#172033; border:1px solid rgba(255,255,255,0.08); color:#fff; font-size:14px; outline:none;">
                 </div>
             </div>
 
+            <!-- SECTION 2: CONFIGURATION SWITCHES -->
             <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 25px;">
-                <h3 style="font-size: 20px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-sliders"></i> Configuration</h3>
+                <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-sliders"></i> Configuration</h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 15px; text-align: left;">
                     <div>
@@ -93,22 +136,22 @@
                 </div>
             </div>
 
+            <!-- SECTION 3: MESSAGE TEMPLATE -->
             <div style="margin-bottom: 25px; text-align: left;">
-                <h3 style="font-size: 20px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-photo-film"></i> Message - Media Template</h3>
-                <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Structure premium carousels, text, button payloads or dynamic quick replies.</p>
+                <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-photo-film"></i> Message - Media Template</h3>
                 
                 <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px; background: #172033; padding: 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);">
                     <div>
                         <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Template Button Title</label>
-                        <input type="text" id="templateBtnTitle" placeholder="Enter button name (e.g., Learn More)" style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; font-size:14px;">
+                        <input type="text" id="templateBtnTitle" placeholder="Enter button name" style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; font-size:14px;">
                     </div>
                     <div>
                         <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Redirect Destination URL</label>
-                        <input type="url" id="templateUrl" placeholder="https://yourwebsite.com/offer" style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; font-size:14px;">
+                        <input type="url" id="templateUrl" placeholder="https://yourwebsite.com" style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; font-size:14px;">
                     </div>
                     <div>
                         <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Headline Content & Description</label>
-                        <textarea id="templateDescription" rows="3" placeholder="Automation Powered by @imy_automation..." style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; resize:none; font-size:14px; font-family: inherit;"></textarea>
+                        <textarea id="templateDescription" rows="3" placeholder="Automation Powered by..." style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; resize:none; font-size:14px; font-family: inherit;"></textarea>
                     </div>
                 </div>
             </div>
@@ -120,4 +163,5 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="facebook.js"></script>
 </body>
-</html>
+                            </html>
+                            
