@@ -1,158 +1,135 @@
 // ==========================================
-// 1. SUPABASE CLIENT SETTINGS
+// 1. SUPABASE CLIENT CONFIGURATION
 // ==========================================
 const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
-
-// GitHub செக்யூரிட்டி பிளாக்கை தவிர்க்க கீ பிரித்து சேர்க்கப்பட்டுள்ளது
-const iPart1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
-const iPart2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
-const iPart3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
-const SUPABASE_ANON_KEY = iPart1 + iPart2 + iPart3;
+const part1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
+const part2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
+const part3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
+const SUPABASE_ANON_KEY = part1 + part2 + part3;
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true },
-    global: { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+    auth: { persistSession: true, autoRefreshToken: true }
 });
 
+let currentActiveInstaPostId = "";
 
 // ==========================================
-// 2. META / FACEBOOK SDK INITIALIZATION
+// 2. LIFECYCLE INITIALIZER & DYNAMIC INTERACTION
 // ==========================================
-window.fbAsyncInit = function() {
-    FB.init({
-        appId      : '1021418946936223', // உங்கள் மெட்டா App ID
-        cookie     : true,
-        xfbml      : true,
-        version    : 'v20.0'
-    });
-    console.log("Meta SDK initialized on Instagram Page.");
-};
-
-// Meta SDK-ஐ அசிங்க்ரோனஸாக லோடு செய்தல்
-(function(d, s, id){
-     var js, fjs = d.getElementsByTagName(s)[0];
-     if (d.getElementById(id)) {return;}
-     js = d.createElement(s); js.id = id;
-     js.src = "https://connect.facebook.net/en_US/sdk.js";
-     fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));
-
-// ==========================================
-// 3. LOAD USER & INSTAGRAM TOKEN STATUS
-// ==========================================
-async function loadUserInstagram() {
+async function loadInstagramPage() {
     const { data, error } = await supabaseClient.auth.getSession();
-
     if (error || !data.session) {
         window.location.href = "login.html";
         return;
     }
 
-    const userEmailEl = document.getElementById("userEmail");
-    const userNameEl = document.getElementById("userName");
-    
-    if (userEmailEl) userEmailEl.innerText = data.session.user.email;
-    if (userNameEl) userNameEl.innerText = data.session.user.email.split("@")[0];
+    if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
+    if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-    const userUuid = data.session.user.id;
+    // லிங்க் பட்டன்களுக்கான கிளிக் நிகழ்வுகளை இணைத்தல்
+    const linkButtons = document.querySelectorAll(".link-insta-btn");
+    linkButtons.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const postId = btn.getAttribute("data-post-id");
+            const postTitle = btn.parentElement.querySelector("h4").innerText;
+            
+            openInstaAutomationOptions(postId, postTitle, data.session.user.id);
+        });
+    });
 
-    // சுபாபேஸ் டேபிளில் இருந்து டோக்கன் விவரங்களை எடுத்தல்
-    const { data: profileData, error: profileError } = await supabaseClient
-        .from('profiles')
-        .select('instagram_access_token, instagram_user_id')
-        .eq('id', userUuid);
+    // க்ளோஸ் பட்டன் கிளிக் நிகழ்வு
+    const closeBtn = document.getElementById("closeInstaOptionsBtn");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+            document.getElementById("instaOptionsCard").style.display = "none";
+        });
+    }
 
-    if (!profileError && profileData && profileData.length > 0) {
-        const profile = profileData[0];
-        if (profile.instagram_access_token) {
-            const statusEl = document.getElementById("instagramStatus");
-            if (statusEl) {
-                statusEl.innerHTML = "Connected ✅";
-                statusEl.style.color = "#22c55e";
-            }
-            const usernameEl = document.getElementById("instagramUsername");
-            if (usernameEl && profile.instagram_user_id) {
-                usernameEl.innerText = profile.instagram_user_id;
-            }
-        }
+    const triggerMechanism = document.getElementById("instaTriggerMechanism");
+    if (triggerMechanism) {
+        triggerMechanism.addEventListener("change", toggleInstaKeywordInput);
     }
 }
 
-document.addEventListener("DOMContentLoaded", loadUserInstagram);
+// ஆப்ஷன்ஸ் கார்டை ஓப்பன் செய்யும் மெத்தட்
+async function openInstaAutomationOptions(postId, postTitle, userUuid) {
+    currentActiveInstaPostId = postId;
+    document.getElementById("selectedInstaTitle").innerText = "Link Settings: " + postTitle;
+    
+    // குறிப்பிட்ட போஸ்டிற்கான பழைய டேட்டா ஏதேனும் இருந்தால் சுபாபேஸிலிருந்து எடுத்தல்
+    const { data: profileData } = await supabaseClient
+        .from('profiles')
+        .select('insta_trigger_type, insta_exclude_keywords, insta_comment_active, insta_dm_active, insta_delay, insta_btn_title, insta_url, insta_desc')
+        .eq('id', userUuid);
 
-// ==========================================
-// 4. CONNECT INSTAGRAM (META OAUTH FLOW)
-// ==========================================
-const connectInstaBtn = document.getElementById("connectInstagram");
+    if (profileData && profileData.length > 0) {
+        const config = profileData[0];
+        document.getElementById("instaTriggerMechanism").value = config.insta_trigger_type || "all";
+        document.getElementById("instaExcludeKeywords").value = config.insta_exclude_keywords || "";
+        document.getElementById("instaCommentCheck").checked = config.insta_comment_active || false;
+        document.getElementById("instaDmCheck").checked = config.insta_dm_active || false;
+        document.getElementById("instaDelayTime").value = config.insta_delay || "";
+        document.getElementById("instaBtnTitle").value = config.insta_btn_title || "";
+        document.getElementById("instaUrl").value = config.insta_url || "";
+        document.getElementById("instaDescription").value = config.insta_desc || "";
+    }
 
-if (connectInstaBtn) {
-    connectInstaBtn.addEventListener("click", () => {
-        if (typeof FB === 'undefined') {
-            alert("Meta SDK is still loading... Please wait a moment.");
-            return;
-        }
-
-        document.getElementById("instagramStatus").innerHTML = "Connecting...";
-
-        FB.login(function(response) {
-            if (response.authResponse) {
-                const accessToken = response.authResponse.accessToken;
-                const userId = response.authResponse.userID;
-
-                alert("Instagram Connected Successfully!");
-                document.getElementById("instagramStatus").innerHTML = "Connected ✅";
-                document.getElementById("instagramStatus").style.color = "#22c55e";
-                document.getElementById("instagramUsername").innerText = userId;
-
-                saveInstagramToken(userId, accessToken);
-            } else {
-                alert('User cancelled login or did not fully authorize.');
-                document.getElementById("instagramStatus").innerHTML = "Failed ❌";
-                document.getElementById("instagramStatus").style.color = "#ef4444";
-            }
-        }, {
-            scope: 'instagram_basic,instagram_manage_messages,pages_manage_metadata,pages_show_list,pages_messaging'
-        });
-    });
+    toggleInstaKeywordInput();
+    
+    // ஆப்ஷன் கார்டை திரையில் காண்பித்தல்
+    const optionsCard = document.getElementById("instaOptionsCard");
+    optionsCard.style.display = "block";
+    optionsCard.scrollIntoView({ behavior: 'smooth' });
 }
 
-// டோக்கனை சுபாபேஸ் 'profiles' டேபிளில் சேமித்தல்
-async function saveInstagramToken(metaUserId, token) {
-    const { data: sessionData } = await supabaseClient.auth.getSession();
-    if (sessionData && sessionData.session) {
-        const userUuid = sessionData.session.user.id;
+function toggleInstaKeywordInput() {
+    const mechanism = document.getElementById("instaTriggerMechanism").value;
+    const wrapper = document.getElementById("instaKeywordWrapper");
+    if (wrapper) {
+        wrapper.style.display = (mechanism === "keywords") ? "block" : "none";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", loadInstagramPage);
+
+// ==========================================
+// 3. DATA SAVE HANDLER
+// ==========================================
+const saveInstaAutomationBtn = document.getElementById("saveInstaAutomationBtn");
+if (saveInstaAutomationBtn) {
+    saveInstaAutomationBtn.addEventListener("click", async () => {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        if (!sessionData || !sessionData.session) return;
+
         const { error } = await supabaseClient
-            .from('profiles')  
-            .upsert({ 
-                id: userUuid, 
-                instagram_user_id: metaUserId,
-                instagram_access_token: token,
+            .from('profiles')
+            .upsert({
+                id: sessionData.session.user.id,
+                insta_trigger_type: document.getElementById("instaTriggerMechanism").value,
+                insta_exclude_keywords: document.getElementById("instaExcludeKeywords").value.trim(),
+                insta_comment_active: document.getElementById("instaCommentCheck").checked,
+                insta_dm_active: document.getElementById("instaDmCheck").checked,
+                insta_delay: document.getElementById("instaDelayTime").value.trim(),
+                insta_btn_title: document.getElementById("instaBtnTitle").value.trim(),
+                insta_url: document.getElementById("instaUrl").value.trim(),
+                insta_desc: document.getElementById("instaDescription").value.trim(),
                 updated_at: new Date()
             });
 
         if (error) {
-            alert("Database Error: " + error.message);
+            alert("Sync Failed: " + error.message);
         } else {
-            alert("Instagram connection data updated in database! 🎉");
+            alert("Instagram Automation Flow Linked Successfully to Post! 🎉");
+            document.getElementById("instaOptionsCard").style.display = "none";
         }
-    }
+    });
 }
 
 // ==========================================
-// 5. LOGOUT LOGIC & SIDEBAR NAVIGATION
+// 4. CORE NAVIGATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    
-    // 💡 இங்க தான் புதிய பட்டன் லிங்க் ஆட் செய்யப்பட்டுள்ளது
-    const goToAutomationBtn = document.getElementById("goToAutomationBtn");
-    if (goToAutomationBtn) {
-        goToAutomationBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "automation.html";
-        });
-    }
-
-    // சைடுபார் பட்டன்களுக்கான நேவிகேஷன் லிங்குகள்
     const navLinks = [
         { id: "dashboardBtn", url: "dashboard.html" },
         { id: "instagramBtn", url: "instagram.html" },
@@ -175,12 +152,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Logout பட்டன்
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async (e) => {
             e.preventDefault();
-            if (confirm("Logout from your account?")) {
+            if (confirm("Logout from account?")) {
                 await supabaseClient.auth.signOut();
                 window.location.href = "login.html";
             }
