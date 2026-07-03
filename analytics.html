@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics | IMA Automation</title>
+    <link rel="stylesheet" href="analytics.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-bolt"></i>
+        </div>
+        <ul>
+            <li><a href="#" id="dashboardBtn"><i class="fa-solid fa-house"></i><span>Dashboard</span></a></li>
+            <li><a href="#" id="instagramBtn"><i class="fa-brands fa-instagram"></i><span>Instagram</span></a></li>
+            <li><a href="#" id="facebookBtn"><i class="fa-brands fa-facebook"></i><span>Facebook</span></a></li>
+            <li><a href="#" id="automationBtn"><i class="fa-solid fa-robot"></i><span>Automation</span></a></li>
+            <li><a href="#" id="commentsBtn"><i class="fa-solid fa-comment"></i><span>Comments</span></a></li>
+            <li><a href="#" id="autodmBtn"><i class="fa-solid fa-paper-plane"></i><span>Auto DM</span></a></li>
+            <li><a href="#" id="keywordsBtn"><i class="fa-solid fa-key"></i><span>Keywords</span></a></li>
+            <li class="active"><a href="#" id="analyticsBtn"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a></li>
+            <li><a href="#" id="settingsBtn"><i class="fa-solid fa-gear"></i><span>Settings</span></a></li>
+            <li><a href="#" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a></li>
+        </ul>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <div>
+                <h1>Automation Analytics</h1>
+                <p>Track your automated engagement metrics and performance counters</p>
+            </div>
+            <div class="profile">
+                <i class="fa-solid fa-user"></i>
+                <div>
+                    <span id="userName">User</span>
+                    <span id="userEmail" style="font-size: 12px; color: #94a3b8; display: block;">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics">
+            <h2>Performance Counters</h2>
+            <div class="stats">
+                <div class="box">
+                    <h3 id="statComments">47</h3>
+                    <span>Comments Replied</span>
+                </div>
+                <div class="box">
+                    <h3 id="statDM">20</h3>
+                    <span>DM Sent</span>
+                </div>
+                <div class="box">
+                    <h3 id="statTriggers">47</h3>
+                    <span>Keyword Triggers</span>
+                </div>
+                <div class="box">
+                    <h3 id="statConversions">25</h3>
+                    <span>Conversions</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards" style="margin-top: 35px;">
+            <div class="card">
+                <div>
+                    <i class="fa-brands fa-instagram"></i>
+                    <h2 style="margin-top: 10px;">Instagram Growth</h2>
+                    <p>Live metrics overview for automated threads</p>
+                </div>
+                <div style="font-size: 24px; font-weight: 700; color: #22c55e;">+12.4% <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">this week</span></div>
+            </div>
+
+            <div class="card">
+                <div>
+                    <i class="fa-brands fa-facebook"></i>
+                    <h2 style="margin-top: 10px;">Facebook Growth</h2>
+                    <p>Performance review for automated messenger flow</p>
+                </div>
+                <div style="font-size: 24px; font-weight: 700; color: #22c55e;">+8.2% <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">this week</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="analytics.js"></script>
+</body>
+  </html>
+
