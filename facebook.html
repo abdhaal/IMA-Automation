@@ -4,82 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facebook Management | IMA Automation</title>
-    <!-- பிரதான CSS மற்றும் ஃபான்ட் ஆசம் ஐகான்கள் -->
     <link rel="stylesheet" href="facebook.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- ⚡ 100% உங்களுடைய அசல் மெயின் டேஷ்போர்டு போன்றே அமைக்கப்பட்ட சைடுபார் -->
     <div class="sidebar">
         <div class="logo">
             <i class="fa-solid fa-bolt"></i>
         </div>
         <ul>
-            <li>
-                <a href="#" id="dashboardBtn">
-                    <i class="fa-solid fa-house"></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" id="instagramBtn">
-                    <i class="fa-brands fa-instagram"></i>
-                    <span>Instagram</span>
-                </a>
-            </li>
-            <li class="active">
-                <a href="#" id="facebookBtn">
-                    <i class="fa-brands fa-facebook"></i>
-                    <span>Facebook</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" id="automationBtn">
-                    <i class="fa-solid fa-robot"></i>
-                    <span>Automation</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" id="commentsBtn">
-                    <i class="fa-solid fa-comment"></i>
-                    <span>Comments</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" id="autodmBtn">
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <span>Auto DM</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" id="keywordsBtn">
-                    <i class="fa-solid fa-key"></i>
-                    <span>Keywords</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" id="analyticsBtn">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Analytics</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" id="settingsBtn">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Settings</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" id="logoutBtn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Logout</span>
-                </a>
-            </li>
+            <li><a href="#" id="dashboardBtn"><i class="fa-solid fa-house"></i><span>Dashboard</span></a></li>
+            <li><a href="#" id="instagramBtn"><i class="fa-brands fa-instagram"></i><span>Instagram</span></a></li>
+            <li class="active"><a href="#" id="facebookBtn"><i class="fa-brands fa-facebook"></i><span>Facebook</span></a></li>
+            <li><a href="#" id="automationBtn"><i class="fa-solid fa-robot"></i><span>Automation</span></a></li>
+            <li><a href="#" id="commentsBtn"><i class="fa-solid fa-comment"></i><span>Comments</span></a></li>
+            <li><a href="#" id="autodmBtn"><i class="fa-solid fa-paper-plane"></i><span>Auto DM</span></a></li>
+            <li><a href="#" id="keywordsBtn"><i class="fa-solid fa-key"></i><span>Keywords</span></a></li>
+            <li><a href="#" id="analyticsBtn"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a></li>
+            <li><a href="#" id="settingsBtn"><i class="fa-solid fa-gear"></i><span>Settings</span></a></li>
+            <li><a href="#" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a></li>
         </ul>
     </div>
 
-    <!-- ⚡ பிரதான உள்ளடக்கப் பகுதி -->
     <div class="main">
         <div class="topbar">
             <div>
@@ -95,38 +42,17 @@
             </div>
         </div>
 
-        <!-- 📦 கார்டு 1: POSTS & REELS LIST -->
         <div class="card" style="min-height: auto; padding: 25px; margin-bottom: 25px; width: 100%;">
             <h3 style="font-size: 20px; display: flex; align-items: center; gap: 10px; margin-bottom: 15px;"><i class="fa-solid fa-images"></i> Latest Posts / Reels</h3>
             
             <div style="display: flex; flex-direction: column; gap: 12px;" id="postsContainer">
-                <!-- போஸ்ட் 1 -->
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-video" style="margin:0; font-size: 16px; color: #fff;"></i></div>
-                        <div style="text-align: left;">
-                            <h4 style="font-size: 15px; font-weight: 600; margin: 0;">Marketing Campaign Reel #01</h4>
-                            <p style="font-size: 12px; color: #94a3b8; margin: 0;">Published: June 28, 2026</p>
-                        </div>
-                    </div>
-                    <button class="link-post-btn" data-post-id="post_01" style="width: auto; padding: 8px 20px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #2563eb, #1d4ed8);">Link</button>
-                </div>
-
-                <!-- போஸ்ட் 2 -->
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-image" style="margin:0; font-size: 16px; color: #fff;"></i></div>
-                        <div style="text-align: left;">
-                            <h4 style="font-size: 15px; font-weight: 600; margin: 0;">Product Showcase Post #02</h4>
-                            <p style="font-size: 12px; color: #94a3b8; margin: 0;">Published: June 26, 2026</p>
-                        </div>
-                    </div>
-                    <button class="link-post-btn" data-post-id="post_02" style="width: auto; padding: 8px 20px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #2563eb, #1d4ed8);">Link</button>
+                <div style="text-align: center; color: #94a3b8; padding: 20px 0;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>Fetching active posts from your Facebook Page...</p>
                 </div>
             </div>
         </div>
 
-        <!-- 📦 கார்டு 2: ADVANCED OPTIONS FORM -->
         <div class="card" id="automationOptionsCard" style="min-height: auto; padding: 35px; width: 100%; display: none;">
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 15px;">
@@ -137,7 +63,6 @@
                 <i class="fa-solid fa-circle-xmark" id="closeOptionsBtn" style="font-size: 24px; cursor: pointer; color: #ef4444;"></i>
             </div>
 
-            <!-- SECTION 1: CHOOSE TRIGGER TYPE -->
             <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 25px;">
                 <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 0;"><i class="fa-solid fa-wand-magic-sparkles"></i> Choose Trigger Type</h3>
                 
@@ -161,7 +86,6 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: CONFIGURATION SWITCHES -->
             <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 25px;">
                 <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 0;"><i class="fa-solid fa-sliders"></i> Configuration</h3>
                 
@@ -187,7 +111,6 @@
                 </div>
             </div>
 
-            <!-- SECTION 3: MESSAGE TEMPLATE -->
             <div style="margin-bottom: 25px; text-align: left;">
                 <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 0;"><i class="fa-solid fa-photo-film"></i> Message - Media Template</h3>
                 
@@ -211,7 +134,6 @@
         </div>
     </div>
 
-    <!-- ✅ சுபாபேஸ் சிடிஎன் மற்றும் ஜாவாஸ்கிரிப்ட் கோப்புகள் -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="facebook.js"></script>
 </body>
