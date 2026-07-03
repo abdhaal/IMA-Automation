@@ -22,6 +22,7 @@ window.fbAsyncInit = function() {
     console.log("Meta SDK initialized on Facebook Page.");
 };
 
+// Meta SDK-ஐ அசிங்க்ரோனஸாக லோடு செய்தல்
 (function(d, s, id){
      var js, fjs = d.getElementsByTagName(s)[0];
      if (d.getElementById(id)) {return;}
@@ -102,6 +103,7 @@ if (connectFbBtn) {
                 alert('User cancelled login or did not fully authorize.');
                 document.getElementById("facebookStatus").innerHTML = "Failed ❌";
                 document.getElementById("facebookStatus").style.color = "#ef4444";
+                document.getElementById("fbPageName").innerText = "-";
             }
         }, {
             scope: 'pages_manage_metadata,pages_messaging,pages_read_engagement,public_profile,email'
@@ -109,7 +111,7 @@ if (connectFbBtn) {
     });
 }
 
-// டோக்கனை சுபாபேஸ் டேபிளில் சேமித்தல்
+// டோக்கனை சுபாபேஸ் 'profiles' டேபிளில் சேமித்தல்
 async function saveFacebookToken(metaUserId, token) {
     const { data: sessionData } = await supabaseClient.auth.getSession();
     if (sessionData && sessionData.session) {
@@ -177,4 +179,4 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
-      
+         
