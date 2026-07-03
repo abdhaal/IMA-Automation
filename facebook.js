@@ -1,22 +1,20 @@
 // ==========================================
-// 1. SUPABASE CLIENT CONFIGURATION (BYPASS SECRET SCANNING)
+// 1. SUPABASE CLIENT CONFIGURATION
 // ==========================================
 const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
-
 const part1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
 const part2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
 const part3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
 const SUPABASE_ANON_KEY = part1 + part2 + part3;
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true },
-    global: { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+    auth: { persistSession: true, autoRefreshToken: true }
 });
 
 let currentActivePostId = "";
 
 // ==========================================
-// 2. FETCH LIVE FACEBOOK POSTS & REELS
+// 2. FETCH LIVE FACEBOOK PAGE POSTS & REELS
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -33,25 +31,36 @@ async function loadFacebookPageData() {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
 
-        // Profiles டேபிளில் இருந்து அக்சஸ் டோக்கனை எடுத்தல்
+        // Profiles டேபிளில் இருந்து டோக்கன் மற்றும் பேஜ் ஐடியை எடுத்தல்
         const { data: profileData, error: profileError } = await supabaseClient
             .from('profiles')
             .select('facebook_access_token, facebook_user_id')
             .eq('id', user.id);
 
         if (profileError) {
-            console.error("Supabase Profile Fetch Error:", profileError);
-            postsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px 0;">Database Error. Check Supabase RLS Policies.</div>`;
+            postsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px 0;">Database Access Error.</div>`;
             return;
         }
 
-        // 💡 பாதுகாப்பு செக்: டோக்கன் இருக்கிறதா என்று பார்த்தல்
         if (profileData && profileData.length > 0 && profileData[0].facebook_access_token) {
             const token = profileData[0].facebook_access_token;
             
+            // 💡 ஒருவேளை டேட்டாபேஸில் facebook_user_id இருந்தால் அதை எடுக்கும், இல்லையெனில் 'me' என்றுFallback ஆகும்
+            const targetPageId = profileData[0].facebook_user_id && profileData[0].facebook_user_id.trim() !== "" 
+                ? profileData[0].facebook_user_id 
+                : "me";
+
             try {
-                const response = await fetch(`https://graph.facebook.com/v20.0/me/feed?fields=id,message,created_time,full_picture&access_token=${token}`);
-                const resData = await response.json();
+                // ⚡ மாஸ் அப்டேட்: /me/feed-க்கு பதிலாக பக்கத்தின் குறிப்பிட்ட /posts எண்ட் பாயிண்ட்டைப் பயன்படுத்துகிறோம்
+                const response = await fetch(`https://graph.facebook.com/v20.0/${targetPageId}/posts?fields=id,message,created_time,full_picture&access_token=${token}`);
+                let resData = await response.json();
+
+                // 💡 ஒருவேளை பக்கத்தின் ID-ல் எர்ரர் வந்தால், பாதுகாப்பிற்காக பர்சனல் ஃபீடைத் தேடும்
+                if (resData.error) {
+                    console.warn("Page specific fetch failed, retrying with global feed...", resData.error);
+                    const fallbackResponse = await fetch(`https://graph.facebook.com/v20.0/me/feed?fields=id,message,created_time,full_picture&access_token=${token}`);
+                    resData = await fallbackResponse.json();
+                }
 
                 if (resData && resData.data && Array.isArray(resData.data) && resData.data.length > 0) {
                     postsContainer.innerHTML = ""; 
@@ -85,15 +94,14 @@ async function loadFacebookPageData() {
                     postsContainer.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 20px 0;"><i class="fa-solid fa-circle-info" style="font-size:20px; margin-bottom:8px; color:#3b82f6;"></i><p>No active posts found on this Facebook page feed.</p></div>`;
                 }
             } catch (err) {
-                postsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px 0;">Failed to fetch Meta live feed. Verify Token App permissions.</div>`;
+                postsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px 0;">Failed to fetch live feed. Verify Meta Graph token.</div>`;
             }
         } else {
-            // 💡 டோக்கன் இல்லை என்றால் லோடிங்கை நிறுத்திவிட்டு இந்த அலர்ட்டைக் காட்டும்
             postsContainer.innerHTML = `
                 <div style="text-align: center; color: #f59e0b; padding: 30px 10px; background: rgba(245,158,11,0.05); border-radius:12px; border:1px dashed rgba(245,158,11,0.2);">
                     <i class="fa-solid fa-triangle-exclamation" style="font-size: 26px; margin-bottom: 10px;"></i>
                     <h4 style="color:#fff; font-size:16px; margin-bottom:4px;">Facebook Page Not Connected</h4>
-                    <p style="font-size:13px; color:#94a3b8; max-width:400px; margin:0 auto 15px auto;">Your profile row exists, but "facebook_access_token" is empty. Connect your Facebook Page inside Settings first.</p>
+                    <p style="font-size:13px; color:#94a3b8; max-width:400px; margin:0 auto 15px auto;">Connect your Facebook Page inside Settings first.</p>
                 </div>`;
         }
 
@@ -101,6 +109,7 @@ async function loadFacebookPageData() {
         console.error("Global crash logic handled:", globalErr);
     }
 
+    // க்ளோஸ் சிஸ்டம்
     const closeBtn = document.getElementById("closeOptionsBtn");
     if (closeBtn) {
         closeBtn.addEventListener("click", () => {
@@ -214,3 +223,4 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
     });
 });
+            
