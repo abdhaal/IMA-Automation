@@ -3,71 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Connection | IMA Automation</title>
+    <title>Instagram Integration | IMA Automation</title>
     <link rel="stylesheet" href="instagram.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>⚡ IMA</h2>
+        <div class="logo">
+            <i class="fa-solid fa-bolt"></i>
+        </div>
         <ul>
-            <li onclick="location.href='dashboard.html'">
-                <i class="fa-solid fa-house"></i>
-                <span>Dashboard</span>
+            <li>
+                <a href="dashboard.html" id="dashboardBtn">
+                    <i class="fa-solid fa-house"></i>
+                </a>
             </li>
             <li class="active">
-                <i class="fa-brands fa-instagram"></i>
-                <span>Instagram</span>
+                <a href="instagram.html" id="instagramBtn">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
             </li>
-            <li onclick="location.href='facebook.html'">
-                <i class="fa-brands fa-facebook"></i>
-                <span>Facebook</span>
+            <li>
+                <a href="facebook.html" id="facebookBtn">
+                    <i class="fa-brands fa-facebook"></i>
+                </a>
             </li>
-            <li onclick="location.href='automation.html'">
-                <i class="fa-solid fa-robot"></i>
-                <span>Automation</span>
+            <li>
+                <a href="automation.html" id="automationBtn">
+                    <i class="fa-solid fa-robot"></i>
+                </a>
             </li>
-            <li onclick="location.href='analytics.html'">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>Analytics</span>
+            <li>
+                <a href="comments.html" id="commentsBtn">
+                    <i class="fa-solid fa-comment"></i>
+                </a>
             </li>
-            <li id="logoutBtn">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Logout</span>
+            <li>
+                <a href="autodm.html" id="autodmBtn">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </a>
+            </li>
+            <li>
+                <a href="keywords.html" id="keywordsBtn">
+                    <i class="fa-solid fa-key"></i>
+                </a>
+            </li>
+            <li>
+                <a href="analytics.html" id="analyticsBtn">
+                    <i class="fa-solid fa-chart-line"></i>
+                </a>
+            </li>
+            <li>
+                <a href="settings.html" id="settingsBtn">
+                    <i class="fa-solid fa-gear"></i>
+                </a>
+            </li>
+            <li>
+                <a href="#" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
             </li>
         </ul>
     </div>
 
     <div class="main">
         <div class="topbar">
-            <h1>Instagram Integration</h1>
+            <div>
+                <h1>Instagram Integration</h1>
+                <p>Manage Instagram Automation</p>
+            </div>
             <div class="profile">
                 <i class="fa-solid fa-user"></i>
-                <span id="userEmail">Loading...</span>
+                <div>
+                    <span id="userName">User</span>
+                    <span id="userEmail" style="font-size: 12px; color: #94a3b8; display: block;">Loading...</span>
+                </div>
             </div>
         </div>
 
         <div class="cards">
             <div class="card">
-                <h2><i class="fa-brands fa-instagram"></i> Instagram Business</h2>
-                <p>Status: <span id="instagramStatus" style="color:#ef4444; font-weight:700;">Not Connected ❌</span></p>
+                <div class="card-header-icon">
+                    <i class="fa-brands fa-instagram"></i>
+                </div>
+                <h3>Instagram Business</h3>
+                <p>Business Account Status</p>
+                <div class="status-text" id="instagramStatus" style="color: #f59e0b; font-weight: 700; margin: 15px 0;">Not Connected</div>
                 <button id="connectInstagram">Connect Instagram</button>
             </div>
 
             <div class="card">
-                <h2>Account Information</h2>
-                <p><b>Username:</b> <span id="instagramUsername">-</span></p>
-                <p><b>Followers:</b> <span id="instagramFollowers">0</span></p>
-                <p><b>Account Type:</b> <span id="instagramAccountType">Business</span></p>
+                <div class="card-header-icon">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+                <h3>Account Details</h3>
+                <p style="margin-bottom: 8px;"><b>Username:</b> <span id="instagramUsername" style="color:#fff;">-</span></p>
+                <p style="margin-bottom: 8px;"><b>Followers:</b> <span id="instagramFollowers" style="color:#fff;">0</span></p>
+                <p style="margin-bottom: 8px;"><b>Type:</b> <span id="instagramAccountType" style="color:#fff;">Business</span></p>
             </div>
 
             <div class="card">
-                <h2>Automation Status</h2>
-                <p>Comment Reply : <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
-                <p>Auto DM : <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
-                <p>Story Reply : <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
-                <button onclick="location.href='automation.html'" style="margin-top: 15px;">Configure Automation</button>
+                <div class="card-header-icon">
+                    <i class="fa-solid fa-toggle-on"></i>
+                </div>
+                <h3>Automation Config</h3>
+                <p style="margin-bottom: 6px;">Comment Reply: <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
+                <p style="margin-bottom: 6px;">Auto DM: <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
+                <p style="margin-bottom: 20px;">Story Reply: <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
+                <button id="goToAutomationBtn">Configure Automation</button>
             </div>
         </div>
     </div>
@@ -76,4 +120,3 @@
     <script src="instagram.js"></script>
 </body>
 </html>
-
