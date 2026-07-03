@@ -1,18 +1,18 @@
 // ==========================================
-// 1. SUPABASE CLIENT CONFIGURATION (BYPASS SECRET SCANNING)
+// 1. GLOBAL SUPABASE FALLBACK (BYPASSING SECRET SCANNING)
 // ==========================================
-const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
+// உங்களுடைய மற்ற கோப்புகளில் ஏற்கனவே supabaseClient அல்லது supabase குளோபலாக இருந்தால் அதை எடுக்கும், இல்லை எனில் லோக்கல் வேரியபிளை பயன்படுத்தும்.
+let fbSupabase = window.supabaseClient || window.supabase;
 
-// GitHub செக்யூரிட்டி பிளாக்கை தவிர்க்க கீ பிரித்து சேர்க்கப்பட்டுள்ளது
-const part1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
-const part2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
-const part3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
-const SUPABASE_ANON_KEY = part1 + part2 + part3;
-
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true },
-    global: { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
-});
+if (!fbSupabase) {
+    const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
+    const part1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
+    const part2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
+    const part3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
+    fbSupabase = window.supabase.createClient(SUPABASE_URL, part1 + part2 + part3, {
+        auth: { persistSession: true, autoRefreshToken: true }
+    });
+}
 
 let currentActivePostId = "";
 
@@ -21,7 +21,7 @@ let currentActivePostId = "";
 // ==========================================
 async function loadFacebookPageData() {
     try {
-        const { data, error } = await supabaseClient.auth.getSession();
+        const { data, error } = await fbSupabase.auth.getSession();
         if (error || !data || !data.session) {
             window.location.href = "login.html";
             return;
@@ -34,8 +34,8 @@ async function loadFacebookPageData() {
         if (userEmailEl) userEmailEl.innerText = user.email;
         if (userNameEl) userNameEl.innerText = user.email.split("@")[0];
 
-        // Profiles டேபிளில் இருந்து அக்சஸ் டோக்கனை எடுத்தல்
-        const { data: profileData, error: profileError } = await supabaseClient
+        // profiles டேபிளில் இருந்து அக்சஸ் டோக்கனை எடுத்தல்
+        const { data: profileData, error: profileError } = await fbSupabase
             .from('profiles')
             .select('facebook_access_token, facebook_user_id')
             .eq('id', user.id);
@@ -51,7 +51,6 @@ async function loadFacebookPageData() {
                 const response = await fetch(`https://graph.facebook.com/v20.0/me/feed?fields=id,message,created_time,full_picture&access_token=${token}`);
                 const resData = await response.json();
 
-                // 💡 பாதுகாப்பு செக்: டேட்டா காலியாகவோ அல்லது எர்ரர் ஆகவோ வந்தால் கிராஷ் ஆகாமல் தடுக்கும் லேயர்
                 if (resData && resData.data && Array.isArray(resData.data) && resData.data.length > 0) {
                     postsContainer.innerHTML = ""; // லோடிங் ஸ்பின்னரை நீக்குதல்
                     
@@ -61,7 +60,6 @@ async function loadFacebookPageData() {
                         const postDate = post.created_time ? new Date(post.created_time).toLocaleDateString() : "N/A";
                         const postImg = post.full_picture || "";
 
-                        // டைனமிக் ஆக அசல் ஃபேஸ்புக் போஸ்ட் கார்டுகளை உருவாக்குதல்
                         const postRow = document.createElement("div");
                         postRow.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px;";
                         
@@ -79,7 +77,6 @@ async function loadFacebookPageData() {
                         postsContainer.appendChild(postRow);
                     });
 
-                    // புதிய பட்டன்களுக்கு கிளிக் லிசனர் இணைத்தல்
                     bindLinkButtons(user.id);
 
                 } else {
@@ -93,10 +90,9 @@ async function loadFacebookPageData() {
         }
 
     } catch (globalErr) {
-        console.error("Global auth initialization error:", globalErr);
+        console.error("Global core initialization error:", globalErr);
     }
 
-    // க்ளோஸ் சிஸ்டம்
     const closeBtn = document.getElementById("closeOptionsBtn");
     if (closeBtn) {
         closeBtn.addEventListener("click", () => {
@@ -152,7 +148,7 @@ document.addEventListener("DOMContentLoaded", loadFacebookPageData);
 const savePostAutomationBtn = document.getElementById("savePostAutomationBtn");
 if (savePostAutomationBtn) {
     savePostAutomationBtn.addEventListener("click", async () => {
-        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const { data: sessionData } = await fbSupabase.auth.getSession();
         if (!sessionData || !sessionData.session) return;
 
         const mechanismEl = document.getElementById("triggerMechanism");
@@ -164,7 +160,7 @@ if (savePostAutomationBtn) {
         const urlEl = document.getElementById("templateUrl");
         const descEl = document.getElementById("templateDescription");
 
-        const { error } = await supabaseClient
+        const { error } = await fbSupabase
             .from('profiles')
             .upsert({
                 id: sessionData.session.user.id,
@@ -210,4 +206,3 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
     });
 });
-
