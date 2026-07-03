@@ -1,0 +1,300 @@
+/* ==========================================================================
+   IMA AUTOMATION - AUTO DM PREMIUM THEME (100% EXACT DASHBOARD MATCH)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+html{
+scroll-behavior:smooth;
+}
+
+body{
+background:
+radial-gradient(circle at top left,#143d8d 0%,transparent 30%),
+radial-gradient(circle at bottom right,#5b21b6 0%,transparent 35%),
+#060b18;
+color:#fff;
+min-height:100vh;
+display:flex;
+overflow-x:hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{
+width:8px;
+}
+::-webkit-scrollbar-track{
+background:#09111f;
+}
+::-webkit-scrollbar-thumb{
+background:#365dff;
+border-radius:20px;
+}
+
+/* ================= Sidebar (260px Match) ================= */
+.sidebar{
+width:260px;
+height:100vh;
+position:fixed;
+left:0;
+top:0;
+padding:25px;
+background:rgba(255,255,255,.05);
+backdrop-filter:blur(25px);
+border-right:1px solid rgba(255,255,255,.08);
+box-shadow:0 0 30px rgba(0,0,0,.35);
+z-index: 1000;
+}
+
+.logo{
+font-size:28px;
+font-weight:700;
+margin-bottom:45px;
+letter-spacing:1px;
+text-align:center;
+background:linear-gradient(90deg,#3b82f6,#9333ea);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.sidebar ul{
+list-style:none;
+}
+
+.sidebar ul li{
+margin:14px 0;
+}
+
+.sidebar ul li a{
+display:flex;
+align-items:center;
+gap:15px;
+padding:15px 18px;
+text-decoration:none;
+color:#d8d8d8;
+font-size:15px;
+font-weight:500;
+border-radius:14px;
+transition:.35s;
+}
+
+.sidebar ul li a i{
+width:22px;
+text-align:center;
+font-size:18px;
+}
+
+.sidebar ul li a:hover,
+.sidebar ul li.active a {
+background:linear-gradient(90deg,#2563eb,#7c3aed) !important;
+color:#fff !important;
+transform:translateX(6px);
+box-shadow:0 10px 25px rgba(37,99,235,.35);
+}
+
+/* ============== Main Area ============== */
+.main{
+margin-left:260px;
+width:calc(100% - 260px);
+padding:35px;
+}
+
+/* ============== Topbar ============== */
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:35px;
+}
+
+.topbar h1{
+font-size:34px;
+font-weight:700;
+letter-spacing:.5px;
+}
+
+.topbar p{
+color: #94a3b8;
+font-size: 14px;
+margin-top: 4px;
+}
+
+.profile{
+display:flex;
+align-items:center;
+gap:12px;
+padding:12px 20px;
+border-radius:16px;
+background:rgba(255,255,255,.05);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.08);
+}
+
+.profile i{
+width:42px;
+height:42px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:50%;
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+font-size:18px;
+}
+
+.profile span{
+font-size:14px;
+font-weight:500;
+color:#fff;
+}
+
+/* ==========================================================================
+   📦 CARDS GRID & DESIGN MATCH
+========================================================================== */
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:25px;
+margin-bottom:40px;
+}
+
+.card{
+position:relative;
+padding:28px;
+border-radius:22px;
+background:rgba(255,255,255,.05);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.08);
+overflow:hidden;
+transition:.35s;
+box-shadow:0 15px 35px rgba(0,0,0,.25);
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+min-height: 340px;
+}
+
+.card::before{
+content:"";
+position:absolute;
+top:-80px;
+right:-80px;
+width:180px;
+height:180px;
+border-radius:50%;
+background:rgba(59,130,246,.12);
+}
+
+.card:hover{
+transform:translateY(-10px);
+box-shadow:
+0 20px 50px rgba(59,130,246,.35),
+0 0 35px rgba(124,58,237,.25);
+border-color:#3b82f6;
+}
+
+.card i {
+font-size:28px;
+margin-bottom:15px;
+background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+display: inline-block;
+}
+
+.card p{
+color:#b8c0d4;
+font-size:15px;
+line-height:1.7;
+margin-bottom:20px;
+}
+
+/* Buttons */
+.card button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:14px;
+cursor:pointer;
+font-size:15px;
+font-weight:600;
+color:#fff;
+background:linear-gradient(135deg,#2563eb,#9333ea);
+transition:.3s;
+box-shadow:0 10px 25px rgba(59,130,246,.35);
+margin-top: auto;
+}
+
+.card button:hover{
+transform:translateY(-3px);
+box-shadow:0 18px 35px rgba(59, 130, 246, .5);
+}
+
+/* Card Shine Effect */
+.card::after{
+content:"";
+position:absolute;
+top:-150%;
+left:-40%;
+width:120px;
+height:400px;
+background:rgba(255,255,255,.12);
+transform:rotate(25deg);
+transition:.8s;
+}
+
+.card:hover::after{
+left:140%;
+}
+
+/* Custom Rule Item Row */
+.rule-item {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px 15px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+/* Responsive (Tablet & Mobile) */
+@media(max-width:992px){
+.sidebar{ width:90px; padding:20px 10px; }
+.logo{ font-size:18px; }
+.sidebar ul li a span{ display:none; }
+.sidebar ul li a{ justify-content:center; }
+.main{ margin-left:90px; width:calc(100% - 90px); }
+}
+
+@media(max-width:768px){
+body{ display:block; }
+.sidebar{ position:relative; width:100%; height:auto; border-right:none; border-bottom:1px solid rgba(255,255,255,.08); padding: 20px !important; }
+.sidebar ul{ display:flex; overflow-x:auto; gap:12px; padding-bottom:10px; }
+.sidebar ul li{ flex:none; margin: 0 !important; }
+.sidebar ul li a{ justify-content:center; padding:12px 16px; }
+.main{ margin-left:0; width:100%; padding:20px; }
+.topbar{ flex-direction:column; align-items:flex-start; gap:18px; }
+.profile{ width:100%; justify-content:center; }
+.cards{ grid-template-columns:1fr; }
+}
+
+/* Fade animation */
+@keyframes fadeIn{
+from{ opacity:0; transform:translateY(25px); }
+to{ opacity:1; transform:translateY(0); }
+}
+
+.sidebar,
+.topbar,
+.cards {
+animation:fadeIn .7s ease;
+}
+
