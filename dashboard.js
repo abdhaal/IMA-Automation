@@ -1,12 +1,9 @@
-// ===============================
-// IMA Automation Dashboard
-// ===============================
-
-// ---------- Supabase ----------
+// ==========================================
+// 1. SUPABASE CONFIGURATION & CLIENT INITIALIZATION
+// ==========================================
 const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
 
-// ✅ புதிய கோடு (இப்படி மாற்றுங்கள்):
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
         persistSession: true,
@@ -20,38 +17,38 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
     }
 });
 
-
-
-// ---------- Load User & Integrations ----------
+// ==========================================
+// 2. LOAD USER & DATA ACCESS LOGIC (406 FIXED)
+// ==========================================
 async function loadUser() {
-    // 1. பயனர் செஷனை எடுத்தல்
+    // பயனர் செஷனை எடுத்தல்
     const { data, error } = await supabaseClient.auth.getSession();
 
-    if (error) {
-        console.log(error);
-        return;
-    }
-
-    if (!data.session) {
+    if (error || !data.session) {
+        console.log("Active session not found, redirecting to login...");
         window.location.href = "login.html";
         return;
     }
 
-    // பயனரின் மின்னஞ்சல் விவரங்களைக் காட்டுதல்
-    document.getElementById("userEmail").innerText = data.session.user.email;
-    document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
+    // HTML Elements செக் மற்றும் இமெயில் விவரங்களை நிரப்புதல்
+    const userEmailEl = document.getElementById("userEmail");
+    const userNameEl = document.getElementById("userName");
 
-    // 2. 💡 டேட்டாபேஸில் இருந்து இந்த பயனரின் ப்ரொஃபைல்/டோக்கன் விவரங்களை எடுத்தல்
+    if (userEmailEl) userEmailEl.innerText = data.session.user.email;
+    if (userNameEl) userNameEl.innerText = data.session.user.email.split("@")[0];
+
+    // டேட்டாபேஸில் இருந்து ப்ரொஃபைல் விவரங்களை எடுத்தல்
     const userUuid = data.session.user.id;
     const { data: profileData, error: profileError } = await supabaseClient
         .from('profiles')
         .select('instagram_access_token, facebook_access_token')
-        .eq('id', userUuid)
-        .single();
+        .eq('id', userUuid); // 💡 406 எர்ரர் வராமல் தடுக்க Array வடிவில் செக் செய்கிறோம்
 
-    if (!profileError && profileData) {
-        // இன்ஸ்டாகிராம் டோக்கன் ஏற்கனவே இருந்தால் "Connected" என்று காட்டும்
-        if (profileData.instagram_access_token) {
+    if (!profileError && profileData && profileData.length > 0) {
+        const profile = profileData[0];
+
+        // இன்ஸ்டாகிராம் டோக்கன் செக்
+        if (profile.instagram_access_token) {
             const instaStatus = document.getElementById("instagramStatus");
             if (instaStatus) {
                 instaStatus.innerHTML = "Connected ✅";
@@ -59,8 +56,8 @@ async function loadUser() {
             }
         }
 
-        // ஃபேஸ்புக் டோக்கன் ஏற்கனவே இருந்தால் "Connected" என்று காட்டும்
-        if (profileData.facebook_access_token) {
+        // ஃபேஸ்புக் டோக்கன் செக்
+        if (profile.facebook_access_token) {
             const fbStatus = document.getElementById("facebookStatus");
             if (fbStatus) {
                 fbStatus.innerHTML = "Connected ✅";
@@ -70,139 +67,67 @@ async function loadUser() {
     }
 }
 
+// பக்கம் ஓபன் ஆனவுடன் யூசரை லோடு செய்தல்
 loadUser();
 
-
-
 // ==========================================
-// SIDEBAR BUTTONS NAVIGATION LOGIC
+// 3. SIDEBAR BUTTONS NAVIGATION LOGIC (ID BASED)
 // ==========================================
-
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 1. Dashboard Link
-    const dashboardBtn = document.getElementById("dashboardBtn");
-    if (dashboardBtn) {
-        dashboardBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "dashboard.html";
-        });
-    }
+    const navLinks = [
+        { id: "dashboardBtn", url: "dashboard.html" },
+        { id: "instagramBtn", url: "instagram.html" },
+        { id: "facebookBtn", url: "facebook.html" },
+        { id: "automationBtn", url: "automation.html" },
+        { id: "commentsBtn", url: "comments.html" },
+        { id: "autodmBtn", url: "autodm.html" },
+        { id: "keywordsBtn", url: "keywords.html" },
+        { id: "analyticsBtn", url: "analytics.html" },
+        { id: "settingsBtn", url: "settings.html" }
+    ];
 
-    // 2. Instagram Link
-    const instagramBtn = document.getElementById("instagramBtn");
-    if (instagramBtn) {
-        instagramBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "instagram.html";
-        });
-    }
+    navLinks.forEach(link => {
+        const btn = document.getElementById(link.id);
+        if (btn) {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.location.href = link.url;
+            });
+        }
+    });
 
-    // 3. Facebook Link
-    const facebookBtn = document.getElementById("facebookBtn");
-    if (facebookBtn) {
-        facebookBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "facebook.html";
-        });
-    }
-
-    // 4. Automation Link
-    const automationBtn = document.getElementById("automationBtn");
-    if (automationBtn) {
-        automationBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "automation.html";
-        });
-    }
-
-    // 5. Comments Link
-    const commentsBtn = document.getElementById("commentsBtn");
-    if (commentsBtn) {
-        commentsBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "comments.html";
-        });
-    }
-
-    // 6. Auto DM Link
-    const autodmBtn = document.getElementById("autodmBtn");
-    if (autodmBtn) {
-        autodmBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "autodm.html";
-        });
-    }
-
-    // 7. Keywords Link
-    const keywordsBtn = document.getElementById("keywordsBtn");
-    if (keywordsBtn) {
-        keywordsBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "keywords.html";
-        });
-    }
-
-    // 8. Analytics Link
-    const analyticsBtn = document.getElementById("analyticsBtn");
-    if (analyticsBtn) {
-        analyticsBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "analytics.html";
-        });
-    }
-
-    // 9. Settings Link
-    const settingsBtn = document.getElementById("settingsBtn");
-    if (settingsBtn) {
-        settingsBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "settings.html";
-        });
-    }
-
-    // 10. Logout Link (Supabase SignOut உடன்)
+    // Logout பட்டன் லாஜிக்
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async (e) => {
             e.preventDefault();
             if (confirm("Logout from your account?")) {
-                if (typeof supabaseClient !== 'undefined') {
-                    await supabaseClient.auth.signOut();
-                } else if (typeof supabase !== 'undefined') {
-                    await supabase.auth.signOut();
-                }
+                await supabaseClient.auth.signOut();
                 window.location.href = "login.html";
             }
         });
     }
 });
 
-
-
 // ==========================================
-// ---------- Instagram / Meta OAuth ----------
+// 4. FACEBOOK / INSTAGRAM META OAUTH FLOW
 // ==========================================
 
-// 1. Meta SDK-ஐ இனிஷியலைஸ் செய்தல்
 window.fbAsyncInit = function() {
     FB.init({
-        appId      : '1021418946936223', // உங்கள் Meta App ID-ஐ இங்கு போடவும்
+        appId      : '1021418946936223', 
         cookie     : true,
         xfbml      : true,
-        version    : 'v20.0' // தற்போதைய மெட்டா API வெர்ஷன்
+        version    : 'v20.0'
     });
     console.log("Meta SDK successfully initialized.");
 };
 
-
+// Instagram OAuth
 const instaBtn = document.getElementById("connectInstagram");
-
 if (instaBtn) {
-
     instaBtn.addEventListener("click", () => {
-        
-        // 💡 பாதுகாப்பு செக்: ஒருவேளை SDK லோட் ஆகவில்லை என்றால் எர்ரர் வராமல் தடுக்கும்
         if (typeof FB === 'undefined') {
             alert("Meta SDK is still loading... Please wait a moment and try again.");
             return;
@@ -210,11 +135,8 @@ if (instaBtn) {
 
         document.getElementById("instagramStatus").innerHTML = "Connecting...";
 
-        // மெட்டா லாகின் விண்டோவை ஓபன் செய்தல்
         FB.login(function(response) {
             if (response.authResponse) {
-                console.log('Welcome! Fetching your access token...', response);
-                
                 const accessToken = response.authResponse.accessToken;
                 const userId = response.authResponse.userID;
 
@@ -222,29 +144,22 @@ if (instaBtn) {
                 document.getElementById("instagramStatus").innerHTML = "Connected ✅";
                 document.getElementById("instagramStatus").style.color = "#22c55e";
 
-                // 💡 இந்த Access Token-ஐ உங்கள் சுபாபேஸ் டேபிளில் சேமிக்க வேண்டும்
                 saveInstagramToken(userId, accessToken);
-
             } else {
                 alert('User cancelled login or did not fully authorize.');
                 document.getElementById("instagramStatus").innerHTML = "Failed ❌";
                 document.getElementById("instagramStatus").style.color = "#ef4444";
             }
         }, {
-            // இன்ஸ்டாகிராம் ஆட்டோமேஷன் மற்றும் மெசேஜ் அனுப்ப தேவையான அனுமதிகள் (Permissions)
             scope: 'instagram_basic,instagram_manage_messages,pages_manage_metadata,pages_show_list,pages_messaging'
         });
-
     });
-
 }
 
-// ---------- Instagram டோக்கன் சேமிக்கும் பகுதி ----------
 async function saveInstagramToken(metaUserId, token) {
     const { data: sessionData } = await supabaseClient.auth.getSession();
     if (sessionData && sessionData.session) {
         const userUuid = sessionData.session.user.id;
-
         const { error } = await supabaseClient
             .from('profiles')  
             .upsert({ 
@@ -254,27 +169,14 @@ async function saveInstagramToken(metaUserId, token) {
                 updated_at: new Date()
             });
 
-        if (error) {
-            alert("Database Error (Insta): " + error.message);
-        } else {
-            alert("Instagram data saved to Database! 🎉");
-        }
-    } else {
-        alert("User session not found! Please login again.");
+        if (error) alert("Database Error (Insta): " + error.message);
     }
 }
 
-// ==========================================
-// ---------- Facebook OAuth ----------
-// ==========================================
-
+// Facebook OAuth
 const fbBtn = document.getElementById("connectFacebook");
-
 if (fbBtn) {
-
     fbBtn.addEventListener("click", () => {
-        
-        // 💡 பாதுகாப்பு செக்
         if (typeof FB === 'undefined') {
             alert("Meta SDK is still loading... Please wait a moment and try again.");
             return;
@@ -282,11 +184,8 @@ if (fbBtn) {
 
         document.getElementById("facebookStatus").innerHTML = "Connecting...";
 
-        // மெட்டா லாகின் விண்டோவை ஓபன் செய்தல்
         FB.login(function(response) {
             if (response.authResponse) {
-                console.log('Facebook Login Successful!', response);
-                
                 const accessToken = response.authResponse.accessToken;
                 const userId = response.authResponse.userID;
 
@@ -294,29 +193,22 @@ if (fbBtn) {
                 document.getElementById("facebookStatus").innerHTML = "Connected ✅";
                 document.getElementById("facebookStatus").style.color = "#22c55e";
 
-                // லாகின் ஆன பிறகு இந்த டோக்கனை சுபாபேஸில் சேமிக்கலாம்
                 saveFacebookToken(userId, accessToken);
-
             } else {
                 alert('User cancelled login or did not fully authorize.');
                 document.getElementById("facebookStatus").innerHTML = "Failed ❌";
                 document.getElementById("facebookStatus").style.color = "#ef4444";
             }
         }, {
-            // ஃபேஸ்புக் பக்கங்கள் மற்றும் மெசேஜ்களை நிர்வகிக்க தேவையான அனுமதிகள் (Scopes)
             scope: 'pages_manage_metadata,pages_messaging,pages_read_engagement,public_profile,email'
         });
-
     });
-
 }
 
-// ---------- Facebook டோக்கன் சேமிக்கும் பகுதி ----------
 async function saveFacebookToken(metaUserId, token) {
     const { data: sessionData } = await supabaseClient.auth.getSession();
     if (sessionData && sessionData.session) {
         const userUuid = sessionData.session.user.id;
-
         const { error } = await supabaseClient
             .from('profiles') 
             .upsert({ 
@@ -326,105 +218,53 @@ async function saveFacebookToken(metaUserId, token) {
                 updated_at: new Date()
             });
 
-        if (error) {
-            alert("Database Error (FB): " + error.message);
-        } else {
-            alert("Facebook data saved to Database! 🎉");
-        }
-    } else {
-        alert("User session not found! Please login again.");
+        if (error) alert("Database Error (FB): " + error.message);
     }
 }
 
+// ==========================================
+// 5. AUTOMATION INTERACTION LOGIC & MOCK COUNTERS
+// ==========================================
 
-
-// ---------- Auto DM ----------
 const autoDM = document.getElementById("autoDM");
-
 if (autoDM) {
-
-    autoDM.addEventListener("click", () => {
-
-        alert("Auto DM Enabled");
-
-    });
-
+    autoDM.addEventListener("click", () => alert("Auto DM Enabled"));
 }
 
-
-// ---------- Auto Reply ----------
 const autoReply = document.getElementById("autoReply");
-
 if (autoReply) {
-
-    autoReply.addEventListener("click", () => {
-
-        alert("Auto Reply Enabled");
-
-    });
-
+    autoReply.addEventListener("click", () => alert("Auto Reply Enabled"));
 }
 
-
-// ---------- Keywords ----------
 const keywordBtn = document.getElementById("keywordBtn");
-
 if (keywordBtn) {
-
     keywordBtn.addEventListener("click", () => {
-
         const keyword = prompt("Enter keyword");
-
-        if (keyword) {
-
-            alert("Keyword Saved : " + keyword);
-
-        }
-
+        if (keyword) alert("Keyword Saved : " + keyword);
     });
-
 }
 
-
-// ---------- Automation Status ----------
 const automationStatus = document.getElementById("automationStatus");
-
 if (automationStatus) {
-
     automationStatus.innerHTML = "Running";
-
     automationStatus.style.color = "#22c55e";
-
 }
 
-
-// ---------- Dashboard Counter ----------
+// Randomizer Counter
 function random(min, max) {
-
     return Math.floor(Math.random() * (max - min + 1)) + min;
-
 }
 
 const numbers = document.querySelectorAll(".box h3");
-
 numbers.forEach(item => {
-
     if (!item.innerText.includes("%")) {
-
         item.innerText = random(0, 50);
-
     }
-
 });
 
+// Auto Clear Success Toast Overlay Fix
 setInterval(() => {
-
-const toast = document.querySelector(
-'.toast,.toastify,.notification,.success-toast,.Toastify__toast,.swal2-toast'
-);
-
-if(toast){
-    toast.remove();
-}
-
-},500);
+    const toast = document.querySelector('.toast,.toastify,.notification,.success-toast,.Toastify__toast,.swal2-toast');
+    if (toast) toast.remove();
+}, 500);
+                                         
