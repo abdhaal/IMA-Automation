@@ -255,35 +255,94 @@ left:140%;
 
 /* Custom Rule Item Row */
 .rule-item {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 12px 15px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
+background: rgba(255, 255, 255, 0.04);
+border: 1px solid rgba(255, 255, 255, 0.06);
+padding: 12px 15px;
+border-radius: 12px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+font-size: 14px;
 }
 
-/* Responsive (Tablet & Mobile) */
+/* Online status dot */
+.online-dot {
+display: inline-block;
+width: 8px;
+height: 8px;
+border-radius: 50%;
+background: #22c55e;
+}
+
+/* ==========================================================================
+   📱 RESPONSIVE MEDIA QUERIES (TABLET & MOBILE MATCH)
+========================================================================== */
+
+/* Tablet (992px) */
 @media(max-width:992px){
-.sidebar{ width:90px; padding:20px 10px; }
-.logo{ font-size:18px; }
-.sidebar ul li a span{ display:none; }
-.sidebar ul li a{ justify-content:center; }
-.main{ margin-left:90px; width:calc(100% - 90px); }
+.sidebar{
+width:90px;
+padding:20px 10px;
+}
+.logo{
+font-size:18px;
+}
+.sidebar ul li a span{
+display:none;
+}
+.sidebar ul li a{
+justify-content:center;
+}
+.main{
+margin-left:90px;
+width:calc(100% - 90px);
+}
 }
 
+/* Mobile (768px) */
 @media(max-width:768px){
-body{ display:block; }
-.sidebar{ position:relative; width:100%; height:auto; border-right:none; border-bottom:1px solid rgba(255,255,255,.08); padding: 20px !important; }
-.sidebar ul{ display:flex; overflow-x:auto; gap:12px; padding-bottom:10px; }
-.sidebar ul li{ flex:none; margin: 0 !important; }
-.sidebar ul li a{ justify-content:center; padding:12px 16px; }
-.main{ margin-left:0; width:100%; padding:20px; }
-.topbar{ flex-direction:column; align-items:flex-start; gap:18px; }
-.profile{ width:100%; justify-content:center; }
-.cards{ grid-template-columns:1fr; }
+body{
+display:block;
+}
+.sidebar{
+position:relative;
+width:100%;
+height:auto;
+border-right:none;
+border-bottom:1px solid rgba(255,255,255,.08);
+padding: 20px !important;
+}
+.sidebar ul{
+display:flex;
+overflow-x:auto;
+gap:12px;
+padding-bottom:10px;
+}
+.sidebar ul li{
+flex:none;
+margin: 0 !important;
+}
+.sidebar ul li a{
+justify-content:center;
+padding:12px 16px;
+}
+.main{
+margin-left:0;
+width:100%;
+padding:20px;
+}
+.topbar{
+flex-direction:column;
+align-items:flex-start;
+gap:18px;
+}
+.profile{
+width:100%;
+justify-content:center;
+}
+.cards{
+grid-template-columns:1fr;
+}
 }
 
 /* Fade animation */
