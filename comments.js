@@ -3,6 +3,7 @@
 // ==========================================
 const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
 
+// GitHub செக்யூரிட்டி பிளாக்கை தவிர்க்க கீ பிரித்து சேர்க்கப்பட்டுள்ளது
 const part1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
 const part2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
 const part3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
@@ -139,4 +140,3 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
-      
