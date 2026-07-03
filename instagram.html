@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Integration | IMA Automation</title>
+    <title>Instagram Management | IMA Automation</title>
     <link rel="stylesheet" href="instagram.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
@@ -14,73 +14,24 @@
             <i class="fa-solid fa-bolt"></i>
         </div>
         <ul>
-            <li>
-                <a href="dashboard.html" id="dashboardBtn">
-                    <i class="fa-solid fa-house"></i>
-                </a>
-            </li>
-            
-            <li class="active">
-                <a href="instagram.html" id="instagramBtn">
-                    <i class="fa-brands fa-instagram"></i>
-                </a>
-            </li>
-            
-            <li>
-                <a href="facebook.html" id="facebookBtn">
-                    <i class="fa-brands fa-facebook"></i>
-                </a>
-            </li>
-            
-            <li>
-                <a href="automation.html" id="automationBtn">
-                    <i class="fa-solid fa-robot"></i>
-                </a>
-            </li>
-            
-            <li>
-                <a href="comments.html" id="commentsBtn">
-                    <i class="fa-solid fa-comment"></i>
-                </a>
-            </li>
-            
-            <li>
-                <a href="autodm.html" id="autodmBtn">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </a>
-            </li>
-            
-            <li>
-                <a href="keywords.html" id="keywordsBtn">
-                    <i class="fa-solid fa-key"></i>
-                </a>
-            </li>
-            
-            <li>
-                <a href="analytics.html" id="analyticsBtn">
-                    <i class="fa-solid fa-chart-line"></i>
-                </a>
-            </li>
-            
-            <li>
-                <a href="settings.html" id="settingsBtn">
-                    <i class="fa-solid fa-gear"></i>
-                </a>
-            </li>
-            
-            <li>
-                <a href="logout.html" id="logoutBtn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </a>
-            </li>
+            <li><a href="#" id="dashboardBtn"><i class="fa-solid fa-house"></i><span>Dashboard</span></a></li>
+            <li class="active"><a href="#" id="instagramBtn"><i class="fa-brands fa-instagram"></i><span>Instagram</span></a></li>
+            <li><a href="#" id="facebookBtn"><i class="fa-brands fa-facebook"></i><span>Facebook</span></a></li>
+            <li><a href="#" id="automationBtn"><i class="fa-solid fa-robot"></i><span>Automation</span></a></li>
+            <li><a href="#" id="commentsBtn"><i class="fa-solid fa-comment"></i><span>Comments</span></a></li>
+            <li><a href="#" id="autodmBtn"><i class="fa-solid fa-paper-plane"></i><span>Auto DM</span></a></li>
+            <li><a href="#" id="keywordsBtn"><i class="fa-solid fa-key"></i><span>Keywords</span></a></li>
+            <li><a href="#" id="analyticsBtn"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a></li>
+            <li><a href="#" id="settingsBtn"><i class="fa-solid fa-gear"></i><span>Settings</span></a></li>
+            <li><a href="#" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a></li>
         </ul>
     </div>
 
     <div class="main">
         <div class="topbar">
             <div>
-                <h1>Instagram Integration</h1>
-                <p>Manage Facebook & Instagram Automation</p>
+                <h1>Instagram Automation Hub</h1>
+                <p>Link your active business posts or reels to configure omnichannel reply streams</p>
             </div>
             <div class="profile">
                 <i class="fa-solid fa-user"></i>
@@ -91,37 +42,112 @@
             </div>
         </div>
 
-        <div class="cards">
-            <div class="card">
-                <div class="card-header-icon">
-                    <i class="fa-brands fa-instagram"></i>
+        <div class="card" style="min-height: auto; padding: 25px; margin-bottom: 25px; width: 100%;">
+            <h3 style="font-size: 20px; display: flex; align-items: center; gap: 10px; margin-bottom: 15px;"><i class="fa-solid fa-images"></i> Latest Posts / Reels</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;" id="instaPostsContainer">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-video" style="margin:0; font-size: 16px; color: #fff;"></i></div>
+                        <div style="text-align: left;">
+                            <h4 style="font-size: 15px; font-weight: 600; margin: 0;">Instagram Growth Reel #01</h4>
+                            <p style="font-size: 12px; color: #94a3b8; margin: 0;">Published: June 29, 2026</p>
+                        </div>
+                    </div>
+                    <button class="link-insta-btn" data-post-id="insta_01" style="width: auto; padding: 8px 20px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #2563eb, #1d4ed8);">Link</button>
                 </div>
-                <h3>Instagram Business</h3>
-                <p>Business Account Status</p>
-                <div class="status-text" id="instagramStatus" style="color: #f59e0b; font-weight: 700; margin: 15px 0; font-size: 22px;">Not Connected</div>
-                <button id="connectInstagram">Connect Instagram</button>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-image" style="margin:0; font-size: 16px; color: #fff;"></i></div>
+                        <div style="text-align: left;">
+                            <h4 style="font-size: 15px; font-weight: 600; margin: 0;">Business Promo Post #02</h4>
+                            <p style="font-size: 12px; color: #94a3b8; margin: 0;">Published: June 27, 2026</p>
+                        </div>
+                    </div>
+                    <button class="link-insta-btn" data-post-id="insta_02" style="width: auto; padding: 8px 20px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #2563eb, #1d4ed8);">Link</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="instaOptionsCard" style="min-height: auto; padding: 35px; width: 100%; display: none;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 15px;">
+                <div style="text-align: left;">
+                    <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #3b82f6; font-weight: 700;">Configuration Stream</span>
+                    <h2 id="selectedInstaTitle" style="font-size: 22px; margin-top: 2px; margin-bottom: 0;">Link Post Settings</h2>
+                </div>
+                <i class="fa-solid fa-circle-xmark" id="closeInstaOptionsBtn" style="font-size: 24px; cursor: pointer; color: #ef4444;"></i>
             </div>
 
-            <div class="card">
-                <div class="card-header-icon">
-                    <i class="fa-solid fa-circle-info"></i>
+            <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 25px;">
+                <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 0;"><i class="fa-solid fa-wand-magic-sparkles"></i> Choose Trigger Type</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                    <div style="background: #172033; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+                        <label style="display: block; font-size: 14px; color: #c7d2fe; margin-bottom: 5px;">Trigger Mechanism</label>
+                        <select id="instaTriggerMechanism" style="width:100%; padding:10px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
+                            <option value="all">All Comments</option>
+                            <option value="keywords">Specific Keywords</option>
+                        </select>
+                    </div>
+                    <div id="instaKeywordWrapper" style="background: #172033; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: left; display: none;">
+                        <label style="display: block; font-size: 14px; color: #c7d2fe; margin-bottom: 5px;">Keywords Triggers</label>
+                        <input type="text" id="instaTargetKeywords" placeholder="e.g., price, info" style="width:100%; padding:10px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
+                    </div>
                 </div>
-                <h3>Account Information</h3>
-                <p style="margin-bottom: 8px;"><b>Username:</b> <span id="instagramUsername" style="color:#fff; font-weight: 600;">-</span></p>
-                <p style="margin-bottom: 8px;"><b>Followers:</b> <span id="instagramFollowers" style="color:#fff; font-weight: 600;">0</span></p>
-                <p style="margin-bottom: 8px;"><b>Account Type:</b> <span id="instagramAccountType" style="color:#fff; font-weight: 600;">Business</span></p>
+
+                <div style="margin-top: 15px; text-align: left;">
+                    <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Exclude Keywords</label>
+                    <input type="text" id="instaExcludeKeywords" placeholder="Bad, Horrible, Disappointed" style="width:100%; padding:12px; border-radius:10px; background:#172033; border:1px solid rgba(255,255,255,0.08); color:#fff; font-size:14px; outline:none;">
+                </div>
             </div>
 
-            <div class="card">
-                <div class="card-header-icon">
-                    <i class="fa-solid fa-toggle-on"></i>
+            <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 25px;">
+                <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 0;"><i class="fa-solid fa-sliders"></i> Configuration</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 15px; text-align: left;">
+                    <div>
+                        <p style="font-size: 14px; color: #c7d2fe; margin-bottom: 5px;">Comment Auto Reply</p>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="instaCommentCheck" style="width: 18px; height: 18px; accent-color: #3b82f6;">
+                            <span style="font-size: 13px; color: #94a3b8;">Automatically reply to post comments</span>
+                        </label>
+                    </div>
+                    <div>
+                        <p style="font-size: 14px; color: #c7d2fe; margin-bottom: 5px;">Engagement Starter / Send DM</p>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="instaDmCheck" style="width: 18px; height: 18px; accent-color: #3b82f6;">
+                            <span style="font-size: 13px; color: #94a3b8;">Send private DM flow to user inbox</span>
+                        </label>
+                    </div>
+                    <div>
+                        <p style="font-size: 14px; color: #c7d2fe; margin-bottom: 5px;">Reply Delay Interval</p>
+                        <input type="text" id="instaDelayTime" placeholder="MM:SS (e.g., 00:05)" style="width:100%; padding:10px; border-radius:8px; background:#172033; border:1px solid rgba(255,255,255,0.08); color:#fff; outline:none; font-size: 14px;">
+                    </div>
                 </div>
-                <h3>Automation Status</h3>
-                <p style="margin-bottom: 8px;">Comment Reply : <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
-                <p style="margin-bottom: 8px;">Auto DM : <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
-                <p style="margin-bottom: 22px;">Story Reply : <span style="color:#f59e0b; font-weight:600;">OFF</span></p>
-                <button id="goToAutomationBtn">Configure Automation</button>
             </div>
+
+            <div style="margin-bottom: 25px; text-align: left;">
+                <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 0;"><i class="fa-solid fa-photo-film"></i> Message - Media Template</h3>
+                
+                <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px; background: #172033; padding: 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div>
+                        <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Template Button Title</label>
+                        <input type="text" id="instaBtnTitle" placeholder="Enter button name" style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; font-size:14px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Redirect Destination URL</label>
+                        <input type="url" id="instaUrl" placeholder="https://yourwebsite.com" style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; font-size:14px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 6px; font-size:14px; color:#c7d2fe;">Headline Content & Description</label>
+                        <textarea id="instaDescription" rows="3" placeholder="Automation Powered by..." style="width:100%; padding:11px; border-radius:8px; background:#09111f; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; resize:none; font-size:14px; font-family: inherit;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button id="saveInstaAutomationBtn" style="max-width: 300px; margin: 20px auto 0 auto; background: linear-gradient(135deg, #2563eb, #7c3aed);">Save Instagram Configuration</button>
         </div>
     </div>
 
