@@ -253,7 +253,11 @@ transition:.8s;
 left:140%;
 }
 
-/* Responsive (Tablet & Mobile) */
+/* ==========================================================================
+   📱 RESPONSIVE MEDIA QUERIES (TABLET & MOBILE MATCH)
+========================================================================== */
+
+/* Tablet (992px) */
 @media(max-width:992px){
 .sidebar{ width:90px; padding:20px 10px; }
 .logo{ font-size:18px; }
@@ -262,6 +266,7 @@ left:140%;
 .main{ margin-left:90px; width:calc(100% - 90px); }
 }
 
+/* Mobile (768px) */
 @media(max-width:768px){
 body{ display:block; }
 .sidebar{ position:relative; width:100%; height:auto; border-right:none; border-bottom:1px solid rgba(255,255,255,.08); padding: 20px !important; }
@@ -284,4 +289,4 @@ to{ opacity:1; transform:translateY(0); }
 .topbar,
 .cards {
 animation:fadeIn .7s ease;
-  }
+}
