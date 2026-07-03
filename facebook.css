@@ -2,7 +2,7 @@
    IMA AUTOMATION - FACEBOOK PREMIUM THEME (100% EXACT DASHBOARD MATCH)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght=300;400;500;600;700;800&display=swap');
 
 *{
 margin:0;
@@ -38,7 +38,7 @@ background:#365dff;
 border-radius:20px;
 }
 
-/* ================= Sidebar (260px Match) ================= */
+/* ================= Sidebar (260px Exact Match) ================= */
 .sidebar{
 width:260px;
 height:100vh;
@@ -91,12 +91,17 @@ text-align:center;
 font-size:18px;
 }
 
-.sidebar ul li a:hover,
-.sidebar ul li.active a {
-background:linear-gradient(90deg,#2563eb,#7c3aed) !important;
-color:#fff !important;
+.sidebar ul li a:hover{
+background:linear-gradient(90deg,#2563eb,#7c3aed);
+color:#fff;
 transform:translateX(6px);
 box-shadow:0 10px 25px rgba(37,99,235,.35);
+}
+
+/* ஃபேஸ்புக் பக்கத்தில் இந்த மெனு ஆக்டிவ்வாக இருக்க வேண்டிய அசல் ஸ்டைல் */
+.sidebar ul li.active a{
+background:linear-gradient(90deg,#2563eb,#7c3aed) !important;
+color:#fff !important;
 }
 
 /* ============== Main Area ============== */
@@ -155,7 +160,7 @@ color:#fff;
 }
 
 /* ==========================================================================
-   📦 CARDS GRID & DESIGN MATCH
+   📦 CARDS GRID & BOX DESIGN (100% DASHBOARD MATCH)
 ========================================================================== */
 .cards{
 display:grid;
@@ -177,7 +182,7 @@ box-shadow:0 15px 35px rgba(0,0,0,.25);
 display: flex;
 flex-direction: column;
 justify-content: space-between;
-min-height: 260px;
+min-height: 260px; /* கார்டுகள் அனைத்தும் ஒரே உயரத்தில் இருக்க */
 }
 
 .card::before{
@@ -199,7 +204,10 @@ box-shadow:
 border-color:#3b82f6;
 }
 
-.card i {
+/* Card Icons Gradient */
+.card i.fa-facebook,
+.card i.fa-circle-info,
+.card i.fa-toggle-on {
 font-size:28px;
 margin-bottom:15px;
 background:linear-gradient(135deg,#3b82f6,#8b5cf6);
@@ -228,7 +236,7 @@ color:#fff;
 background:linear-gradient(135deg,#2563eb,#9333ea);
 transition:.3s;
 box-shadow:0 10px 25px rgba(59,130,246,.35);
-margin-top: auto;
+margin-top: auto; /* பட்டன் கார்டின் கீழே சரியாக அமர */
 }
 
 .card button:hover{
@@ -253,24 +261,96 @@ transition:.8s;
 left:140%;
 }
 
-/* Responsive (Tablet & Mobile) */
+button:active{
+transform:scale(.96);
+}
+
+/* Status text style */
+.status-text {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+/* ==========================================================================
+   📱 6. RESPONSIVE MEDIA QUERIES (TABLET & MOBILE MATCH)
+========================================================================== */
+
+/* Tablet (992px) */
 @media(max-width:992px){
-.sidebar{ width:90px; padding:20px 10px; }
-.logo{ font-size:18px; }
-.sidebar ul li a span{ display:none; }
-.sidebar ul li a{ justify-content:center; }
-.main{ margin-left:90px; width:calc(100% - 90px); }
+.sidebar{
+width:90px;
+padding:20px 10px;
+}
+.logo{
+font-size:18px;
+}
+.sidebar ul li a span{
+display:none;
+}
+.sidebar ul li a{
+justify-content:center;
+}
+.main{
+margin-left:90px;
+width:calc(100% - 90px);
+}
 }
 
+/* Mobile (768px) */
 @media(max-width:768px){
-body{ display:block; }
-.sidebar{ position:relative; width:100%; height:auto; border-right:none; border-bottom:1px solid rgba(255,255,255,.08); }
-.sidebar ul{ display:flex; overflow-x:auto; gap:12px; padding-bottom:10px; }
-.sidebar ul li{ flex:none; margin: 0; }
-.sidebar ul li a{ justify-content:center; padding:12px 16px; }
-.main{ margin-left:0; width:100%; padding:20px; }
-.topbar{ flex-direction:column; align-items:flex-start; gap:18px; }
-.profile{ width:100%; justify-content:center; }
-.cards{ grid-template-columns:1fr; }
+body{
+display:block;
+}
+.sidebar{
+position:relative;
+width:100%;
+height:auto;
+border-right:none;
+border-bottom:1px solid rgba(255,255,255,.08);
+padding: 20px !important;
+}
+.sidebar ul{
+display:flex;
+overflow-x:auto;
+gap:12px;
+padding-bottom:10px;
+}
+.sidebar ul li{
+flex:none;
+margin: 0 !important;
+}
+.sidebar ul li a{
+justify-content:center;
+padding:12px 16px;
+}
+.main{
+margin-left:0;
+width:100%;
+padding:20px;
+}
+.topbar{
+flex-direction:column;
+align-items:flex-start;
+gap:18px;
+}
+.profile{
+width:100%;
+justify-content:center;
+}
+.cards{
+grid-template-columns:1fr;
+}
 }
 
+/* Fade animation */
+@keyframes fadeIn{
+from{ opacity:0; transform:translateY(25px); }
+to{ opacity:1; transform:translateY(0); }
+}
+
+.sidebar,
+.topbar,
+.cards {
+animation:fadeIn .7s ease;
+}
