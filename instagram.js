@@ -43,7 +43,10 @@ async function loadUserInstagram() {
     }
 
     const userEmailEl = document.getElementById("userEmail");
+    const userNameEl = document.getElementById("userName");
+    
     if (userEmailEl) userEmailEl.innerText = data.session.user.email;
+    if (userNameEl) userNameEl.innerText = data.session.user.email.split("@")[0];
 
     const userUuid = data.session.user.id;
 
@@ -130,16 +133,51 @@ async function saveInstagramToken(metaUserId, token) {
 }
 
 // ==========================================
-// 5. LOGOUT LOGIC
+// 5. LOGOUT LOGIC & SIDEBAR NAVIGATION
 // ==========================================
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        if (confirm("Logout from your account?")) {
-            await supabaseClient.auth.signOut();
-            window.location.href = "login.html";
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // 💡 இங்க தான் புதிய பட்டன் லிங்க் ஆட் செய்யப்பட்டுள்ளது
+    const goToAutomationBtn = document.getElementById("goToAutomationBtn");
+    if (goToAutomationBtn) {
+        goToAutomationBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "automation.html";
+        });
+    }
+
+    // சைடுபார் பட்டன்களுக்கான நேவிகேஷன் லிங்குகள்
+    const navLinks = [
+        { id: "dashboardBtn", url: "dashboard.html" },
+        { id: "instagramBtn", url: "instagram.html" },
+        { id: "facebookBtn", url: "facebook.html" },
+        { id: "automationBtn", url: "automation.html" },
+        { id: "commentsBtn", url: "comments.html" },
+        { id: "autodmBtn", url: "autodm.html" },
+        { id: "keywordsBtn", url: "keywords.html" },
+        { id: "analyticsBtn", url: "analytics.html" },
+        { id: "settingsBtn", url: "settings.html" }
+    ];
+
+    navLinks.forEach(link => {
+        const btn = document.getElementById(link.id);
+        if (btn) {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.location.href = link.url;
+            });
         }
     });
-}
 
+    // Logout பட்டன்
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (confirm("Logout from your account?")) {
+                await supabaseClient.auth.signOut();
+                window.location.href = "login.html";
+            }
+        });
+    }
+});
