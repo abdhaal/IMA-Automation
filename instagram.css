@@ -2,13 +2,15 @@
    IMA AUTOMATION - INSTAGRAM PREMIUM THEME (100% MAIN DASHBOARD MATCH)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght=300;400;500;600;700;800&display=swap');
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 html, body {
@@ -40,135 +42,38 @@ body {
 }
 
 /* ==========================================================================
-   💻 1. EXACT SIDEBAR FIXED RESET (AS PER SCREENSHOT)
+   💻 1. DESKTOP LAYOUT RESET (85px SIDEBAR WITH EMBEDDED STYLES)
 ========================================================================== */
 @media (min-width: 769px) {
-    /* ================= Sidebar ================= */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 85px !important; /* அசல் டேஷ்போர்டின் அதே அளவு */
+        height: 100vh !important;
+        min-height: 100vh !important;
+        background: rgba(8, 15, 35, 0.92) !important;
+        backdrop-filter: blur(25px);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 25px 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        z-index: 1000 !important;
+        overflow-y: auto !important;
+    }
 
-.sidebar{
-
-width:260px;
-
-height:100vh;
-
-position:fixed;
-
-left:0;
-
-top:0;
-
-padding:25px;
-
-background:rgba(255,255,255,.05);
-
-backdrop-filter:blur(25px);
-
-border-right:1px solid rgba(255,255,255,.08);
-
-box-shadow:0 0 30px rgba(0,0,0,.35);
-
-}
-
-.logo{
-
-font-size:28px;
-
-font-weight:700;
-
-margin-bottom:45px;
-
-letter-spacing:1px;
-
-text-align:center;
-
-background:linear-gradient(90deg,#3b82f6,#9333ea);
-
--webkit-background-clip:text;
-
--webkit-text-fill-color:transparent;
-
-}
-
-.sidebar ul{
-
-list-style:none;
-
-}
-
-.sidebar ul li{
-
-margin:14px 0;
-
-}
-
-.sidebar ul li a{
-
-display:flex;
-
-align-items:center;
-
-gap:15px;
-
-padding:15px 18px;
-
-text-decoration:none;
-
-color:#d8d8d8;
-
-font-size:15px;
-
-font-weight:500;
-
-border-radius:14px;
-
-transition:.35s;
-
-}
-
-.sidebar ul li a i{
-
-width:22px;
-
-text-align:center;
-
-font-size:18px;
-
-}
-
-.sidebar ul li a:hover{
-
-background:linear-gradient(90deg,#2563eb,#7c3aed);
-
-color:#fff;
-
-transform:translateX(6px);
-
-box-shadow:0 10px 25px rgba(37,99,235,.35);
-
-}
-
-.sidebar ul li.active a{
-
-background:linear-gradient(90deg,#2563eb,#7c3aed);
-
-color:#fff;
-
-}
-
-/* ============== Main Area ============== */
-
-.main{
-
-margin-left:260px;
-
-width:calc(100% - 260px);
-
-padding:35px;
-
+    .main {
+        margin-left: 85px !important; /* சைடுபார் இடஒதுக்கீடு கச்சிதமாக */
+        width: calc(100% - 85px) !important;
+        padding: 35px !important;
+        display: block !important;
+        animation: fadePage .6s ease;
+    }
 }
 
 /* ==========================================================================
-   ⚡ 2. SIDEBAR ELEMENTS (LOGO & ICON CENTERED NAV)
+   ⚡ 2. SIDEBAR INTERNAL ELEMENTS (ICON CENTERED)
 ========================================================================== */
 .sidebar .logo {
     font-size: 24px;
@@ -201,7 +106,7 @@ padding:35px;
     transition: all 0.35s ease;
 }
 
-/* 🎯 ACTIVE STATE (உங்களுடைய மெயின் பேஜின் அதே பர்பிள்/ப்ளூ தீம்) */
+/* 🎯 HOVER & ACTIVE STATE EFFECT */
 .sidebar ul li a:hover, 
 .sidebar ul li.active a {
     background: linear-gradient(90deg, #2563eb, #9333ea) !important;
@@ -401,4 +306,4 @@ padding:35px;
 @keyframes fadePage {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
-}
+   }
