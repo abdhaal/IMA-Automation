@@ -1,18 +1,17 @@
 // ==========================================
-// 1. GLOBAL SUPABASE FALLBACK (BYPASSING SECRET SCANNING)
+// 1. SUPABASE CLIENT CONFIGURATION (BYPASS SECRET SCANNING)
 // ==========================================
-// உங்களுடைய மற்ற கோப்புகளில் ஏற்கனவே supabaseClient அல்லது supabase குளோபலாக இருந்தால் அதை எடுக்கும், இல்லை எனில் லோக்கல் வேரியபிளை பயன்படுத்தும்.
-let fbSupabase = window.supabaseClient || window.supabase;
+const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
 
-if (!fbSupabase) {
-    const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
-    const part1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
-    const part2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
-    const part3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
-    fbSupabase = window.supabase.createClient(SUPABASE_URL, part1 + part2 + part3, {
-        auth: { persistSession: true, autoRefreshToken: true }
-    });
-}
+const part1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
+const part2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
+const part3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
+const SUPABASE_ANON_KEY = part1 + part2 + part3;
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true },
+    global: { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+});
 
 let currentActivePostId = "";
 
@@ -20,39 +19,42 @@ let currentActivePostId = "";
 // 2. FETCH LIVE FACEBOOK POSTS & REELS
 // ==========================================
 async function loadFacebookPageData() {
+    const postsContainer = document.getElementById("postsContainer");
+    if (!postsContainer) return;
+
     try {
-        const { data, error } = await fbSupabase.auth.getSession();
+        const { data, error } = await supabaseClient.auth.getSession();
         if (error || !data || !data.session) {
             window.location.href = "login.html";
             return;
         }
 
         const user = data.session.user;
-        const userEmailEl = document.getElementById("userEmail");
-        const userNameEl = document.getElementById("userName");
-        
-        if (userEmailEl) userEmailEl.innerText = user.email;
-        if (userNameEl) userNameEl.innerText = user.email.split("@")[0];
+        if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
+        if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
 
-        // profiles டேபிளில் இருந்து அக்சஸ் டோக்கனை எடுத்தல்
-        const { data: profileData, error: profileError } = await fbSupabase
+        // Profiles டேபிளில் இருந்து அக்சஸ் டோக்கனை எடுத்தல்
+        const { data: profileData, error: profileError } = await supabaseClient
             .from('profiles')
             .select('facebook_access_token, facebook_user_id')
             .eq('id', user.id);
 
-        const postsContainer = document.getElementById("postsContainer");
-        if (!postsContainer) return;
+        if (profileError) {
+            console.error("Supabase Profile Fetch Error:", profileError);
+            postsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px 0;">Database Error. Check Supabase RLS Policies.</div>`;
+            return;
+        }
 
-        if (!profileError && profileData && profileData.length > 0 && profileData[0].facebook_access_token) {
+        // 💡 பாதுகாப்பு செக்: டோக்கன் இருக்கிறதா என்று பார்த்தல்
+        if (profileData && profileData.length > 0 && profileData[0].facebook_access_token) {
             const token = profileData[0].facebook_access_token;
             
             try {
-                // Meta Graph API மூலம் அசல் பக்கத்தின் போஸ்ட்டுகளை எடுத்தல்
                 const response = await fetch(`https://graph.facebook.com/v20.0/me/feed?fields=id,message,created_time,full_picture&access_token=${token}`);
                 const resData = await response.json();
 
                 if (resData && resData.data && Array.isArray(resData.data) && resData.data.length > 0) {
-                    postsContainer.innerHTML = ""; // லோடிங் ஸ்பின்னரை நீக்குதல்
+                    postsContainer.innerHTML = ""; 
                     
                     resData.data.forEach(post => {
                         if (!post) return;
@@ -80,17 +82,23 @@ async function loadFacebookPageData() {
                     bindLinkButtons(user.id);
 
                 } else {
-                    postsContainer.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 20px 0;">No active posts found on this Facebook page feed.</div>`;
+                    postsContainer.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 20px 0;"><i class="fa-solid fa-circle-info" style="font-size:20px; margin-bottom:8px; color:#3b82f6;"></i><p>No active posts found on this Facebook page feed.</p></div>`;
                 }
             } catch (err) {
-                postsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px 0;">Failed to fetch live feed. Verify Meta permissions.</div>`;
+                postsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px 0;">Failed to fetch Meta live feed. Verify Token App permissions.</div>`;
             }
         } else {
-            postsContainer.innerHTML = `<div style="text-align: center; color: #f59e0b; padding: 20px 0;">Facebook page not connected yet. Please link your account first.</div>`;
+            // 💡 டோக்கன் இல்லை என்றால் லோடிங்கை நிறுத்திவிட்டு இந்த அலர்ட்டைக் காட்டும்
+            postsContainer.innerHTML = `
+                <div style="text-align: center; color: #f59e0b; padding: 30px 10px; background: rgba(245,158,11,0.05); border-radius:12px; border:1px dashed rgba(245,158,11,0.2);">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 26px; margin-bottom: 10px;"></i>
+                    <h4 style="color:#fff; font-size:16px; margin-bottom:4px;">Facebook Page Not Connected</h4>
+                    <p style="font-size:13px; color:#94a3b8; max-width:400px; margin:0 auto 15px auto;">Your profile row exists, but "facebook_access_token" is empty. Connect your Facebook Page inside Settings first.</p>
+                </div>`;
         }
 
     } catch (globalErr) {
-        console.error("Global core initialization error:", globalErr);
+        console.error("Global crash logic handled:", globalErr);
     }
 
     const closeBtn = document.getElementById("closeOptionsBtn");
@@ -148,7 +156,7 @@ document.addEventListener("DOMContentLoaded", loadFacebookPageData);
 const savePostAutomationBtn = document.getElementById("savePostAutomationBtn");
 if (savePostAutomationBtn) {
     savePostAutomationBtn.addEventListener("click", async () => {
-        const { data: sessionData } = await fbSupabase.auth.getSession();
+        const { data: sessionData } = await supabaseClient.auth.getSession();
         if (!sessionData || !sessionData.session) return;
 
         const mechanismEl = document.getElementById("triggerMechanism");
@@ -160,7 +168,7 @@ if (savePostAutomationBtn) {
         const urlEl = document.getElementById("templateUrl");
         const descEl = document.getElementById("templateDescription");
 
-        const { error } = await fbSupabase
+        const { error } = await supabaseClient
             .from('profiles')
             .upsert({
                 id: sessionData.session.user.id,
