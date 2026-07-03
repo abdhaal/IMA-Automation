@@ -1,5 +1,5 @@
 /* ==========================================================================
-   IMA AUTOMATION - INSTAGRAM PREMIUM DASHBOARD STYLES (100% MATCH)
+   IMA AUTOMATION - INSTAGRAM PREMIUM THEME (100% MAIN DASHBOARD MATCH)
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
@@ -9,8 +9,6 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
 }
 
 html, body {
@@ -27,8 +25,6 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: row;
-    transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
 }
 
 /* 🌟 SCROLLBAR STYLES */
@@ -44,30 +40,29 @@ body {
 }
 
 /* ==========================================================================
-   💻 1. DESKTOP LAYOUT (MINI SIDEBAR & MAIN CONTENT)
+   💻 1. EXACT SIDEBAR FIXED RESET (AS PER SCREENSHOT)
 ========================================================================== */
 @media (min-width: 769px) {
     .sidebar {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
-        width: 85px !important; /* பிரதான டேஷ்போர்டின் அதே 85px அகலம் */
+        width: 230px !important; /* உங்களுடைய அசல் மெயின் டேஷ்போர்டு சைடுபார் அகலம் */
         height: 100vh !important;
         min-height: 100vh !important;
         background: rgba(8, 15, 35, 0.92) !important;
         backdrop-filter: blur(25px);
         border-right: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 25px 10px !important;
+        padding: 35px 20px !important;
         display: flex !important;
         flex-direction: column !important;
-        align-items: center !important;
         z-index: 1000 !important;
         overflow-y: auto !important;
     }
 
     .main {
-        margin-left: 85px !important; /* சைடுபார் இட ஒதுக்கீடு */
-        width: calc(100% - 85px) !important;
+        margin-left: 230px !important; /* சைடுபார் 230px-க்கு இணையாக மெயின் பகுதி தள்ளப்படும் */
+        width: calc(100% - 230px) !important;
         padding: 35px !important;
         display: block !important;
         animation: fadePage .6s ease;
@@ -75,51 +70,17 @@ body {
 }
 
 /* ==========================================================================
-   📱 2. MOBILE LAYOUT (TOPBAR SIDEBAR RESET)
-========================================================================== */
-@media (max-width: 768px) {
-    body {
-        flex-direction: column !important;
-    }
-
-    .sidebar {
-        position: relative !important;
-        width: 100% !important;
-        height: auto !important;
-        min-height: auto !important;
-        padding: 15px !important;
-        background: rgba(8, 15, 35, 0.95) !important;
-        border-right: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        z-index: 1000 !important;
-    }
-
-    .main {
-        margin-left: 0 !important;
-        width: 100% !important;
-        padding: 20px !important;
-        animation: fadePage .6s ease;
-    }
-}
-
-/* ==========================================================================
-   ⚡ 3. SIDEBAR ELEMENTS ELEMENTS (LOGO & NAVIGATION LINKS)
+   ⚡ 2. SIDEBAR ELEMENTS (LOGO & ICON CENTERED NAV)
 ========================================================================== */
 .sidebar .logo {
-    font-size: 24px;
+    font-size: 22px;
+    font-weight: 700;
     color: #3b82f6;
     margin-bottom: 35px;
-    text-align: center;
-}
-
-@media (max-width: 768px) {
-    .sidebar .logo {
-        margin-bottom: 0 !important;
-    }
+    padding-left: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .sidebar ul {
@@ -127,33 +88,17 @@ body {
     width: 100%;
 }
 
-@media (max-width: 768px) {
-    .sidebar ul {
-        display: flex !important;
-        justify-content: flex-end !important;
-        gap: 8px !important;
-        width: auto !important;
-    }
-}
-
 .sidebar ul li {
     width: 100%;
-    margin-bottom: 12px;
-}
-
-@media (max-width: 768px) {
-    .sidebar ul li {
-        width: auto !important;
-        margin-bottom: 0 !important;
-    }
+    margin-bottom: 10px;
 }
 
 .sidebar ul li a {
     display: flex;
-    justify-content: center;
     align-items: center;
-    width: 55px;
-    height: 55px;
+    justify-content: center; /* ஐகான்கள் மட்டும் நடுவில் அமர */
+    width: 50px;
+    height: 50px;
     margin: 0 auto;
     border-radius: 16px;
     color: #8fa0dd;
@@ -162,15 +107,7 @@ body {
     transition: all 0.35s ease;
 }
 
-@media (max-width: 768px) {
-    .sidebar ul li a {
-        width: 42px !important;
-        height: 42px !important;
-        font-size: 16px !important;
-    }
-}
-
-/* 🎯 HOVER & ACTIVE GRADIENT LOGIC */
+/* 🎯 ACTIVE STATE (உங்களுடைய மெயின் பேஜின் அதே பர்பிள்/ப்ளூ தீம்) */
 .sidebar ul li a:hover, 
 .sidebar ul li.active a {
     background: linear-gradient(90deg, #2563eb, #9333ea) !important;
@@ -179,21 +116,13 @@ body {
 }
 
 /* ==========================================================================
-   💎 4. TOPBAR, PROFILE & CARD DESIGN
+   💎 3. TOPBAR & PROFILE CARD DESIGN
 ========================================================================== */
 .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 35px;
-}
-
-@media (max-width: 768px) {
-    .topbar {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 15px !important;
-    }
 }
 
 .topbar h1 {
@@ -205,33 +134,21 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
-@media (max-width: 768px) {
-    .topbar h1 {
-        font-size: 32px !important;
-    }
-}
-
 .topbar p {
     color: #9ca3af;
-    font-size: 15px;
-    margin-top: 4px;
+    font-size: 16px;
+    margin-top: 6px;
 }
 
 .profile {
     display: flex;
     align-items: center;
     gap: 15px;
-    padding: 15px 20px;
+    padding: 15px 22px;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(20px);
-}
-
-@media (max-width: 768px) {
-    .profile {
-        width: 100% !important;
-    }
 }
 
 .profile i {
@@ -250,10 +167,12 @@ body {
     font-weight: 600;
 }
 
-/* 📦 CARDS GRID GRID STYLES */
+/* ==========================================================================
+   📦 4. PREMIUM GLASS CARDS GRID (MATCHING DASHBOARD OVERVIEW)
+========================================================================== */
 .cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 28px;
     margin-top: 20px;
 }
@@ -266,45 +185,44 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(20px);
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+    transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
 }
 
 .card:hover {
     transform: translateY(-6px) !important;
-    border-color: rgba(59, 130, 246, 0.4) !important;
+    border-color: #3b82f6 !important;
     box-shadow:
-        0 20px 50px rgba(37, 99, 235, 0.20),
-        0 0 35px rgba(124, 58, 237, 0.15) !important;
+        0 20px 50px rgba(37, 99, 235, 0.25),
+        0 0 35px rgba(124, 58, 237, 0.18) !important;
 }
 
 .card-header-icon {
     font-size: 32px;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
     background: linear-gradient(135deg, #3b82f6, #9333ea);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: inline-block;
 }
 
-/* இன்ஸ்டாகிராம் கார்டுக்கு மட்டும் இன்ஸ்டா பிராண்ட் கலர் க்ளோ தர */
 .card h3 {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .card p {
-    font-size: 14px;
+    font-size: 15px;
     color: #b8c0d4;
     margin-bottom: 15px;
-    line-height: 1.7;
+    line-height: 1.8;
 }
 
-/* 🔮 BUTTONS & GLOW EFFECTS */
+/* 🔮 BUTTON GRAIDENT & SHINE */
 .card button {
     width: 100%;
-    padding: 14px;
+    padding: 15px;
     border: none;
     border-radius: 15px;
     font-size: 15px;
@@ -312,7 +230,7 @@ body {
     cursor: pointer;
     color: #fff;
     background: linear-gradient(90deg, #2563eb, #9333ea);
-    transition: all 0.3s ease;
+    transition: all 0.35s ease;
     box-shadow: 0 10px 25px rgba(59, 130, 246, 0.35);
 }
 
@@ -321,13 +239,69 @@ body {
     box-shadow: 0 15px 30px rgba(59, 130, 246, 0.45);
 }
 
-/* 🌟 FADE IN ANIMATION */
+/* ==========================================================================
+   📱 5. MOBILE RESPONSIVE LAYOUT (MAX-WIDTH: 768px)
+========================================================================== */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column !important;
+    }
+
+    .sidebar {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 15px !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .sidebar .logo {
+        margin-bottom: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    .sidebar ul {
+        display: flex !important;
+        justify-content: flex-end !important;
+        gap: 6px !important;
+        width: auto !important;
+    }
+
+    .sidebar ul li {
+        width: auto !important;
+        margin-bottom: 0 !important;
+    }
+
+    .sidebar ul li a {
+        width: 42px !important;
+        height: 42px !important;
+        font-size: 16px !important;
+    }
+
+    .main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 20px !important;
+    }
+
+    .topbar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px !important;
+    }
+
+    .profile {
+        width: 100% !important;
+    }
+}
+
+/* 🌟 SMOOTH ANIMATION */
 @keyframes fadePage {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-::selection {
-    background: #2563eb;
-    color: #fff;
 }
