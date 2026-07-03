@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automation Engine | IMA Automation</title>
+    <link rel="stylesheet" href="automation.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-bolt"></i>
+        </div>
+        <ul>
+            <li><a href="#" id="dashboardBtn"><i class="fa-solid fa-house"></i><span>Dashboard</span></a></li>
+            <li><a href="#" id="instagramBtn"><i class="fa-brands fa-instagram"></i><span>Instagram</span></a></li>
+            <li><a href="#" id="facebookBtn"><i class="fa-brands fa-facebook"></i><span>Facebook</span></a></li>
+            <li class="active"><a href="#" id="automationBtn"><i class="fa-solid fa-robot"></i><span>Automation</span></a></li>
+            <li><a href="#" id="commentsBtn"><i class="fa-solid fa-comment"></i><span>Comments</span></a></li>
+            <li><a href="#" id="autodmBtn"><i class="fa-solid fa-paper-plane"></i><span>Auto DM</span></a></li>
+            <li><a href="#" id="keywordsBtn"><i class="fa-solid fa-key"></i><span>Keywords</span></a></li>
+            <li><a href="#" id="analyticsBtn"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a></li>
+            <li><a href="#" id="settingsBtn"><i class="fa-solid fa-gear"></i><span>Settings</span></a></li>
+            <li><a href="#" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a></li>
+        </ul>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <div>
+                <h1>Automation Engine</h1>
+                <p>Configure Core Omnichannel Automation Rules</p>
+            </div>
+            <div class="profile">
+                <i class="fa-solid fa-user"></i>
+                <div>
+                    <span id="userName">User</span>
+                    <span id="userEmail" style="font-size: 12px; color: #94a3b8; display: block;">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <div>
+                    <i class="fa-solid fa-robot"></i>
+                    <h2 style="margin-top: 10px;">Master Engine</h2>
+                    <p>Turn all automated comment & DM triggers ON or OFF</p>
+                </div>
+                <div class="status-text" style="margin: 15px 0;">
+                    Status: <span id="masterStatus" style="color:#ef4444; font-weight:700;">STOPPED 🛑</span>
+                </div>
+                <button id="toggleMasterBtn">Start Automation Engine</button>
+            </div>
+
+            <div class="card">
+                <div>
+                    <i class="fa-brands fa-instagram"></i>
+                    <h2 style="margin-top: 10px;">Instagram Sync</h2>
+                    <p>Configure dedicated triggers for keywords, stories, and feed posts</p>
+                </div>
+                <button id="configInstaBtn">Configure Instagram</button>
+            </div>
+
+            <div class="card">
+                <div>
+                    <i class="fa-brands fa-facebook"></i>
+                    <h2 style="margin-top: 10px;">Facebook Sync</h2>
+                    <p>Manage auto-replies for page comments and messenger streams</p>
+                </div>
+                <button id="configFbBtn">Configure Facebook</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="automation.js"></script>
+</body>
+                  </html>
+
