@@ -14,31 +14,75 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 let currentActivePostId = "";
 
 // ==========================================
-// 2. LIFECYCLE INITIALIZER & DYNAMIC INTERACTION
+// 2. FETCH LIVE FACEBOOK POSTS & REELS
 // ==========================================
-async function loadFacebookPage() {
+async function loadFacebookPageData() {
     const { data, error } = await supabaseClient.auth.getSession();
     if (error || !data.session) {
         window.location.href = "login.html";
         return;
     }
 
-    if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
-    if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
+    const user = data.session.user;
+    if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
+    if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
 
-    // லிங்க் பட்டன்களுக்கான கிளிக் நிகழ்வுகளை இணைத்தல்
-    const linkButtons = document.querySelectorAll(".link-post-btn");
-    linkButtons.forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const postId = btn.getAttribute("data-post-id");
-            const postTitle = btn.parentElement.querySelector("h4").innerText;
-            
-            openAutomationOptions(postId, postTitle, data.session.user.id);
-        });
-    });
+    // சுபாபேஸ் profiles டேபிளில் இருந்து ஃபேஸ்புக் அக்சஸ் டோக்கனை எடுத்தல்
+    const { data: profileData } = await supabaseClient
+        .from('profiles')
+        .select('facebook_access_token, facebook_user_id')
+        .eq('id', user.id);
 
-    // க்ளோஸ் பட்டன் கிளிக் நிகழ்வு
+    const postsContainer = document.getElementById("postsContainer");
+
+    if (profileData && profileData.length > 0 && profileData[0].facebook_access_token) {
+        const token = profileData[0].facebook_access_token;
+        
+        try {
+            // Meta Graph API மூலம் அசல் பக்கத்தின் போஸ்ட்டுகளை எடுத்தல்
+            const response = await fetch(`https://graph.facebook.com/v20.0/me/feed?fields=id,message,created_time,full_picture&access_token=${token}`);
+            const resData = await response.json();
+
+            if (resData && resData.data && resData.data.length > 0) {
+                postsContainer.innerHTML = ""; // லோடிங் ஸ்பின்னரை நீக்குதல்
+                
+                resData.data.forEach(post => {
+                    const postMessage = post.message ? post.message.substring(0, 50) + "..." : "Facebook Post / Reel Content";
+                    const postDate = new Date(post.created_time).toLocaleDateString();
+                    const postImg = post.full_picture || "";
+
+                    // டைனமிக் ஆக அசல் ஃபேஸ்புக் போஸ்ட் கார்டுகளை உருவாக்குதல்
+                    const postRow = document.createElement("div");
+                    postRow.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);";
+                    
+                    postRow.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            ${postImg ? `<img src="${postImg}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">` : 
+                            `<div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-video" style="margin:0; font-size: 16px; color: #fff;"></i></div>`}
+                            <div style="text-align: left;">
+                                <h4 class="post-title-text" style="font-size: 15px; font-weight: 600; margin: 0;">${postMessage}</h4>
+                                <p style="font-size: 12px; color: #94a3b8; margin: 0;">Published: ${postDate}</p>
+                            </div>
+                        </div>
+                        <button class="link-post-btn" data-post-id="${post.id}" style="width: auto; padding: 8px 20px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #2563eb, #1d4ed8);">Link</button>
+                    `;
+                    postsContainer.appendChild(postRow);
+                });
+
+                // புதிய பட்டன்களுக்கு கிளிக் லிசனர் இணைத்தல்
+                bindLinkButtons(user.id);
+
+            } else {
+                postsContainer.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 20px 0;">No active posts found on this Facebook page feed.</div>`;
+            }
+        } catch (err) {
+            postsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px 0;">Failed to fetch live feed. Verify Meta permissions.</div>`;
+        }
+    } else {
+        postsContainer.innerHTML = `<div style="text-align: center; color: #f59e0b; padding: 20px 0;">Facebook page not connected yet. Please link your account first.</div>`;
+    }
+
+    // க்ளோஸ் சிஸ்டம்
     const closeBtn = document.getElementById("closeOptionsBtn");
     if (closeBtn) {
         closeBtn.addEventListener("click", () => {
@@ -52,32 +96,22 @@ async function loadFacebookPage() {
     }
 }
 
-// ஆப்ஷன்ஸ் கார்டை ஓப்பன் செய்யும் மெத்தட்
+function bindLinkButtons(userUuid) {
+    const linkButtons = document.querySelectorAll(".link-post-btn");
+    linkButtons.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const postId = btn.getAttribute("data-post-id");
+            const postTitle = btn.parentElement.querySelector(".post-title-text").innerText;
+            openAutomationOptions(postId, postTitle, userUuid);
+        });
+    });
+}
+
 async function openAutomationOptions(postId, postTitle, userUuid) {
     currentActivePostId = postId;
     document.getElementById("selectedPostTitle").innerText = "Link Settings: " + postTitle;
     
-    // குறிப்பிட்ட போஸ்டிற்கான பழைய டேட்டா ஏதேனும் இருந்தால் சுபாபேஸிலிருந்து எடுத்தல்
-    const { data: profileData } = await supabaseClient
-        .from('profiles')
-        .select('fb_trigger_type, fb_exclude_keywords, fb_comment_reply_active, fb_dm_active, fb_delay, fb_btn_title, fb_url, fb_desc')
-        .eq('id', userUuid);
-
-    if (profileData && profileData.length > 0) {
-        const config = profileData[0];
-        document.getElementById("triggerMechanism").value = config.fb_trigger_type || "all";
-        document.getElementById("excludeKeywords").value = config.fb_exclude_keywords || "";
-        document.getElementById("commentAutoReplyCheck").checked = config.fb_comment_reply_active || false;
-        document.getElementById("sendDMCheck").checked = config.fb_dm_active || false;
-        document.getElementById("delayTime").value = config.fb_delay || "";
-        document.getElementById("templateBtnTitle").value = config.fb_btn_title || "";
-        document.getElementById("templateUrl").value = config.fb_url || "";
-        document.getElementById("templateDescription").value = config.fb_desc || "";
-    }
-
-    toggleKeywordInput();
-    
-    // ஆப்ஷன் கார்டை திரையில் காண்பித்தல்
     const optionsCard = document.getElementById("automationOptionsCard");
     optionsCard.style.display = "block";
     optionsCard.scrollIntoView({ behavior: 'smooth' });
@@ -91,10 +125,10 @@ function toggleKeywordInput() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", loadFacebookPage);
+document.addEventListener("DOMContentLoaded", loadFacebookPageData);
 
 // ==========================================
-// 3. DATA SAVE HANDLER
+// 3. ACTION SAVE STATE
 // ==========================================
 const savePostAutomationBtn = document.getElementById("savePostAutomationBtn");
 if (savePostAutomationBtn) {
@@ -120,7 +154,7 @@ if (savePostAutomationBtn) {
         if (error) {
             alert("Sync Failed: " + error.message);
         } else {
-            alert("Automation Flow Linked Successfully to Post! 🎉");
+            alert("Automation Flow Linked Successfully! 🎉");
             document.getElementById("automationOptionsCard").style.display = "none";
         }
     });
@@ -144,22 +178,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     navLinks.forEach(link => {
         const btn = document.getElementById(link.id);
-        if (btn) {
-            btn.addEventListener("click", (e) => {
-                e.preventDefault();
-                window.location.href = link.url;
-            });
-        }
+        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
     });
-
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", async (e) => {
-            e.preventDefault();
-            if (confirm("Logout from account?")) {
-                await supabaseClient.auth.signOut();
-                window.location.href = "login.html";
-            }
-        });
-    }
 });
