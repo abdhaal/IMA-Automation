@@ -15,7 +15,7 @@ let currentActivePostId = "";
 let currentUserUuid = "";
 
 // ==========================================
-// 2. RENDERING REPLY RUSH STYLE CARDS
+// 2. RENDERING DYNAMIC REPLY RUSH GRID CARDS
 // ==========================================
 async function loadInstagramPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -66,31 +66,39 @@ async function loadInstagramPageData() {
             postsContainer.appendChild(card);
         });
 
+        // பட்டன் கிளிக்குகளை அக்கார்டியன் கார்டுடன் இணைத்தல்
         bindLinkButtons(user.id);
 
     } catch (gErr) { console.error(gErr); }
 }
 
 // ==========================================
-// 3. ACCORDION ACCELERATION & BINDINGS
+// 3. 🎯 ACCORDION FIX (GLOBAL WINDOW BINDING)
 // ==========================================
-function toggleAccordion(accId) {
+window.toggleAccordion = function(accId) {
     const content = document.getElementById(accId);
     if (!content) return;
     
     const isVisible = content.style.display === "block";
     
-    // அனைத்தையும் மூடுதல்
-    document.querySelectorAll(".accordion-content").forEach(el => el.style.style.display = "none");
-    document.querySelectorAll(".accordion-header i").forEach(el => el.className = "fa-solid fa-chevron-down");
+    // முதலில் மற்ற அனைத்து அக்கார்டியன்களையும் மூடுதல்
+    document.querySelectorAll(".accordion-content").forEach(el => {
+        el.style.display = "none";
+    });
+    document.querySelectorAll(".accordion-header i").forEach(el => {
+        el.className = "fa-solid fa-chevron-down";
+    });
     
-    // தேவைப்படுவதை மட்டும் திறத்தல்
+    // தற்போதைய அக்கார்டியனை மட்டும் டாக்ஃகுள் செய்தல்
     if (!isVisible) {
         content.style.display = "block";
-        event.currentTarget.querySelector("i").className = "fa-solid fa-chevron-up";
+        // செலக்ட் செய்யப்பட்ட ஹெடரின் ஐகானை மாற்றுதல்
+        const clickedHeader = content.previousElementSibling;
+        if (clickedHeader && clickedHeader.querySelector("i")) {
+            clickedHeader.querySelector("i").className = "fa-solid fa-chevron-up";
+        }
     }
-}
-window.toggleAccordion = toggleAccordion; // Global Scope Binding
+};
 
 function bindLinkButtons(userUuid) {
     document.querySelectorAll(".replyrush-btn").forEach(btn => {
@@ -102,18 +110,18 @@ function bindLinkButtons(userUuid) {
             currentActivePostId = postId;
             document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
             
-            const card = document.getElementById("automationOptionsCard");
-            card.style.display = "block";
-            card.scrollIntoView({ behavior: 'smooth' });
+            // செட்டிங்ஸ் கார்டைக் காட்டுதல்
+            document.getElementById("automationOptionsCard").style.display = "block";
+            document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
             
-            // முதல் அக்கார்டியனை ஆட்டோமேட்டிக்காக ஓப்பன் செய்கிறது
-            document.getElementById("triggerAcc").style.display = "block";
+            // முதல் அக்கார்டியனை (Trigger Section) தானாகவே திறந்து வைக்கிறது
+            window.toggleAccordion('triggerAcc');
         });
     });
 }
 
 // ==========================================
-// 4. SAVE & FORM SYNC CONTROLS
+// 4. ACTION INTERACTION LOGIC & SAVE CONTROL
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
@@ -153,4 +161,23 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
         alert("Configuration Linked for Post Successfully! 🚀🎉");
         document.getElementById("automationOptionsCard").style.display = "none";
     }
+});
+
+// CORE NAVIGATION LINKING
+document.addEventListener("DOMContentLoaded", () => {
+    const navLinks = [
+        { id: "dashboardBtn", url: "dashboard.html" },
+        { id: "instagramBtn", url: "instagram.html" },
+        { id: "facebookBtn", url: "facebook.html" },
+        { id: "automationBtn", url: "automation.html" },
+        { id: "commentsBtn", url: "comments.html" },
+        { id: "autodmBtn", url: "autodm.html" },
+        { id: "keywordsBtn", url: "keywords.html" },
+        { id: "analyticsBtn", url: "analytics.html" },
+        { id: "settingsBtn", url: "settings.html" }
+    ];
+    navLinks.forEach(link => {
+        const btn = document.getElementById(link.id);
+        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
+    });
 });
