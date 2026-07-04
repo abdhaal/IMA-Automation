@@ -1,3 +1,6 @@
+// ==========================================
+// 1. SUPABASE CLIENT CONFIGURATION
+// ==========================================
 const SUPABASE_URL = "https://psrdnqptvdcwthoquhst.supabase.co";
 const part1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.";
 const part2 = "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzcmRucXB0dmRjd3Rob3F1aHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjI3NzcsImV4cCI6MjA5ODQ5ODc3N30.";
@@ -12,7 +15,9 @@ let currentActivePostId = "";
 let currentUserUuid = "";
 let currentSelectedTemplateType = "media";
 
-// RENDERING REPLY RUSH FEED CARDS
+// ==========================================
+// 2. RENDERING DYNAMIC REPLY RUSH FEED CARDS
+// ==========================================
 async function loadInstagramPageData() {
     const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
@@ -30,6 +35,7 @@ async function loadInstagramPageData() {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
 
+        // Reply Rush Grid Sandbox Live Mock Data
         const mockInstagramPosts = [
             { id: "ig_01", title: "Smart Solar Step Lights for Stairs & Walls! 🔥", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&q=80", comments: "48", likes: "2.4k" },
             { id: "ig_02", title: "Stop Dust, Insects & AC Cooling Loss with This!", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&q=80", comments: "12", likes: "840" },
@@ -61,22 +67,32 @@ async function loadInstagramPageData() {
 
         bindLinkButtons(user.id);
 
-    } catch (gErr) { console.error(gErr); }
+    } catch (gErr) { 
+        console.error(gErr); 
+    }
 }
 
-// ACCORDION CONTROLLERS
+// ==========================================
+// 3. ACCORDION CONTROLLERS
+// ==========================================
 window.toggleAccordion = function(accId) {
     const content = document.getElementById(accId);
     if (!content) return;
     const isVisible = content.style.display === "block";
     
-    document.querySelectorAll(".accordion-content").forEach(el => el.style.display = "none");
-    document.querySelectorAll(".accordion-header i").forEach(el => el.className = "fa-solid fa-chevron-down");
+    document.querySelectorAll(".accordion-content").forEach(el => {
+        el.style.display = "none";
+    });
+    document.querySelectorAll(".accordion-header i").forEach(el => {
+        el.className = "fa-solid fa-chevron-down";
+    });
     
     if (!isVisible) {
         content.style.display = "block";
         const header = content.previousElementSibling;
-        if (header && header.querySelector("i")) header.querySelector("i").className = "fa-solid fa-chevron-up";
+        if (header && header.querySelector("i")) {
+            header.querySelector("i").className = "fa-solid fa-chevron-up";
+        }
     }
 };
 
@@ -90,9 +106,11 @@ function bindLinkButtons(userUuid) {
             
             document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
             
-            // Set image to mock smartphone card slots
+            // Set image to mock smartphone card slot
             const imgSlot = document.getElementById("previewImageSlot");
-            if (imgSlot) imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
+            if (imgSlot) {
+                imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
+            }
 
             document.getElementById("automationOptionsCard").style.display = "grid";
             document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
@@ -102,7 +120,9 @@ function bindLinkButtons(userUuid) {
     });
 }
 
-// 🎯 REAL-TIME TEMPLATE SWITCHER ENGINE
+// ==========================================
+// 4. REAL-TIME TEMPLATE SWITCHER ENGINE
+// ==========================================
 function handleTemplateTypeSwitch(type) {
     currentSelectedTemplateType = type;
     
@@ -115,6 +135,8 @@ function handleTemplateTypeSwitch(type) {
     const imgSlot = document.getElementById("previewImageSlot");
     const bodyContent = document.getElementById("previewCardBodyContent");
     const liveBtn = document.getElementById("livePreviewBtn");
+
+    if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn) return;
 
     // Standard baseline reset
     hBlock.style.display = "block";
@@ -129,18 +151,14 @@ function handleTemplateTypeSwitch(type) {
     if (type === "media") {
         // Media template shows everything
     } else if (type === "text") {
-        // Text template only shows description text inside a single bubble chat layout
         hBlock.style.display = "none";
         bBlock.style.display = "none";
         uBlock.style.display = "none";
         imgSlot.style.display = "none";
-        bodyContent.style.display = "block";
         liveBtn.style.display = "none";
     } else if (type === "quick" || type === "button") {
-        // Quick reply / Button layouts omit top hero imagery mapping
         imgSlot.style.display = "none";
     } else if (type === "attach") {
-        // Attachments only mirror content streams without text blocks
         hBlock.style.display = "none";
         dBlock.style.display = "none";
         bBlock.style.display = "none";
@@ -149,21 +167,22 @@ function handleTemplateTypeSwitch(type) {
         liveBtn.style.display = "none";
     }
     
-    // Refresh mirror elements manually to sync placeholder states properly
     triggerLiveMirrorUpdate();
 }
 
 function triggerLiveMirrorUpdate() {
-    const headlineValue = document.getElementById("templateHeadline").value || "Card Headline";
-    const descValue = document.getElementById("templateDescription").value || "Template Description text goes here...";
-    const btnTitleValue = document.getElementById("templateBtnTitle").value || "Button Title";
+    const headlineValue = document.getElementById("templateHeadline")?.value || "Card Headline";
+    const descValue = document.getElementById("templateDescription")?.value || "Template Description text goes here...";
+    const btnTitleValue = document.getElementById("templateBtnTitle")?.value || "Button Title";
 
     const liveHeadline = document.getElementById("livePreviewHeadline");
     const liveDesc = document.getElementById("livePreviewDesc");
     const liveBtn = document.getElementById("livePreviewBtn");
 
+    if (!liveHeadline || !liveDesc || !liveBtn) return;
+
     if (currentSelectedTemplateType === "text") {
-        liveDesc.innerText = document.getElementById("templateDescription").value || "Text Message flow placeholder...";
+        liveDesc.innerText = document.getElementById("templateDescription")?.value || "Text Message flow placeholder...";
         liveHeadline.innerText = "";
     } else {
         liveHeadline.innerText = headlineValue;
@@ -172,7 +191,9 @@ function triggerLiveMirrorUpdate() {
     }
 }
 
-// DOM LISTENERS INTERACTION ENGINE
+// ==========================================
+// 5. DOM LISTENERS & LIFECYCLE CONTROLS
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
 
@@ -181,22 +202,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("triggerMechanism")?.addEventListener("change", (e) => {
-        document.getElementById("keywordInputWrapper").style.display = (e.target.value === "keywords") ? "block" : "none";
+        const wrapper = document.getElementById("keywordInputWrapper");
+        if (wrapper) wrapper.style.display = (e.target.value === "keywords") ? "block" : "none";
     });
 
-    // Toggle Input boxes based on checkboxes state
+    // Toggle input visibility based on checkbox status
     document.getElementById("commentAutoReplyCheck")?.addEventListener("change", (e) => {
-        document.getElementById("commentTextInputWrapper").style.display = e.target.checked ? "block" : "none";
+        const wrapper = document.getElementById("commentTextInputWrapper");
+        if (wrapper) wrapper.style.display = e.target.checked ? "block" : "none";
     });
 
     document.getElementById("sendDMCheck")?.addEventListener("change", (e) => {
-        document.getElementById("engagementTextInputWrapper").style.display = e.target.checked ? "block" : "none";
-        document.getElementById("previewEngagementBubble").style.display = e.target.checked ? "block" : "none";
+        const wrapper = document.getElementById("engagementTextInputWrapper");
+        const bubble = document.getElementById("previewEngagementBubble");
+        if (wrapper) wrapper.style.display = e.target.checked ? "block" : "none";
+        if (bubble) bubble.style.display = e.target.checked ? "block" : "none";
     });
 
-    // Real-time listen input streams mirror text
+    // Real-time input listeners mirror mapping
     document.getElementById("customEngagementText")?.addEventListener("input", (e) => {
-        document.getElementById("previewEngagementBubble").innerText = e.target.value || "Hi there! Thanks for your interest! 👋";
+        const bubble = document.getElementById("previewEngagementBubble");
+        if (bubble) bubble.innerText = e.target.value || "Hi there! Thanks for your interest! 👋";
     });
 
     document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
@@ -213,7 +239,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// SUBMIT SAVE FLOW RULE TARGETING
+// ==========================================
+// 6. DB RULES EXECUTION (SAVE OPERATION)
+// ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
 
@@ -222,22 +250,21 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
         .upsert({
             id: currentUserUuid,
             ig_active_post_id: currentActivePostId,
-            ig_trigger_type: document.getElementById("triggerMechanism").value,
+            ig_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
-            ig_exclude_keywords: document.getElementById("excludeKeywords").value.trim(),
+            ig_exclude_keywords: document.getElementById("excludeKeywords")?.value.trim() || "",
             
-            // Checkboxes & Text Values Saved to Database
-            ig_comment_reply_active: document.getElementById("commentAutoReplyCheck").checked,
+            ig_comment_reply_active: document.getElementById("commentAutoReplyCheck")?.checked || false,
             ig_custom_comment_text: document.getElementById("customCommentReplyText")?.value.trim() || "",
-            ig_dm_active: document.getElementById("sendDMCheck").checked,
+            ig_dm_active: document.getElementById("sendDMCheck")?.checked || false,
             ig_custom_engagement_text: document.getElementById("customEngagementText")?.value.trim() || "",
             
-            ig_delay: document.getElementById("delayTime").value.trim(),
+            ig_delay: document.getElementById("delayTime")?.value.trim() || "",
             ig_template_type: currentSelectedTemplateType,
-            ig_btn_title: document.getElementById("templateBtnTitle").value.trim(),
+            ig_btn_title: document.getElementById("templateBtnTitle")?.value.trim() || "",
             ig_headline: document.getElementById("templateHeadline")?.value.trim() || "",
-            ig_url: document.getElementById("templateUrl").value.trim(),
-            ig_desc: document.getElementById("templateDescription").value.trim(),
+            ig_url: document.getElementById("templateUrl")?.value.trim() || "",
+            ig_desc: document.getElementById("templateDescription")?.value.trim() || "",
             updated_at: new Date()
         });
 
@@ -245,6 +272,26 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
         alert("Instagram Sync Failed: " + error.message);
     } else {
         alert("Configuration Saved and Real-time Flows Synced Successfully! 🚀🎉");
-        document.getElementById("automationOptionsCard").style.display = "none";
+        const optionsCard = document.getElementById("automationOptionsCard");
+        if (optionsCard) optionsCard.style.display = "none";
     }
+});
+
+// CORE NAVIGATION LINKING
+document.addEventListener("DOMContentLoaded", () => {
+    const navLinks = [
+        { id: "dashboardBtn", url: "dashboard.html" },
+        { id: "instagramBtn", url: "instagram.html" },
+        { id: "facebookBtn", url: "facebook.html" },
+        { id: "automationBtn", url: "automation.html" },
+        { id: "commentsBtn", url: "comments.html" },
+        { id: "autodmBtn", url: "autodm.html" },
+        { id: "keywordsBtn", url: "keywords.html" },
+        { id: "analyticsBtn", url: "analytics.html" },
+        { id: "settingsBtn", url: "settings.html" }
+    ];
+    navLinks.forEach(link => {
+        const btn = document.getElementById(link.id);
+        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
+    });
 });
