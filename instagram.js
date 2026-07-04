@@ -67,13 +67,11 @@ async function loadInstagramPageData() {
 
         bindLinkButtons();
 
-    } catch (gErr) { 
-        console.error(gErr); 
-    }
+    } catch (gErr) { console.error(gErr); }
 }
 
 // ==========================================
-// 3. ACCORDION CONTROLLERS
+// 3. ACCORDION VIEW CONTROLLERS
 // ==========================================
 window.toggleAccordion = function(accId) {
     const content = document.getElementById(accId);
@@ -102,7 +100,7 @@ function bindLinkButtons() {
             base64CustomUploadedImage = postImg; 
 
             const imgSlot = document.getElementById("previewImageSlot");
-            if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`; }
+            if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;">`; }
 
             document.getElementById("automationOptionsCard").style.display = "grid";
             document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
@@ -132,33 +130,27 @@ function handleTemplateTypeSwitch(type) {
 
     if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn || !mSourceBlock || !autoRadioLabel) return;
 
-    // Standard base setting visibility reset
     hBlock.style.display = "block";
     dBlock.style.display = "block";
     bBlock.style.display = "block";
     uBlock.style.display = "block";
     mSourceBlock.style.display = "block";
-    autoRadioLabel.style.display = "flex"; // Default active
+    autoRadioLabel.style.display = "flex";
     richCard.style.display = "flex";
     imgSlot.style.display = "flex";
     bodyContent.style.display = "block";
     liveBtn.style.display = "block";
 
-    // 🎯 SMART TEMPLATE CONDITION ROUTER LOGIC
     if (type === "media") {
-        // Media Template: காட்டும் இரண்டு ஆப்ஷன்களும் (Manual & Auto Link)
+        // Media Template - standard active view mapping
     } else if (type === "attach") {
-        // Media Attachment: இமேஜ் பிளாக் மட்டும் இருக்கும், ஆனால் "Fetch from Product Link" ரேடியோ பட்டன் மறைந்துவிடும்!
         autoRadioLabel.style.display = "none";
-        
-        // போர்ஸ் ஆக மேனுவல் அப்லோடு மோடுக்கு மாத்துகிறது
         const manualRadio = document.querySelector("input[name='imageSourceToggle'][value='manual']");
         if (manualRadio) {
             manualRadio.checked = true;
             document.getElementById("manualUploadWrapper").style.display = "block";
             document.getElementById("autoFetchWrapper").style.display = "none";
         }
-
         hBlock.style.display = "none";
         dBlock.style.display = "none";
         bBlock.style.display = "none";
@@ -202,7 +194,17 @@ function triggerLiveMirrorUpdate() {
 }
 
 // ==========================================
-// 5. INPUT ACTION LISTENERS
+// 5. SMART IMAGE SCRAPER FALLBACK ENGINE
+// ==========================================
+function updatePreviewImage(srcPath) {
+    const imgSlot = document.getElementById("previewImageSlot");
+    if (imgSlot) {
+        imgSlot.innerHTML = `<img src="${srcPath}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
+    }
+}
+
+// ==========================================
+// 6. LIFE CYCLE & ACTION LISTENERS SETUP
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
@@ -237,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
 
-    // Toggle manual / auto link visibility
+    // Toggle source selections routers
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
             if (e.target.value === "manual") {
@@ -246,13 +248,15 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 document.getElementById("manualUploadWrapper").style.display = "none";
                 document.getElementById("autoFetchWrapper").style.display = "block";
-                const activeUrl = document.getElementById("templateUrl").value;
-                if (activeUrl && activeUrl.startsWith("http")) { updatePreviewImage(activeUrl); }
+                
+                // Trigger smart extractor if input contains valid headers
+                const activeUrl = document.getElementById("templateUrl").value.trim();
+                if (activeUrl && activeUrl.startsWith("http")) { processSmartAutoImageFetch(activeUrl); }
             }
         });
     });
 
-    // Manual Upload file handler mapping
+    // Local file binary base64 converter streams
     document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -265,27 +269,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Auto Link URL image fetch mapping
+    // URL change listen channel binding
     document.getElementById("templateUrl")?.addEventListener("input", (e) => {
         const targetUrl = e.target.value.trim();
         const selectedRadio = document.querySelector("input[name='imageSourceToggle']:checked")?.value;
-        
         if (selectedRadio === "auto" && targetUrl.startsWith("http")) {
-            if (targetUrl.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
-                base64CustomUploadedImage = targetUrl;
-                updatePreviewImage(targetUrl);
-            } else {
-                const smartImgFallback = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
-                base64CustomUploadedImage = smartImgFallback;
-                updatePreviewImage(smartImgFallback);
-            }
+            processSmartAutoImageFetch(targetUrl);
         }
     });
 
-    function updatePreviewImage(srcPath) {
-        const imgSlot = document.getElementById("previewImageSlot");
-        if (imgSlot) {
-            imgSlot.innerHTML = `<img src="${srcPath}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
+    // 🎯 SMART PRODUCT LINK EXTRACTION FALLBACK
+    function processSmartAutoImageFetch(urlStr) {
+        if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
+            base64CustomUploadedImage = urlStr;
+            updatePreviewImage(urlStr);
+        } else {
+            // அமேசான் / மற்ற லிங்க்குகளில் இருந்து தப்பான எர்ரர் வராமல் தடுக்க, நமது அசல் போஸ்ட்டின் இமேஜையே இதற்கும் எடுத்துக்கொள்கிறது!
+            const currentActivePostBtn = document.querySelector(`.replyrush-btn[data-post-id='${currentActivePostId}']`);
+            const fallbackSrc = currentActivePostBtn ? currentActivePostBtn.getAttribute("data-img") : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
+            base64CustomUploadedImage = fallbackSrc;
+            updatePreviewImage(fallbackSrc);
         }
     }
 
@@ -299,7 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB
+// 7. RELIABLE DATA ARCHIVE SAVE ENGINE
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
@@ -341,7 +344,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
     }
 });
 
-// CORE NAVIGATION PANEL LINKS
+// CORE NAVIGATION
 document.addEventListener("DOMContentLoaded", () => {
     const navLinks = [
         { id: "dashboardBtn", url: "dashboard.html" },
@@ -359,4 +362,4 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
     });
 });
-        
+    
