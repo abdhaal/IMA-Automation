@@ -99,7 +99,7 @@ function bindLinkButtons() {
             const postImg = btn.getAttribute("data-img");
             
             document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
-            base64CustomUploadedImage = postImg; // Default initial setup image fallback
+            base64CustomUploadedImage = postImg; 
 
             const imgSlot = document.getElementById("previewImageSlot");
             if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`; }
@@ -123,26 +123,48 @@ function handleTemplateTypeSwitch(type) {
     const bBlock = document.getElementById("buttonTitleFieldBlock");
     const uBlock = document.getElementById("urlFieldBlock");
     const mSourceBlock = document.getElementById("mediaSourceSelectionBlock");
+    const autoRadioLabel = document.getElementById("autoFetchRadioLabel");
     
     const richCard = document.getElementById("previewRichCardContainer");
     const imgSlot = document.getElementById("previewImageSlot");
     const bodyContent = document.getElementById("previewCardBodyContent");
     const liveBtn = document.getElementById("livePreviewBtn");
 
-    if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn || !mSourceBlock) return;
+    if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn || !mSourceBlock || !autoRadioLabel) return;
 
+    // Standard base setting visibility reset
     hBlock.style.display = "block";
     dBlock.style.display = "block";
     bBlock.style.display = "block";
     uBlock.style.display = "block";
     mSourceBlock.style.display = "block";
+    autoRadioLabel.style.display = "flex"; // Default active
     richCard.style.display = "flex";
     imgSlot.style.display = "flex";
     bodyContent.style.display = "block";
     liveBtn.style.display = "block";
 
+    // 🎯 SMART TEMPLATE CONDITION ROUTER LOGIC
     if (type === "media") {
-        // Keeps all blocks visible
+        // Media Template: காட்டும் இரண்டு ஆப்ஷன்களும் (Manual & Auto Link)
+    } else if (type === "attach") {
+        // Media Attachment: இமேஜ் பிளாக் மட்டும் இருக்கும், ஆனால் "Fetch from Product Link" ரேடியோ பட்டன் மறைந்துவிடும்!
+        autoRadioLabel.style.display = "none";
+        
+        // போர்ஸ் ஆக மேனுவல் அப்லோடு மோடுக்கு மாத்துகிறது
+        const manualRadio = document.querySelector("input[name='imageSourceToggle'][value='manual']");
+        if (manualRadio) {
+            manualRadio.checked = true;
+            document.getElementById("manualUploadWrapper").style.display = "block";
+            document.getElementById("autoFetchWrapper").style.display = "none";
+        }
+
+        hBlock.style.display = "none";
+        dBlock.style.display = "none";
+        bBlock.style.display = "none";
+        uBlock.style.display = "none";
+        bodyContent.style.display = "none";
+        liveBtn.style.display = "none";
     } else if (type === "text") {
         hBlock.style.display = "none";
         bBlock.style.display = "none";
@@ -153,13 +175,6 @@ function handleTemplateTypeSwitch(type) {
     } else if (type === "quick" || type === "button") {
         imgSlot.style.display = "none";
         mSourceBlock.style.display = "none";
-    } else if (type === "attach") {
-        hBlock.style.display = "none";
-        dBlock.style.display = "none";
-        bBlock.style.display = "none";
-        uBlock.style.display = "none";
-        bodyContent.style.display = "none";
-        liveBtn.style.display = "none";
     }
     
     triggerLiveMirrorUpdate();
@@ -187,7 +202,7 @@ function triggerLiveMirrorUpdate() {
 }
 
 // ==========================================
-// 5. INPUT ACTION LISTENERS WITH IMAGE AUTO-FETCH
+// 5. INPUT ACTION LISTENERS
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
@@ -222,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
 
-    // Dynamic Image Toggle Router Options
+    // Toggle manual / auto link visibility
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
             if (e.target.value === "manual") {
@@ -231,14 +246,13 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 document.getElementById("manualUploadWrapper").style.display = "none";
                 document.getElementById("autoFetchWrapper").style.display = "block";
-                // Trigger auto fetch from active URL input immediately if available
                 const activeUrl = document.getElementById("templateUrl").value;
                 if (activeUrl && activeUrl.startsWith("http")) { updatePreviewImage(activeUrl); }
             }
         });
     });
 
-    // Option 1: Live Manual Local File Image Uploader Render Mapping
+    // Manual Upload file handler mapping
     document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -251,18 +265,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Option 2: Automatic Real-Time Image Extractor Loader From Input URL link
+    // Auto Link URL image fetch mapping
     document.getElementById("templateUrl")?.addEventListener("input", (e) => {
         const targetUrl = e.target.value.trim();
         const selectedRadio = document.querySelector("input[name='imageSourceToggle']:checked")?.value;
         
         if (selectedRadio === "auto" && targetUrl.startsWith("http")) {
-            // Auto-fetch routing checks if URL contains direct image streams or general web anchors
             if (targetUrl.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
                 base64CustomUploadedImage = targetUrl;
                 updatePreviewImage(targetUrl);
             } else {
-                // Smart fallback placeholder to isolate standard links
                 const smartImgFallback = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
                 base64CustomUploadedImage = smartImgFallback;
                 updatePreviewImage(smartImgFallback);
@@ -287,7 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE
+// 6. SAVE HANDLER TO SUPABASE DB
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
@@ -311,7 +323,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_delay: document.getElementById("delayTime")?.value.trim() || "",
             ig_template_type: currentSelectedTemplateType,
             ig_image_source_mode: selectedImageSource,
-            ig_custom_image_data: base64CustomUploadedImage, // Saves Base64 data or extracted link stream
+            ig_custom_image_data: base64CustomUploadedImage, 
             
             ig_btn_title: document.getElementById("templateBtnTitle")?.value.trim() || "",
             ig_headline: document.getElementById("templateHeadline")?.value.trim() || "",
