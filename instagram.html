@@ -9,6 +9,7 @@
 </head>
 <body>
 
+    <!-- SIDEBAR NAVIGATION -->
     <div class="sidebar">
         <div class="logo">
             <i class="fa-solid fa-bolt"></i>
@@ -27,6 +28,7 @@
         </ul>
     </div>
 
+    <!-- MAIN WORKSPACE -->
     <div class="main">
         <div class="topbar">
             <div>
@@ -42,13 +44,16 @@
             </div>
         </div>
 
+        <!-- Live Grid List Feed Container -->
         <div class="card" style="padding: 25px; margin-bottom: 25px; width: 100%;">
             <h3 style="font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 5px;"><i class="fa-solid fa-images"></i> Posts & Reels</h3>
             <div class="posts-grid" id="postsContainer"></div>
         </div>
 
+        <!-- Reply Rush Two-Column Dynamic Workstation -->
         <div class="workstation-container" id="automationOptionsCard" style="display: none;">
             
+            <!-- Left Side: Configuration Accordions -->
             <div class="config-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                     <div style="text-align: left;">
@@ -58,6 +63,7 @@
                     <i class="fa-solid fa-circle-xmark" id="closeOptionsBtn" style="font-size: 24px; cursor: pointer; color: #ef4444;"></i>
                 </div>
 
+                <!-- Accordion 1: Triggers -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="window.toggleAccordion('triggerAcc')">
                         <span>1. Choose Trigger Type</span>
@@ -84,6 +90,7 @@
                     </div>
                 </div>
 
+                <!-- Accordion 2: Configuration Options (Comment & DM Editor Added) -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="window.toggleAccordion('configAcc')">
                         <span>2. Configuration Options</span>
@@ -93,17 +100,25 @@
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
                             <div>
                                 <p style="font-size: 14px; color: #fff; margin-bottom: 5px; font-weight:600;">Comment Auto Reply</p>
-                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px;">
                                     <input type="checkbox" id="commentAutoReplyCheck" style="width: 18px; height: 18px; accent-color: #ec4899;">
                                     <span style="font-size: 13px; color: #94a3b8;">Auto reply to user comments</span>
                                 </label>
+                                <!-- Dynamic Comment Text Input Box -->
+                                <div id="commentTextInputWrapper" style="display: none; margin-top: 8px;">
+                                    <input type="text" id="customCommentReplyText" placeholder="e.g., Check your DM! Sent the details" style="width:100%; padding:9px; border-radius:8px; background:#1f2937; border:1px solid rgba(255,255,255,0.1); color:#fff; font-size:12px; outline:none;">
+                                </div>
                             </div>
                             <div>
                                 <p style="font-size: 14px; color: #fff; margin-bottom: 5px; font-weight:600;">Engagement Starter / Send DM</p>
-                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px;">
                                     <input type="checkbox" id="sendDMCheck" style="width: 18px; height: 18px; accent-color: #ec4899;">
                                     <span style="font-size: 13px; color: #94a3b8;">Send private DM flow to inbox</span>
                                 </label>
+                                <!-- Dynamic Engagement Text Input Box -->
+                                <div id="engagementTextInputWrapper" style="display: none; margin-top: 8px;">
+                                    <input type="text" id="customEngagementText" placeholder="e.g., Hi there! Thanks for your interest! 👋" style="width:100%; padding:9px; border-radius:8px; background:#1f2937; border:1px solid rgba(255,255,255,0.1); color:#fff; font-size:12px; outline:none;">
+                                </div>
                             </div>
                             <div>
                                 <p style="font-size: 14px; color: #fff; margin-bottom: 5px; font-weight:600;">Reply Delay Interval</p>
@@ -113,6 +128,7 @@
                     </div>
                 </div>
 
+                <!-- Accordion 3: Message - Media Template Customizations -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="window.toggleAccordion('templateAcc')">
                         <span>3. Message - Media Template</span>
@@ -120,30 +136,37 @@
                     </div>
                     <div class="accordion-content" id="templateAcc">
                         <div class="template-type-grid">
-                            <div class="template-type-btn active"><i class="fa-solid fa-photo-film"></i> Media Template</div>
-                            <div class="template-type-btn"><i class="fa-solid fa-align-left"></i> Text Message</div>
-                            <div class="template-type-btn"><i class="fa-solid fa-reply-all"></i> Quick Replies</div>
-                            <div class="template-type-btn"><i class="fa-solid fa-paperclip"></i> Media Attachment</div>
-                            <div class="template-type-btn"><i class="fa-solid fa-square-check"></i> Button Template</div>
+                            <div class="template-type-btn active" data-type="media"><i class="fa-solid fa-photo-film"></i> Media Template</div>
+                            <div class="template-type-btn" data-type="text"><i class="fa-solid fa-align-left"></i> Text Message</div>
+                            <div class="template-type-btn" data-type="quick"><i class="fa-solid fa-reply-all"></i> Quick Replies</div>
+                            <div class="template-type-btn" data-type="attach"><i class="fa-solid fa-paperclip"></i> Media Attachment</div>
+                            <div class="template-type-btn" data-type="button"><i class="fa-solid fa-square-check"></i> Button Template</div>
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-                            <div>
-                                <label style="display:block; margin-bottom: 6px; font-size:13px; color:#94a3b8;">Button Title</label>
-                                <input type="text" id="templateBtnTitle" placeholder="e.g., Send Link Now" style="width:100%; padding:11px; border-radius:8px; background:#1f2937; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
-                            </div>
-                            <div>
-                                <label style="display:block; margin-bottom: 6px; font-size:13px; color:#94a3b8;">URL (When this button is Pressed)</label>
-                                <input type="url" id="templateUrl" placeholder="https://yourwebsite.com" style="width:100%; padding:11px; border-radius:8px; background:#1f2937; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
-                            </div>
-                            <div>
+                        <!-- Content blocks that toggle based on chosen button template -->
+                        <div id="dynamicTemplateFormFields" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                            
+                            <!-- Fields wrapper block for Media / Button / Attachment configs -->
+                            <div id="headlineFieldBlock">
                                 <label style="display:block; margin-bottom: 6px; font-size:13px; color:#94a3b8;">Headline</label>
                                 <input type="text" id="templateHeadline" placeholder="Enter card headline" style="width:100%; padding:11px; border-radius:8px; background:#1f2937; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
                             </div>
-                            <div>
+
+                            <div id="descriptionFieldBlock">
                                 <label style="display:block; margin-bottom: 6px; font-size:13px; color:#94a3b8;">Text Description</label>
                                 <textarea id="templateDescription" rows="3" placeholder="Automation Powered by IMA..." style="width:100%; padding:11px; border-radius:8px; background:#1f2937; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
                             </div>
+
+                            <div id="buttonTitleFieldBlock">
+                                <label style="display:block; margin-bottom: 6px; font-size:13px; color:#94a3b8;">Button Title</label>
+                                <input type="text" id="templateBtnTitle" placeholder="e.g., Send Link Now" style="width:100%; padding:11px; border-radius:8px; background:#1f2937; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
+                            </div>
+
+                            <div id="urlFieldBlock">
+                                <label style="display:block; margin-bottom: 6px; font-size:13px; color:#94a3b8;">URL (When this button is Pressed)</label>
+                                <input type="url" id="templateUrl" placeholder="https://yourwebsite.com" style="width:100%; padding:11px; border-radius:8px; background:#1f2937; border:1px solid rgba(255,255,255,0.1); color:#fff; outline:none;">
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -153,6 +176,7 @@
                 </button>
             </div>
 
+            <!-- Right Side: Live Mobile Preview Framework -->
             <div class="preview-panel">
                 <div class="preview-title">Live DM Preview</div>
                 <div class="mock-smartphone">
@@ -162,20 +186,25 @@
                             <span id="previewHeaderTitle">@imashoppingcentre</span>
                             <i class="fa-solid fa-video"></i>
                         </div>
-                        <div class="chat-area">
-                            <div class="chat-bubble received">
+                        <div class="chat-area" id="liveChatArea">
+                            
+                            <!-- Static/Dynamic Engagement Starter Message bubble -->
+                            <div class="chat-bubble received" id="previewEngagementBubble">
                                 Hi there! Thanks for your interest! 👋
                             </div>
-                            <div class="preview-response-card">
-                                <div class="preview-img-slot">
+
+                            <!-- Live Rendered Response Rich Card -->
+                            <div class="preview-response-card" id="previewRichCardContainer">
+                                <div class="preview-img-slot" id="previewImageSlot">
                                     <i class="fa-solid fa-image" style="font-size: 30px; color: rgba(255,255,255,0.2);"></i>
                                 </div>
-                                <div class="preview-card-body">
+                                <div class="preview-card-body" id="previewCardBodyContent">
                                     <h5 id="livePreviewHeadline">Card Headline</h5>
                                     <p id="livePreviewDesc">Template Description text goes here...</p>
                                 </div>
                                 <div class="preview-card-btn" id="livePreviewBtn">Button Title</div>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -184,6 +213,7 @@
         </div>
     </div>
 
+    <!-- SCRIPTS CONFIGURATION -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="instagram.js"></script>
 </body>
