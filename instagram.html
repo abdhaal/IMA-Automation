@@ -137,11 +137,12 @@
                             
                             <div id="mediaSourceSelectionBlock" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1);">
                                 <label style="display:block; margin-bottom: 8px; font-size:13px; color:#ec4899; font-weight: 600;">Media Image Source Option</label>
-                                <div style="display: flex; gap: 20px; margin-bottom: 12px;">
+                                
+                                <div id="toggleRadioButtonsRow" style="display: flex; gap: 20px; margin-bottom: 12px;">
                                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#fff;">
                                         <input type="radio" name="imageSourceToggle" value="manual" checked style="accent-color:#ec4899;"> Manually Upload
                                     </label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#fff;">
+                                    <label id="autoFetchRadioLabel" style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#fff;">
                                         <input type="radio" name="imageSourceToggle" value="auto" style="accent-color:#ec4899;"> Fetch from Product Link
                                     </label>
                                 </div>
@@ -221,4 +222,5 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="instagram.js"></script>
 </body>
-</html>
+    </html>
+    
