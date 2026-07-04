@@ -15,7 +15,7 @@ let currentActivePostId = "";
 let currentUserUuid = "";
 
 // ==========================================
-// 2. DYNAMIC INSTAGRAM STREAM ENGINE
+// 2. RENDERING REPLY RUSH STYLE CARDS
 // ==========================================
 async function loadInstagramPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -31,155 +31,126 @@ async function loadInstagramPageData() {
         const user = data.session.user;
         currentUserUuid = user.id;
         
-        // ப்ரொஃபைல் கார்டில் பயனர் மின்னஞ்சல் மற்றும் பெயரைப் புதுப்பித்தல்
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
 
-        // 🎯 சாண்ட்பாக்ஸ் லைவ் டேட்டா: அசல் போஸ்ட்கள் மற்றும் ரீல்ஸ்கள் போலவே பியூட்டிஃபுல்லாக ரெண்டர் செய்கிறோம்
+        // Reply Rush வடிவ அசல் இமேஜ் மற்றும் மெட்டா பேட்ஜ்களுடன் கூடிய மாதிரித் தரவுகள்
         const mockInstagramPosts = [
-            { id: "ig_reel_101", type: "video", title: "🚀 Instagram Growth Reel #01", date: "June 29, 2026", color: "linear-gradient(135deg, #ec4899, #7c3aed)" },
-            { id: "ig_post_102", type: "image", title: "🎯 Business Promo Post #02", date: "June 27, 2026", color: "linear-gradient(135deg, #f43f5e, #f59e0b)" },
-            { id: "ig_reel_103", type: "video", title: "🛍️ New Collection Launch Reel #03", date: "July 02, 2026", color: "linear-gradient(135deg, #10b981, #3b82f6)" }
+            { id: "ig_01", title: "Smart Solar Step Lights for Stairs & Walls! 🔥", date: "04 Jul 2026 at 02:00 PM", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&q=80", comments: "48", likes: "2.4k" },
+            { id: "ig_02", title: "Stop Dust, Insects & AC Cooling Loss with This!", date: "04 Jul 2026 at 05:00 AM", img: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&q=80", comments: "12", likes: "840" },
+            { id: "ig_03", title: "High Power 3-in-1 Mini Vacuum Cleaner for Car 🚗", date: "03 Jul 2026 at 02:00 PM", img: "https://images.unsplash.com/photo-1563720223185-11003d516935?w=400&q=80", comments: "93", likes: "4.1k" },
+            { id: "ig_04", title: "Beautiful Blossom Solar LED Tree Light For Garden", date: "02 Jul 2026 at 02:45 PM", img: "https://images.unsplash.com/photo-1513553404607-988bf2703777?w=400&q=80", comments: "5", likes: "190" }
         ];
 
-        postsContainer.innerHTML = ""; // கண்டெய்னரை சுத்தம் செய்தல்
+        postsContainer.innerHTML = "";
 
         mockInstagramPosts.forEach(post => {
-            const icon = post.type === "video" ? "fa-video" : "fa-image";
-            
-            const postRow = document.createElement("div");
-            postRow.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 4px;";
-            postRow.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="width: 50px; height: 50px; background: ${post.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid ${icon}" style="margin:0; font-size: 16px; color: #fff;"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <h4 style="font-size: 15px; font-weight: 600; margin: 0; color: #fff;">${post.title}</h4>
-                        <p style="font-size: 12px; color: #94a3b8; margin: 0;">Published: ${post.date}</p>
-                    </div>
+            const card = document.createElement("div");
+            card.className = "post-card";
+            card.innerHTML = `
+                <img src="${post.img}" class="post-thumb" alt="thumb">
+                <div class="post-meta-badges">
+                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#ec4899;"></i> ${post.comments}</span>
+                    <span class="meta-badge"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> ${post.likes}</span>
                 </div>
-                <button class="link-insta-btn" data-post-id="${post.id}" style="width: auto; padding: 8px 20px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #ec4899, #7c3aed); border:none; color:#fff; border-radius:8px; cursor:pointer; font-weight:600;">Link</button>
+                <div class="post-details">
+                    <div>
+                        <h4>${post.title}</h4>
+                        <p><i class="fa-solid fa-clock"></i> ${post.date}</p>
+                    </div>
+                    <button class="replyrush-btn" data-post-id="${post.id}">
+                        <i class="fa-solid fa-link"></i> Link Post Setup
+                    </button>
+                </div>
             `;
-            postsContainer.appendChild(postRow);
+            postsContainer.appendChild(card);
         });
 
-        // ⚡ பட்டன் கிளிக்குகளை ஏபிஐ கார்டுடன் இணைத்தல்
         bindLinkButtons(user.id);
 
-    } catch (gErr) { 
-        console.error(gErr); 
-    }
+    } catch (gErr) { console.error(gErr); }
 }
 
 // ==========================================
-// 3. AUTOMATION CARD CONTROLS
+// 3. ACCORDION ACCELERATION & BINDINGS
 // ==========================================
+function toggleAccordion(accId) {
+    const content = document.getElementById(accId);
+    if (!content) return;
+    
+    const isVisible = content.style.display === "block";
+    
+    // அனைத்தையும் மூடுதல்
+    document.querySelectorAll(".accordion-content").forEach(el => el.style.style.display = "none");
+    document.querySelectorAll(".accordion-header i").forEach(el => el.className = "fa-solid fa-chevron-down");
+    
+    // தேவைப்படுவதை மட்டும் திறத்தல்
+    if (!isVisible) {
+        content.style.display = "block";
+        event.currentTarget.querySelector("i").className = "fa-solid fa-chevron-up";
+    }
+}
+window.toggleAccordion = toggleAccordion; // Global Scope Binding
+
 function bindLinkButtons(userUuid) {
-    document.querySelectorAll(".link-insta-btn").forEach(btn => {
+    document.querySelectorAll(".replyrush-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
             e.preventDefault();
             const postId = btn.getAttribute("data-post-id");
-            const title = btn.parentElement.querySelector("h4").innerText;
-            openAutomationOptions(postId, title, userUuid);
+            const title = btn.closest(".post-card").querySelector("h4").innerText;
+            
+            currentActivePostId = postId;
+            document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
+            
+            const card = document.getElementById("automationOptionsCard");
+            card.style.display = "block";
+            card.scrollIntoView({ behavior: 'smooth' });
+            
+            // முதல் அக்கார்டியனை ஆட்டோமேட்டிக்காக ஓப்பன் செய்கிறது
+            document.getElementById("triggerAcc").style.display = "block";
         });
     });
 }
 
-async function openAutomationOptions(postId, postTitle, userUuid) {
-    currentActivePostId = postId;
-    const titleEl = document.getElementById("selectedPostTitle");
-    if (titleEl) titleEl.innerText = "Link Settings: " + postTitle;
-    
-    const optionsCard = document.getElementById("automationOptionsCard");
-    if (optionsCard) {
-        optionsCard.style.display = "block";
-        optionsCard.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-// க்ளோஸ் மற்றும் கீவேர்ட்ஸ் டாக்ஃகுள் லாஜிக்
+// ==========================================
+// 4. SAVE & FORM SYNC CONTROLS
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
 
-    const closeBtn = document.getElementById("closeOptionsBtn");
-    if (closeBtn) {
-        closeBtn.addEventListener("click", () => {
-            const card = document.getElementById("automationOptionsCard");
-            if (card) card.style.display = "none";
-        });
-    }
+    document.getElementById("closeOptionsBtn")?.addEventListener("click", () => {
+        document.getElementById("automationOptionsCard").style.display = "none";
+    });
 
-    const triggerMechanism = document.getElementById("triggerMechanism");
-    if (triggerMechanism) {
-        triggerMechanism.addEventListener("change", () => {
-            const wrapper = document.getElementById("keywordInputWrapper");
-            if (wrapper) wrapper.style.display = (triggerMechanism.value === "keywords") ? "block" : "none";
-        });
-    }
+    document.getElementById("triggerMechanism")?.addEventListener("change", (e) => {
+        document.getElementById("keywordInputWrapper").style.display = (e.target.value === "keywords") ? "block" : "none";
+    });
 });
 
-// ==========================================
-// 4. ACTION SAVE TO SUPABASE
-// ==========================================
-const savePostAutomationBtn = document.getElementById("savePostAutomationBtn");
-if (savePostAutomationBtn) {
-    savePostAutomationBtn.addEventListener("click", async () => {
-        if (!currentUserUuid) return;
+document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
+    if (!currentUserUuid) return;
 
-        const mechanismEl = document.getElementById("triggerMechanism");
-        const targetKeywordsEl = document.getElementById("targetKeywords");
-        const excludeEl = document.getElementById("excludeKeywords");
-        const commentCheckEl = document.getElementById("commentAutoReplyCheck");
-        const dmCheckEl = document.getElementById("sendDMCheck");
-        const delayEl = document.getElementById("delayTime");
-        const btnTitleEl = document.getElementById("templateBtnTitle");
-        const urlEl = document.getElementById("templateUrl");
-        const descEl = document.getElementById("templateDescription");
+    const { error } = await supabaseClient
+        .from('profiles')
+        .upsert({
+            id: currentUserUuid,
+            ig_active_post_id: currentActivePostId,
+            ig_trigger_type: document.getElementById("triggerMechanism").value,
+            ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
+            ig_exclude_keywords: document.getElementById("excludeKeywords").value.trim(),
+            ig_comment_reply_active: document.getElementById("commentAutoReplyCheck").checked,
+            ig_dm_active: document.getElementById("sendDMCheck").checked,
+            ig_delay: document.getElementById("delayTime").value.trim(),
+            ig_btn_title: document.getElementById("templateBtnTitle").value.trim(),
+            ig_url: document.getElementById("templateUrl").value.trim(),
+            ig_desc: document.getElementById("templateDescription").value.trim(),
+            updated_at: new Date()
+        });
 
-        // இன்ஸ்டாகிராம் ஆட்டோமேஷன் விதிகளை சுபாபேஸில் சேமித்தல் (ig_ columns)
-        const { error } = await supabaseClient
-            .from('profiles')
-            .upsert({
-                id: currentUserUuid,
-                ig_active_post_id: currentActivePostId,
-                ig_trigger_type: mechanismEl ? mechanismEl.value : "all",
-                ig_target_keywords: targetKeywordsEl ? targetKeywordsEl.value.trim() : "",
-                ig_exclude_keywords: excludeEl ? excludeEl.value.trim() : "",
-                ig_comment_reply_active: commentCheckEl ? commentCheckEl.checked : false,
-                ig_dm_active: dmCheckEl ? dmCheckEl.checked : false,
-                ig_delay: delayEl ? delayEl.value.trim() : "",
-                ig_btn_title: btnTitleEl ? btnTitleEl.value.trim() : "",
-                ig_url: urlEl ? urlEl.value.trim() : "",
-                ig_desc: descEl ? descEl.value.trim() : "",
-                updated_at: new Date()
-            });
-
-        if (error) {
-            alert("Instagram Sync Failed: " + error.message);
-        } else {
-            alert(`Automation Linked for ${currentActivePostId} Successfully! 🚀🎉`);
-            const card = document.getElementById("automationOptionsCard");
-            if (card) card.style.display = "none";
-        }
-    });
-}
-
-// NAVIGATION
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = [
-        { id: "dashboardBtn", url: "dashboard.html" },
-        { id: "instagramBtn", url: "instagram.html" },
-        { id: "facebookBtn", url: "facebook.html" },
-        { id: "automationBtn", url: "automation.html" },
-        { id: "commentsBtn", url: "comments.html" },
-        { id: "autodmBtn", url: "autodm.html" },
-        { id: "keywordsBtn", url: "keywords.html" },
-        { id: "analyticsBtn", url: "analytics.html" },
-        { id: "settingsBtn", url: "settings.html" }
-    ];
-    navLinks.forEach(link => {
-        const btn = document.getElementById(link.id);
-        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
-    });
+    if (error) {
+        alert("Instagram Sync Failed: " + error.message);
+    } else {
+        alert("Configuration Linked for Post Successfully! 🚀🎉");
+        document.getElementById("automationOptionsCard").style.display = "none";
+    }
 });
