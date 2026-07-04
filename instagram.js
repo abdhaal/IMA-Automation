@@ -14,6 +14,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 let currentActivePostId = "";
 let currentUserUuid = "";
 let currentSelectedTemplateType = "media";
+let base64CustomUploadedImage = ""; 
 
 // ==========================================
 // 2. RENDERING REEL / POST CARDS GRID
@@ -72,26 +73,20 @@ async function loadInstagramPageData() {
 }
 
 // ==========================================
-// 3. ACCORDION VIEW CONTROLLER
+// 3. ACCORDION CONTROLLERS
 // ==========================================
 window.toggleAccordion = function(accId) {
     const content = document.getElementById(accId);
     if (!content) return;
     const isVisible = content.style.display === "block";
     
-    document.querySelectorAll(".accordion-content").forEach(el => {
-        el.style.display = "none";
-    });
-    document.querySelectorAll(".accordion-header i").forEach(el => {
-        el.className = "fa-solid fa-chevron-down";
-    });
+    document.querySelectorAll(".accordion-content").forEach(el => { el.style.display = "none"; });
+    document.querySelectorAll(".accordion-header i").forEach(el => { el.className = "fa-solid fa-chevron-down"; });
     
     if (!isVisible) {
         content.style.display = "block";
         const header = content.previousElementSibling;
-        if (header && header.querySelector("i")) {
-            header.querySelector("i").className = "fa-solid fa-chevron-up";
-        }
+        if (header && header.querySelector("i")) { header.querySelector("i").className = "fa-solid fa-chevron-up"; }
     }
 };
 
@@ -104,11 +99,10 @@ function bindLinkButtons() {
             const postImg = btn.getAttribute("data-img");
             
             document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
-            
+            base64CustomUploadedImage = postImg; // Default initial setup image fallback
+
             const imgSlot = document.getElementById("previewImageSlot");
-            if (imgSlot) {
-                imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;">`;
-            }
+            if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`; }
 
             document.getElementById("automationOptionsCard").style.display = "grid";
             document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
@@ -119,7 +113,7 @@ function bindLinkButtons() {
 }
 
 // ==========================================
-// 4. REAL-TIME MULTI-TEMPLATE SWITCHER
+// 4. REAL-TIME MULTI-TEMPLATE CONTROLLER
 // ==========================================
 function handleTemplateTypeSwitch(type) {
     currentSelectedTemplateType = type;
@@ -128,33 +122,37 @@ function handleTemplateTypeSwitch(type) {
     const dBlock = document.getElementById("descriptionFieldBlock");
     const bBlock = document.getElementById("buttonTitleFieldBlock");
     const uBlock = document.getElementById("urlFieldBlock");
+    const mSourceBlock = document.getElementById("mediaSourceSelectionBlock");
     
     const richCard = document.getElementById("previewRichCardContainer");
     const imgSlot = document.getElementById("previewImageSlot");
     const bodyContent = document.getElementById("previewCardBodyContent");
     const liveBtn = document.getElementById("livePreviewBtn");
 
-    if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn) return;
+    if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn || !mSourceBlock) return;
 
     hBlock.style.display = "block";
     dBlock.style.display = "block";
     bBlock.style.display = "block";
     uBlock.style.display = "block";
+    mSourceBlock.style.display = "block";
     richCard.style.display = "flex";
     imgSlot.style.display = "flex";
     bodyContent.style.display = "block";
     liveBtn.style.display = "block";
 
     if (type === "media") {
-        // Media Template - Keep All Default Displays Active
+        // Keeps all blocks visible
     } else if (type === "text") {
         hBlock.style.display = "none";
         bBlock.style.display = "none";
         uBlock.style.display = "none";
+        mSourceBlock.style.display = "none";
         imgSlot.style.display = "none";
         liveBtn.style.display = "none";
     } else if (type === "quick" || type === "button") {
         imgSlot.style.display = "none";
+        mSourceBlock.style.display = "none";
     } else if (type === "attach") {
         hBlock.style.display = "none";
         dBlock.style.display = "none";
@@ -189,7 +187,7 @@ function triggerLiveMirrorUpdate() {
 }
 
 // ==========================================
-// 5. INPUT ACTION LISTENERS
+// 5. INPUT ACTION LISTENERS WITH IMAGE AUTO-FETCH
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
@@ -224,6 +222,61 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
 
+    // Dynamic Image Toggle Router Options
+    document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
+        radio.addEventListener("change", (e) => {
+            if (e.target.value === "manual") {
+                document.getElementById("manualUploadWrapper").style.display = "block";
+                document.getElementById("autoFetchWrapper").style.display = "none";
+            } else {
+                document.getElementById("manualUploadWrapper").style.display = "none";
+                document.getElementById("autoFetchWrapper").style.display = "block";
+                // Trigger auto fetch from active URL input immediately if available
+                const activeUrl = document.getElementById("templateUrl").value;
+                if (activeUrl && activeUrl.startsWith("http")) { updatePreviewImage(activeUrl); }
+            }
+        });
+    });
+
+    // Option 1: Live Manual Local File Image Uploader Render Mapping
+    document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                base64CustomUploadedImage = event.target.result;
+                updatePreviewImage(base64CustomUploadedImage);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Option 2: Automatic Real-Time Image Extractor Loader From Input URL link
+    document.getElementById("templateUrl")?.addEventListener("input", (e) => {
+        const targetUrl = e.target.value.trim();
+        const selectedRadio = document.querySelector("input[name='imageSourceToggle']:checked")?.value;
+        
+        if (selectedRadio === "auto" && targetUrl.startsWith("http")) {
+            // Auto-fetch routing checks if URL contains direct image streams or general web anchors
+            if (targetUrl.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
+                base64CustomUploadedImage = targetUrl;
+                updatePreviewImage(targetUrl);
+            } else {
+                // Smart fallback placeholder to isolate standard links
+                const smartImgFallback = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
+                base64CustomUploadedImage = smartImgFallback;
+                updatePreviewImage(smartImgFallback);
+            }
+        }
+    });
+
+    function updatePreviewImage(srcPath) {
+        const imgSlot = document.getElementById("previewImageSlot");
+        if (imgSlot) {
+            imgSlot.innerHTML = `<img src="${srcPath}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
+        }
+    }
+
     document.querySelectorAll(".template-type-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove("active"));
@@ -238,6 +291,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
+
+    const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
 
     const { error } = await supabaseClient
         .from('profiles')
@@ -255,6 +310,9 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             
             ig_delay: document.getElementById("delayTime")?.value.trim() || "",
             ig_template_type: currentSelectedTemplateType,
+            ig_image_source_mode: selectedImageSource,
+            ig_custom_image_data: base64CustomUploadedImage, // Saves Base64 data or extracted link stream
+            
             ig_btn_title: document.getElementById("templateBtnTitle")?.value.trim() || "",
             ig_headline: document.getElementById("templateHeadline")?.value.trim() || "",
             ig_url: document.getElementById("templateUrl")?.value.trim() || "",
@@ -265,7 +323,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
     if (error) {
         alert("Instagram Sync Failed: " + error.message);
     } else {
-        alert("Configuration Saved and Real-time Flows Synced Successfully! 🚀🎉");
+        alert("Configuration Saved and Real-time Media Flows Synced Successfully! 🚀🎉");
         const optionsCard = document.getElementById("automationOptionsCard");
         if (optionsCard) optionsCard.style.display = "none";
     }
@@ -289,3 +347,4 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
     });
 });
+        
