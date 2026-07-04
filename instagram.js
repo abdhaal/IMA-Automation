@@ -16,7 +16,7 @@ let currentUserUuid = "";
 let currentSelectedTemplateType = "media";
 
 // ==========================================
-// 2. RENDERING DYNAMIC REPLY RUSH FEED CARDS
+// 2. RENDERING REEL / POST CARDS GRID
 // ==========================================
 async function loadInstagramPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -35,7 +35,6 @@ async function loadInstagramPageData() {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
 
-        // Reply Rush Grid Sandbox Live Mock Data
         const mockInstagramPosts = [
             { id: "ig_01", title: "Smart Solar Step Lights for Stairs & Walls! 🔥", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&q=80", comments: "48", likes: "2.4k" },
             { id: "ig_02", title: "Stop Dust, Insects & AC Cooling Loss with This!", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&q=80", comments: "12", likes: "840" },
@@ -65,7 +64,7 @@ async function loadInstagramPageData() {
             postsContainer.appendChild(card);
         });
 
-        bindLinkButtons(user.id);
+        bindLinkButtons();
 
     } catch (gErr) { 
         console.error(gErr); 
@@ -73,7 +72,7 @@ async function loadInstagramPageData() {
 }
 
 // ==========================================
-// 3. ACCORDION CONTROLLERS
+// 3. ACCORDION VIEW CONTROLLER
 // ==========================================
 window.toggleAccordion = function(accId) {
     const content = document.getElementById(accId);
@@ -96,7 +95,7 @@ window.toggleAccordion = function(accId) {
     }
 };
 
-function bindLinkButtons(userUuid) {
+function bindLinkButtons() {
     document.querySelectorAll(".replyrush-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
             e.preventDefault();
@@ -106,10 +105,9 @@ function bindLinkButtons(userUuid) {
             
             document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
             
-            // Set image to mock smartphone card slot
             const imgSlot = document.getElementById("previewImageSlot");
             if (imgSlot) {
-                imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
+                imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;">`;
             }
 
             document.getElementById("automationOptionsCard").style.display = "grid";
@@ -121,7 +119,7 @@ function bindLinkButtons(userUuid) {
 }
 
 // ==========================================
-// 4. REAL-TIME TEMPLATE SWITCHER ENGINE
+// 4. REAL-TIME MULTI-TEMPLATE SWITCHER
 // ==========================================
 function handleTemplateTypeSwitch(type) {
     currentSelectedTemplateType = type;
@@ -138,7 +136,6 @@ function handleTemplateTypeSwitch(type) {
 
     if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn) return;
 
-    // Standard baseline reset
     hBlock.style.display = "block";
     dBlock.style.display = "block";
     bBlock.style.display = "block";
@@ -149,7 +146,7 @@ function handleTemplateTypeSwitch(type) {
     liveBtn.style.display = "block";
 
     if (type === "media") {
-        // Media template shows everything
+        // Media Template - Keep All Default Displays Active
     } else if (type === "text") {
         hBlock.style.display = "none";
         bBlock.style.display = "none";
@@ -192,7 +189,7 @@ function triggerLiveMirrorUpdate() {
 }
 
 // ==========================================
-// 5. DOM LISTENERS & LIFECYCLE CONTROLS
+// 5. INPUT ACTION LISTENERS
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
@@ -206,7 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (wrapper) wrapper.style.display = (e.target.value === "keywords") ? "block" : "none";
     });
 
-    // Toggle input visibility based on checkbox status
     document.getElementById("commentAutoReplyCheck")?.addEventListener("change", (e) => {
         const wrapper = document.getElementById("commentTextInputWrapper");
         if (wrapper) wrapper.style.display = e.target.checked ? "block" : "none";
@@ -219,7 +215,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (bubble) bubble.style.display = e.target.checked ? "block" : "none";
     });
 
-    // Real-time input listeners mirror mapping
     document.getElementById("customEngagementText")?.addEventListener("input", (e) => {
         const bubble = document.getElementById("previewEngagementBubble");
         if (bubble) bubble.innerText = e.target.value || "Hi there! Thanks for your interest! 👋";
@@ -229,7 +224,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
 
-    // Template Selector Type Buttons bindings
     document.querySelectorAll(".template-type-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove("active"));
@@ -240,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. DB RULES EXECUTION (SAVE OPERATION)
+// 6. SAVE HANDLER TO SUPABASE
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
@@ -277,7 +271,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
     }
 });
 
-// CORE NAVIGATION LINKING
+// CORE NAVIGATION PANEL LINKS
 document.addEventListener("DOMContentLoaded", () => {
     const navLinks = [
         { id: "dashboardBtn", url: "dashboard.html" },
