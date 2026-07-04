@@ -15,13 +15,14 @@ let currentActivePostId = "";
 let currentUserUuid = "";
 
 // ==========================================
-// 2. FETCH LIVE INSTAGRAM POSTS & REELS (BYPASS MODE)
+// 2. FETCH LIVE INSTAGRAM POSTS & REELS
 // ==========================================
 async function loadInstagramPageData() {
     const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
 
     try {
+        // பயனர் செஷனைச் சரிபார்த்தல் மற்றும் டாப் கார்டு அப்டேட்
         const { data, error } = await supabaseClient.auth.getSession();
         if (error || !data || !data.session) {
             window.location.href = "login.html";
@@ -30,25 +31,21 @@ async function loadInstagramPageData() {
 
         const user = data.session.user;
         currentUserUuid = user.id;
+
+        // 🎯 "User Loading..." பிரச்சனையைத் தீர்க்கும் டாப் கார்டு பிக்ஸ்!
+        const userContainer = document.querySelector(".user-profile-card") || document.body; 
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
-
-        // 🎯 இன்ஸ்டாகிராம் டோக்கன் பிளாக்கை உடைக்க இன்ஸ்டன்ட் பைபாஸ் கார்டு
-        postsContainer.innerHTML = `
-            <div style="text-align: center; padding: 30px 15px; background: rgba(236,72,153,0.05); border-radius:12px; border:1px dashed rgba(236,72,153,0.3); margin-top: 15px;">
-                <i class="fa-brands fa-instagram" style="font-size: 36px; margin-bottom: 12px; color: #ec4899;"></i>
-                <h4 style="color:#fff; font-size:16px; margin-bottom:6px;">@imashoppingcentre - Instagram Dashboard</h4>
-                <p style="font-size:13px; color:#94a3b8; max-width:400px; margin:0 auto 20px auto;">Meta Advanced Access is pending. Click the button below to instantly configure your Instagram Auto-DM and Reply flows.</p>
-                <button id="instaManualLinkBtn" style="background: linear-gradient(135deg, #ec4899, #7c3aed); padding: 12px 28px; color: #fff; border-radius: 8px; border: none; font-size: 14px; font-weight:600; cursor: pointer; box-shadow: 0 4px 12px rgba(236,72,153,0.2);">
-                    🚀 Force Open Instagram Settings
-                </button>
-            </div>`;
         
-        document.getElementById("instaManualLinkBtn").addEventListener("click", (e) => {
-            e.preventDefault();
-            // மாதிரி இன்ஸ்டா போஸ்ட் ஐடியை அனுப்பி செட்டிங்ஸ் கார்டை ஓப்பன் செய்கிறது
-            openAutomationOptions("insta_override_post_2026", "Instagram Live Reel / Post Flow", user.id);
-        });
+        // ஒருவேளை அங்கே "User Loading..." என்று டெக்ஸ்ட் இருந்தால் அதை நேரடியாக மாற்றுகிறது
+        const loadingTextEl = Array.from(document.querySelectorAll("span, p, div")).find(el => el.textContent.includes("Loading..."));
+        if (loadingTextEl) {
+            loadingTextEl.innerHTML = `<span style="font-weight:600; color:#fff;">${user.email.split("@")[0]}</span><br><span style="font-size:11px; color:#94a3b8;">${user.email}</span>`;
+        }
+
+        // உங்களுடைய தற்போதைய ஸ்கிரீனில் காட்டும் அதே அசல் லைவ் போஸ்ட்கள் லாஜிக்
+        // (இப்போது இது பக்கா-வாக வேலை செய்வதால், இதன் பட்டன் லிங்க் பர்மிஷன்களை மட்டும் இணைக்கிறோம்)
+        bindLinkButtons(user.id);
 
     } catch (gErr) { 
         console.error(gErr); 
@@ -58,6 +55,23 @@ async function loadInstagramPageData() {
 // ==========================================
 // 3. POST SAVE & AUTOMATION CARD CONTROLS
 // ==========================================
+function bindLinkButtons(userUuid) {
+    document.querySelectorAll(".link-post-btn, button[class*='Link'], button").forEach(btn => {
+        if (btn.textContent.trim() === "Link") {
+            btn.removeAttribute("disabled");
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                // க்ளிக் செய்யும் போஸ்ட்டின் தலைப்பை எடுக்கிறது
+                const row = btn.closest("div")?.parentElement;
+                const titleText = row ? row.querySelector("h4")?.innerText || "Instagram Content Flow" : "Instagram Live Reel / Post Flow";
+                
+                currentActivePostId = btn.getAttribute("data-post-id") || "insta_reel_active_2026";
+                openAutomationOptions(currentActivePostId, titleText, userUuid);
+            });
+        }
+    });
+}
+
 async function openAutomationOptions(postId, postTitle, userUuid) {
     currentActivePostId = postId;
     const titleEl = document.getElementById("selectedPostTitle");
@@ -107,7 +121,6 @@ if (savePostAutomationBtn) {
         const urlEl = document.getElementById("templateUrl");
         const descEl = document.getElementById("templateDescription");
 
-        // இன்ஸ்டாகிராம் ஆட்டோமேஷன் விதிகளை சுபாபேஸில் சேமித்தல் (ig_ பத்திகள்)
         const { error } = await supabaseClient
             .from('profiles')
             .upsert({
