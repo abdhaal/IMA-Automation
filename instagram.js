@@ -10,6 +10,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 let currentActivePostId = "";
 let currentUserUuid = "";
+let currentSelectedTemplateType = "media";
 
 // RENDERING REPLY RUSH FEED CARDS
 async function loadInstagramPageData() {
@@ -63,7 +64,7 @@ async function loadInstagramPageData() {
     } catch (gErr) { console.error(gErr); }
 }
 
-// 🎯 ACCORDION CONTROLLERS
+// ACCORDION CONTROLLERS
 window.toggleAccordion = function(accId) {
     const content = document.getElementById(accId);
     if (!content) return;
@@ -89,9 +90,9 @@ function bindLinkButtons(userUuid) {
             
             document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
             
-            // மொபைல் ப்ரிவியூ படத்தைப் புதுப்பித்தல்
-            const imgSlot = document.querySelector(".preview-img-slot");
-            if (imgSlot) imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;">`;
+            // Set image to mock smartphone card slots
+            const imgSlot = document.getElementById("previewImageSlot");
+            if (imgSlot) imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
 
             document.getElementById("automationOptionsCard").style.display = "grid";
             document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
@@ -101,7 +102,77 @@ function bindLinkButtons(userUuid) {
     });
 }
 
-// 🎯 REAL-TIME MIRROR ENGINE (உடனுக்குடன் மொபைல் திரையில் மாறும் லேபிள்)
+// 🎯 REAL-TIME TEMPLATE SWITCHER ENGINE
+function handleTemplateTypeSwitch(type) {
+    currentSelectedTemplateType = type;
+    
+    const hBlock = document.getElementById("headlineFieldBlock");
+    const dBlock = document.getElementById("descriptionFieldBlock");
+    const bBlock = document.getElementById("buttonTitleFieldBlock");
+    const uBlock = document.getElementById("urlFieldBlock");
+    
+    const richCard = document.getElementById("previewRichCardContainer");
+    const imgSlot = document.getElementById("previewImageSlot");
+    const bodyContent = document.getElementById("previewCardBodyContent");
+    const liveBtn = document.getElementById("livePreviewBtn");
+
+    // Standard baseline reset
+    hBlock.style.display = "block";
+    dBlock.style.display = "block";
+    bBlock.style.display = "block";
+    uBlock.style.display = "block";
+    richCard.style.display = "flex";
+    imgSlot.style.display = "flex";
+    bodyContent.style.display = "block";
+    liveBtn.style.display = "block";
+
+    if (type === "media") {
+        // Media template shows everything
+    } else if (type === "text") {
+        // Text template only shows description text inside a single bubble chat layout
+        hBlock.style.display = "none";
+        bBlock.style.display = "none";
+        uBlock.style.display = "none";
+        imgSlot.style.display = "none";
+        bodyContent.style.display = "block";
+        liveBtn.style.display = "none";
+    } else if (type === "quick" || type === "button") {
+        // Quick reply / Button layouts omit top hero imagery mapping
+        imgSlot.style.display = "none";
+    } else if (type === "attach") {
+        // Attachments only mirror content streams without text blocks
+        hBlock.style.display = "none";
+        dBlock.style.display = "none";
+        bBlock.style.display = "none";
+        uBlock.style.display = "none";
+        bodyContent.style.display = "none";
+        liveBtn.style.display = "none";
+    }
+    
+    // Refresh mirror elements manually to sync placeholder states properly
+    triggerLiveMirrorUpdate();
+}
+
+function triggerLiveMirrorUpdate() {
+    const headlineValue = document.getElementById("templateHeadline").value || "Card Headline";
+    const descValue = document.getElementById("templateDescription").value || "Template Description text goes here...";
+    const btnTitleValue = document.getElementById("templateBtnTitle").value || "Button Title";
+
+    const liveHeadline = document.getElementById("livePreviewHeadline");
+    const liveDesc = document.getElementById("livePreviewDesc");
+    const liveBtn = document.getElementById("livePreviewBtn");
+
+    if (currentSelectedTemplateType === "text") {
+        liveDesc.innerText = document.getElementById("templateDescription").value || "Text Message flow placeholder...";
+        liveHeadline.innerText = "";
+    } else {
+        liveHeadline.innerText = headlineValue;
+        liveDesc.innerText = descValue;
+        liveBtn.innerText = btnTitleValue;
+    }
+}
+
+// DOM LISTENERS INTERACTION ENGINE
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
 
@@ -113,25 +184,36 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("keywordInputWrapper").style.display = (e.target.value === "keywords") ? "block" : "none";
     });
 
-    // Inputs-களை மொபைல் மிரருடன் இணைத்தல்
-    const headlineInput = document.getElementById("templateHeadline");
-    const descInput = document.getElementById("templateDescription");
-    const btnTitleInput = document.getElementById("templateBtnTitle");
-
-    headlineInput?.addEventListener("input", (e) => {
-        document.getElementById("livePreviewHeadline").innerText = e.target.value || "Card Headline";
+    // Toggle Input boxes based on checkboxes state
+    document.getElementById("commentAutoReplyCheck")?.addEventListener("change", (e) => {
+        document.getElementById("commentTextInputWrapper").style.display = e.target.checked ? "block" : "none";
     });
 
-    descInput?.addEventListener("input", (e) => {
-        document.getElementById("livePreviewDesc").innerText = e.target.value || "Template Description text goes here...";
+    document.getElementById("sendDMCheck")?.addEventListener("change", (e) => {
+        document.getElementById("engagementTextInputWrapper").style.display = e.target.checked ? "block" : "none";
+        document.getElementById("previewEngagementBubble").style.display = e.target.checked ? "block" : "none";
     });
 
-    btnTitleInput?.addEventListener("input", (e) => {
-        document.getElementById("livePreviewBtn").innerText = e.target.value || "Button Title";
+    // Real-time listen input streams mirror text
+    document.getElementById("customEngagementText")?.addEventListener("input", (e) => {
+        document.getElementById("previewEngagementBubble").innerText = e.target.value || "Hi there! Thanks for your interest! 👋";
+    });
+
+    document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
+    document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
+    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
+
+    // Template Selector Type Buttons bindings
+    document.querySelectorAll(".template-type-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            handleTemplateTypeSwitch(btn.getAttribute("data-type"));
+        });
     });
 });
 
-// SAVE TO SUPABASE DB
+// SUBMIT SAVE FLOW RULE TARGETING
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
 
@@ -143,9 +225,15 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_trigger_type: document.getElementById("triggerMechanism").value,
             ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
             ig_exclude_keywords: document.getElementById("excludeKeywords").value.trim(),
+            
+            // Checkboxes & Text Values Saved to Database
             ig_comment_reply_active: document.getElementById("commentAutoReplyCheck").checked,
+            ig_custom_comment_text: document.getElementById("customCommentReplyText")?.value.trim() || "",
             ig_dm_active: document.getElementById("sendDMCheck").checked,
+            ig_custom_engagement_text: document.getElementById("customEngagementText")?.value.trim() || "",
+            
             ig_delay: document.getElementById("delayTime").value.trim(),
+            ig_template_type: currentSelectedTemplateType,
             ig_btn_title: document.getElementById("templateBtnTitle").value.trim(),
             ig_headline: document.getElementById("templateHeadline")?.value.trim() || "",
             ig_url: document.getElementById("templateUrl").value.trim(),
@@ -156,7 +244,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
     if (error) {
         alert("Instagram Sync Failed: " + error.message);
     } else {
-        alert("Configuration Linked with Live Preview Mockup Successfully! 🚀🎉");
+        alert("Configuration Saved and Real-time Flows Synced Successfully! 🚀🎉");
         document.getElementById("automationOptionsCard").style.display = "none";
     }
 });
