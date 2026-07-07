@@ -23,7 +23,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 });
 
 // ==========================================
-// 2. LOAD USER & DATA ACCESS LOGIC (406 FIXED)
+// 2. LOAD USER & DATA ACCESS LOGIC (HTML MATCHED)
 // ==========================================
 async function loadUser() {
     const { data, error } = await supabaseClient.auth.getSession();
@@ -49,19 +49,23 @@ async function loadUser() {
     if (!profileError && profileData && profileData.length > 0) {
         const profile = profileData[0];
 
+        // 🎯 HTML ID: instagramStatus (பச்சை நிறமாக மாறும்)
         if (profile.instagram_access_token) {
             const instaStatus = document.getElementById("instagramStatus");
             if (instaStatus) {
                 instaStatus.innerHTML = "Connected ✅";
                 instaStatus.style.color = "#22c55e";
+                instaStatus.className = "success"; // warning கிளாஸை மாற்றுகிறது
             }
         }
 
+        // 🎯 HTML ID: facebook3Status (பச்சை நிறமாக மாறும்)
         if (profile.facebook_access_token) {
-            const fbStatus = document.getElementById("facebookStatus");
+            const fbStatus = document.getElementById("facebook3Status");
             if (fbStatus) {
                 fbStatus.innerHTML = "Connected ✅";
                 fbStatus.style.color = "#22c55e";
+                fbStatus.className = "success"; // warning கிளாஸை மாற்றுகிறது
             }
         }
     }
@@ -110,10 +114,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🎯 C. DASHBOARD CONNECT INSTAGRAM BUTTON (FIXED & SECURED HERE!)
-    const targetInstaBtn = document.getElementById("ConnectInstagram");
+    // 🎯 C. CONNECT INSTAGRAM REAL OAUTH (HTML ID: connectInstagram MATCHED!)
+    const targetInstaBtn = document.getElementById("connectInstagram");
     if (targetInstaBtn) {
-        console.log("Connect Instagram Button discovered and successfully bound.");
+        console.log("Instagram Button correctly discovered via live HTML DOM.");
         targetInstaBtn.addEventListener("click", (e) => {
             e.preventDefault();
 
@@ -132,11 +136,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             window.location.href = oauthUrl;
         });
-    } else {
-        console.warn("Warning: Element 'btnDashboardConnectInstagram' not found on this HTML page view.");
     }
 
-    // 🔵 D. FACEBOOK OAUTH
+    // 🔵 D. FACEBOOK OAUTH (HTML ID: connectFacebook MATCHED!)
     const fbBtn = document.getElementById("connectFacebook");
     if (fbBtn) {
         fbBtn.addEventListener("click", () => {
@@ -145,7 +147,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            document.getElementById("facebookStatus").innerHTML = "Connecting...";
+            const fbStatusEl = document.getElementById("facebook3Status");
+            if (fbStatusEl) fbStatusEl.innerHTML = "Connecting...";
 
             FB.login(function(response) {
                 if (response.authResponse) {
@@ -153,14 +156,19 @@ document.addEventListener("DOMContentLoaded", () => {
                     const userId = response.authResponse.userID;
 
                     alert("Facebook Connected Successfully!");
-                    document.getElementById("facebookStatus").innerHTML = "Connected ✅";
-                    document.getElementById("facebookStatus").style.color = "#22c55e";
+                    if (fbStatusEl) {
+                        fbStatusEl.innerHTML = "Connected ✅";
+                        fbStatusEl.style.color = "#22c55e";
+                        fbStatusEl.className = "success";
+                    }
 
                     saveFacebookToken(userId, accessToken);
                 } else {
                     alert('User cancelled login or did not fully authorize.');
-                    document.getElementById("facebookStatus").innerHTML = "Failed ❌";
-                    document.getElementById("facebookStatus").style.color = "#ef4444";
+                    if (fbStatusEl) {
+                        fbStatusEl.innerHTML = "Failed ❌";
+                        fbStatusEl.style.color = "#ef4444";
+                    }
                 }
             }, {
                 scope: 'pages_manage_metadata,pages_messaging,pages_read_engagement,public_profile,email'
@@ -168,35 +176,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ⚙️ E. AUTOMATION MOCK INTERACTION LOGIC
+    // ⚙️ E. AUTOMATION CODES (HTML ID: autoDM MATCHED!)
     const autoDM = document.getElementById("autoDM");
     if (autoDM) {
-        autoDM.addEventListener("click", () => alert("Auto DM Enabled"));
-    }
-
-    const autoReply = document.getElementById("autoReply");
-    if (autoReply) {
-        autoReply.addEventListener("click", () => alert("Auto Reply Enabled"));
-    }
-
-    const keywordBtn = document.getElementById("keywordBtn");
-    if (keywordBtn) {
-        keywordBtn.addEventListener("click", () => {
-            const keyword = prompt("Enter keyword");
-            if (keyword) alert("Keyword Saved : " + keyword);
+        autoDM.addEventListener("click", () => {
+            window.location.href = "autodm.html"; // அலர்ட்டுக்குப் பதிலாக நேரடிப் பக்கத்திற்குச் செல்லும்
         });
     }
 
+    // HTML ID: automationStatus Synchronization
     const automationStatus = document.getElementById("automationStatus");
     if (automationStatus) {
         automationStatus.innerHTML = "Running";
-        automationStatus.style.color = "#22c55e";
+        automationStatus.parentElement.style.color = "#22c55e"; // online dot மற்றும் டெக்ஸ்ட்டை பச்சையாக்குகிறது
     }
 
-    // F. RANDOMIZER COUNTERS
+    // F. RANDOMIZER COUNTERS (KPI BOXES)
     const numbers = document.querySelectorAll(".box h3");
     numbers.forEach(item => {
-        if (!item.innerText.includes("%")) {
+        if (item && !item.innerText.includes("%") && item.id !== "instagramStatus" && item.id !== "facebook3Status") {
             item.innerText = Math.floor(Math.random() * 50);
         }
     });
@@ -237,3 +235,4 @@ setInterval(() => {
     const toast = document.querySelector('.toast,.toastify,.notification,.success-toast,.Toastify__toast,.swal2-toast');
     if (toast) toast.remove();
 }, 500);
+        
