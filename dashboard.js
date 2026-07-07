@@ -49,7 +49,6 @@ async function loadUser() {
     if (!profileError && profileData && profileData.length > 0) {
         const profile = profileData[0];
 
-        // 🎯 HTML ID: instagramStatus (பச்சை நிறமாக மாறும்)
         if (profile.instagram_access_token) {
             const instaStatus = document.getElementById("instagramStatus");
             if (instaStatus) {
@@ -59,7 +58,6 @@ async function loadUser() {
             }
         }
 
-        // 🎯 HTML ID: facebook3Status (பச்சை நிறமாக மாறும்)
         if (profile.facebook_access_token) {
             const fbStatus = document.getElementById("facebook3Status");
             if (fbStatus) {
@@ -71,7 +69,6 @@ async function loadUser() {
     }
 }
 
-// பக்கம் ஓபன் ஆனவுடன் யூசரை லோடு செய்தல்
 loadUser();
 
 // =======================================================
@@ -114,38 +111,28 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🎯 CONNECT INSTAGRAM PURE LOGIN SCREEN WORKFLOW (100% INSTAGRAM LOGO SCREEN)
-const targetInstaBtn = document.getElementById("connectInstagram");
-if (targetInstaBtn) {
-    targetInstaBtn.addEventListener("click", (e) => {
-        e.preventDefault();
+    // 🎯 C. CONNECT INSTAGRAM REAL NATIVE OAUTH (அசல் இன்ஸ்டாகிராம் ALLOW ஸ்கிரீன் கொண்டு வரும் பகுதி!)
+    const targetInstaBtn = document.getElementById("connectInstagram");
+    if (targetInstaBtn) {
+        console.log("Instagram Button correctly discovered via live HTML DOM.");
+        targetInstaBtn.addEventListener("click", (e) => {
+            e.preventDefault();
 
-        // 🆔 உங்களுடைய அசல் மெட்டா ஆப் ஐடி
-        const INSTAGRAM_CLIENT_ID = "1021418946936223"; 
-        
-        // 🔗 உங்களுடைய அசல் ரீடைரக்ட் யூஆர்எல்
-        const REDIRECT_URI = "https://abdhaal.github.io/IMA-Automation/instagram.html"; 
+            const INSTAGRAM_CLIENT_ID = "1021418946936223"; 
+            const REDIRECT_URI = "https://abdhaal.github.io/IMA-Automation/instagram.html"; 
 
-        // 📋 இன்ஸ்டாகிராம் பிசினஸ் மற்றும் மெசேஜ் மேனேஜ்மென்ட்க்கான அசல் பர்மிஷன்ஸ் (Scopes)
-        const scopes = [
-            "instagram_business_basic",
-            "instagram_business_manage_messages",
-            "instagram_business_manage_comments",
-            "instagram_business_content_publish"
-        ].join(",");
+            // இன்ஸ்டாகிராம் பேசிக் மற்றும் மெசேஜ் அப்ரூவலுக்கான துல்லியமான ஸ்கோப்கள்
+            const scopes = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish";
 
-        // 🚀 ஃபேஸ்புக் முகப்பைத் தவிர்த்து நேரடியாக அசல் இன்ஸ்டாகிராம் லாகின் பக்கத்தைக் கொண்டு வரும் யூஆர்எல்:
-        const pureInstagramOauthUrl = `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scopes}&response_type=token`;
+            // 🚀 லாகின் செஞ்ச உடனே அப்ரூவல் (Allow / Cancel) ஸ்கிரீனைக் காட்டும் அசல் இன்ஸ்டாகிராம் எண்ட்பாயிண்ட்:
+            const nativeInstagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scopes}&response_type=token`;
 
-        console.log("Launching Pure Instagram Native Authorization Client Screen...");
-        
-        // அதே விண்டோ டேபிலேயே இன்ஸ்டாகிராம் லாகின் முகப்பைத் திறக்கிறது
-        window.location.href = pureInstagramOauthUrl;
-    });
-}
+            console.log("Launching Pure Instagram Authorization Window with Allow Workflow...");
+            window.location.href = nativeInstagramAuthUrl;
+        });
+    }
 
-
-    // 🔵 D. FACEBOOK OAUTH (HTML ID: connectFacebook MATCHED!)
+    // 🔵 D. FACEBOOK OAUTH
     const fbBtn = document.getElementById("connectFacebook");
     if (fbBtn) {
         fbBtn.addEventListener("click", () => {
@@ -183,7 +170,7 @@ if (targetInstaBtn) {
         });
     }
 
-    // ⚙️ E. AUTOMATION CODES (HTML ID: autoDM MATCHED!)
+    // ⚙️ E. AUTOMATION CODES
     const autoDM = document.getElementById("autoDM");
     if (autoDM) {
         autoDM.addEventListener("click", () => {
@@ -191,14 +178,12 @@ if (targetInstaBtn) {
         });
     }
 
-    // HTML ID: automationStatus Synchronization
     const automationStatus = document.getElementById("automationStatus");
     if (automationStatus) {
         automationStatus.innerHTML = "Running";
         automationStatus.parentElement.style.color = "#22c55e"; 
     }
 
-    // F. RANDOMIZER COUNTERS (KPI BOXES)
     const numbers = document.querySelectorAll(".box h3");
     numbers.forEach(item => {
         if (item && !item.innerText.includes("%") && item.id !== "instagramStatus" && item.id !== "facebook3Status") {
@@ -237,9 +222,8 @@ async function saveFacebookToken(metaUserId, token) {
     }
 }
 
-// Auto Clear Success Toast Overlay Fix
 setInterval(() => {
     const toast = document.querySelector('.toast,.toastify,.notification,.success-toast,.Toastify__toast,.swal2-toast');
     if (toast) toast.remove();
 }, 500);
-                
+        
