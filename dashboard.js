@@ -114,20 +114,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🎯 C. CONNECT INSTAGRAM REAL OAUTH (திருத்தப்பட்ட மெட்டா EMBED URL!)
-    const targetInstaBtn = document.getElementById("connectInstagram");
-    if (targetInstaBtn) {
-        console.log("Instagram Button correctly discovered via live HTML DOM.");
-        targetInstaBtn.addEventListener("click", (e) => {
-            e.preventDefault();
+    // 🎯 CONNECT INSTAGRAM PURE LOGIN SCREEN WORKFLOW (100% INSTAGRAM LOGO SCREEN)
+const targetInstaBtn = document.getElementById("connectInstagram");
+if (targetInstaBtn) {
+    targetInstaBtn.addEventListener("click", (e) => {
+        e.preventDefault();
 
-            // மெட்டா டேஷ்போர்டில் ஒயிட்லிஸ்ட் செய்யப்பட்ட 100% அதிகாரப்பூர்வமான அசல் Embed URL
-            const metaEmbedUrl = "https://www.facebook.com/v20.0/dialog/oauth?client_id=1021418946936223&redirect_uri=https%3A%2F%2Fabdhaal.github.io%2FIMA-Automation%2Finstagram.html&response_type=token&scope=instagram_basic%2Cinstagram_manage_messages%2Cinstagram_manage_comments%2Cpages_manage_metadata%2Cpages_show_list&auth_type=rerequest&display=page";
+        // 🆔 உங்களுடைய அசல் மெட்டா ஆப் ஐடி
+        const INSTAGRAM_CLIENT_ID = "1021418946936223"; 
+        
+        // 🔗 உங்களுடைய அசல் ரீடைரக்ட் யூஆர்எல்
+        const REDIRECT_URI = "https://abdhaal.github.io/IMA-Automation/instagram.html"; 
 
-            console.log("Redirecting to Meta Secure Client using whitelist Embed URI workflow...");
-            window.location.href = metaEmbedUrl;
-        });
-    }
+        // 📋 இன்ஸ்டாகிராம் பிசினஸ் மற்றும் மெசேஜ் மேனேஜ்மென்ட்க்கான அசல் பர்மிஷன்ஸ் (Scopes)
+        const scopes = [
+            "instagram_business_basic",
+            "instagram_business_manage_messages",
+            "instagram_business_manage_comments",
+            "instagram_business_content_publish"
+        ].join(",");
+
+        // 🚀 ஃபேஸ்புக் முகப்பைத் தவிர்த்து நேரடியாக அசல் இன்ஸ்டாகிராம் லாகின் பக்கத்தைக் கொண்டு வரும் யூஆர்எல்:
+        const pureInstagramOauthUrl = `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scopes}&response_type=token`;
+
+        console.log("Launching Pure Instagram Native Authorization Client Screen...");
+        
+        // அதே விண்டோ டேபிலேயே இன்ஸ்டாகிராம் லாகின் முகப்பைத் திறக்கிறது
+        window.location.href = pureInstagramOauthUrl;
+    });
+}
+
 
     // 🔵 D. FACEBOOK OAUTH (HTML ID: connectFacebook MATCHED!)
     const fbBtn = document.getElementById("connectFacebook");
