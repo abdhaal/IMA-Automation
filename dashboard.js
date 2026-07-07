@@ -130,54 +130,31 @@ window.fbAsyncInit = function() {
     console.log("Meta SDK successfully initialized.");
 };
 
-// Instagram OAuth
-const instaBtn = document.getElementById("connectInstagram");
-if (instaBtn) {
-    instaBtn.addEventListener("click", () => {
-        if (typeof FB === 'undefined') {
-            alert("Meta SDK is still loading... Please wait a moment and try again.");
-            return;
-        }
+// =======================================================
+// DASHBOARD CONNECT INSTAGRAM BUTTON REAL OAUTH ROUTER
+// =======================================================
+document.getElementById("btnDashboardConnectInstagram")?.addEventListener("click", (e) => {
+    e.preventDefault();
 
-        document.getElementById("instagramStatus").innerHTML = "Connecting...";
+    const META_APP_ID = "1021418946936223"; // உங்களுடைய அசல் மெட்டா ஆப் ஐடி
+    const REDIRECT_URI = "https://abdhaal.github.io/IMA-Automation/instagram.html"; // லாகின் முடிந்ததும் வர வேண்டிய பக்கம்
 
-        FB.login(function(response) {
-            if (response.authResponse) {
-                const accessToken = response.authResponse.accessToken;
-                const userId = response.authResponse.userID;
+    // ஆட்டோமேஷனுக்குத் தேவையான அசல் மெட்டா பர்மிஷன் ஸ்கோப்புகள்
+    const scopes = [
+        "instagram_basic",
+        "instagram_manage_messages",
+        "instagram_manage_comments",
+        "pages_manage_metadata",
+        "pages_show_list"
+    ].join(",");
 
-                alert("Instagram Connected Successfully!");
-                document.getElementById("instagramStatus").innerHTML = "Connected ✅";
-                document.getElementById("instagramStatus").style.color = "#22c55e";
+    // மெட்டாவின் அதிகாரப்பூர்வ செக்யூர் ஓத் லாகின் விண்டோ யூஆர்எல்
+    const oauthUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scopes}&response_type=token`;
 
-                saveInstagramToken(userId, accessToken);
-            } else {
-                alert('User cancelled login or did not fully authorize.');
-                document.getElementById("instagramStatus").innerHTML = "Failed ❌";
-                document.getElementById("instagramStatus").style.color = "#ef4444";
-            }
-        }, {
-            scope: 'instagram_basic,instagram_manage_messages,pages_manage_metadata,pages_show_list,pages_messaging'
-        });
-    });
-}
+    // பட்டனை அமுக்கியவுடன் அதே டேபில் அசல் இன்ஸ்டாகிராம் லாகின் விண்டோவிற்கு அழைத்துச் செல்லும்
+    window.location.href = oauthUrl;
+});
 
-async function saveInstagramToken(metaUserId, token) {
-    const { data: sessionData } = await supabaseClient.auth.getSession();
-    if (sessionData && sessionData.session) {
-        const userUuid = sessionData.session.user.id;
-        const { error } = await supabaseClient
-            .from('profiles')  
-            .upsert({ 
-                id: userUuid, 
-                instagram_user_id: metaUserId,
-                instagram_access_token: token,
-                updated_at: new Date()
-            });
-
-        if (error) alert("Database Error (Insta): " + error.message);
-    }
-}
 
 // Facebook OAuth
 const fbBtn = document.getElementById("connectFacebook");
