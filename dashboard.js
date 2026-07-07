@@ -55,7 +55,7 @@ async function loadUser() {
             if (instaStatus) {
                 instaStatus.innerHTML = "Connected ✅";
                 instaStatus.style.color = "#22c55e";
-                instaStatus.className = "success"; // warning கிளாஸை மாற்றுகிறது
+                instaStatus.className = "success"; 
             }
         }
 
@@ -65,7 +65,7 @@ async function loadUser() {
             if (fbStatus) {
                 fbStatus.innerHTML = "Connected ✅";
                 fbStatus.style.color = "#22c55e";
-                fbStatus.className = "success"; // warning கிளாஸை மாற்றுகிறது
+                fbStatus.className = "success"; 
             }
         }
     }
@@ -114,27 +114,18 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🎯 C. CONNECT INSTAGRAM REAL OAUTH (HTML ID: connectInstagram MATCHED!)
+    // 🎯 C. CONNECT INSTAGRAM REAL OAUTH (திருத்தப்பட்ட மெட்டா EMBED URL!)
     const targetInstaBtn = document.getElementById("connectInstagram");
     if (targetInstaBtn) {
         console.log("Instagram Button correctly discovered via live HTML DOM.");
         targetInstaBtn.addEventListener("click", (e) => {
             e.preventDefault();
 
-            const META_APP_ID = "1021418946936223"; 
-            const REDIRECT_URI = "https://abdhaal.github.io/IMA-Automation/instagram.html"; 
+            // மெட்டா டேஷ்போர்டில் ஒயிட்லிஸ்ட் செய்யப்பட்ட 100% அதிகாரப்பூர்வமான அசல் Embed URL
+            const metaEmbedUrl = "https://www.facebook.com/v20.0/dialog/oauth?client_id=1021418946936223&redirect_uri=https%3A%2F%2Fabdhaal.github.io%2FIMA-Automation%2Finstagram.html&response_type=token&scope=instagram_basic%2Cinstagram_manage_messages%2Cinstagram_manage_comments%2Cpages_manage_metadata%2Cpages_show_list&auth_type=rerequest&display=page";
 
-            const scopes = [
-                "instagram_basic",
-                "instagram_manage_messages",
-                "instagram_manage_comments",
-                "pages_manage_metadata",
-                "pages_show_list"
-            ].join(",");
-
-            const oauthUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scopes}&response_type=token`;
-
-            window.location.href = oauthUrl;
+            console.log("Redirecting to Meta Secure Client using whitelist Embed URI workflow...");
+            window.location.href = metaEmbedUrl;
         });
     }
 
@@ -180,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const autoDM = document.getElementById("autoDM");
     if (autoDM) {
         autoDM.addEventListener("click", () => {
-            window.location.href = "autodm.html"; // அலர்ட்டுக்குப் பதிலாக நேரடிப் பக்கத்திற்குச் செல்லும்
+            window.location.href = "autodm.html"; 
         });
     }
 
@@ -188,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const automationStatus = document.getElementById("automationStatus");
     if (automationStatus) {
         automationStatus.innerHTML = "Running";
-        automationStatus.parentElement.style.color = "#22c55e"; // online dot மற்றும் டெக்ஸ்ட்டை பச்சையாக்குகிறது
+        automationStatus.parentElement.style.color = "#22c55e"; 
     }
 
     // F. RANDOMIZER COUNTERS (KPI BOXES)
@@ -235,4 +226,4 @@ setInterval(() => {
     const toast = document.querySelector('.toast,.toastify,.notification,.success-toast,.Toastify__toast,.swal2-toast');
     if (toast) toast.remove();
 }, 500);
-        
+                
