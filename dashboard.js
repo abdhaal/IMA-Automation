@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 🎯 C. DASHBOARD CONNECT INSTAGRAM BUTTON (FIXED & SECURED HERE!)
-    const targetInstaBtn = document.getElementById("btnDashboardConnectInstagram");
+    const targetInstaBtn = document.getElementById("ConnectInstagram");
     if (targetInstaBtn) {
         console.log("Connect Instagram Button discovered and successfully bound.");
         targetInstaBtn.addEventListener("click", (e) => {
