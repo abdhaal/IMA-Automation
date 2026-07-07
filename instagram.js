@@ -17,13 +17,14 @@ let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
 // ==========================================
-// 2. RENDERING REEL / POST CARDS GRID
+// 2. FETCH AND RENDER REAL INSTAGRAM POSTS & REELS
 // ==========================================
 async function loadInstagramPageData() {
     const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
 
     try {
+        // Auth session validation check
         const { data, error } = await supabaseClient.auth.getSession();
         if (error || !data || !data.session) {
             window.location.href = "login.html";
@@ -36,28 +37,54 @@ async function loadInstagramPageData() {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
 
-        const mockInstagramPosts = [
-            { id: "ig_01", title: "Smart Solar Step Lights for Stairs & Walls! 🔥", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&q=80", comments: "48", likes: "2.4k" },
-            { id: "ig_02", title: "Stop Dust, Insects & AC Cooling Loss with This!", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&q=80", comments: "12", likes: "840" },
-            { id: "ig_03", title: "High Power 3-in-1 Mini Vacuum Cleaner for Car 🚗", date: "03 Jul 2026", img: "https://images.unsplash.com/photo-1563720223185-11003d516935?w=400&q=80", comments: "93", likes: "4.1k" }
-        ];
+        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Syncing your live Instagram posts and reels...</p>";
+
+        // 🎯 REAL API TO FETCH POSTS (சுபாபேஸில் சேமிக்கப்பட்டுள்ள Meta Access Token மூலமாக அசல் போஸ்ட்களை எடுக்கிறது)
+        const { data: profileData, error: dbErr } = await supabaseClient
+            .from('profiles')
+            .select('instagram_access_token, instagram_business_id')
+            .eq('id', currentUserUuid)
+            .single();
+
+        // உங்க அக்கவுண்ட் இன்னும் மெட்டாவில் லிங்க் ஆகவில்லை என்றால், சாண்ட்பாக்ஸ் மாடல் போஸ்ட்களைக் காட்டும்
+        if (dbErr || !profileData || !profileData.instagram_access_token) {
+            console.log("No active Meta token found, loading local interactive sandbox streams.");
+            loadSandboxFallbackPosts();
+            return;
+        }
+
+        // Meta Graph API integration channel endpoint
+        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
+        
+        const response = await fetch(metaApiUrl);
+        const metaJson = await response.json();
+
+        if (!metaJson.data || metaJson.data.length === 0) {
+            postsContainer.innerHTML = "<p style='color:#94a3b8; text-align:center; width:100%;'>No active posts found on your Instagram feed.</p>";
+            return;
+        }
 
         postsContainer.innerHTML = "";
-        mockInstagramPosts.forEach(post => {
+        metaJson.data.forEach(post => {
+            // Video / Reel Fallback thumbnail logic
+            const mediaThumb = (post.media_type === "VIDEO") ? "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400" : post.media_url;
+            const captionText = post.caption ? post.caption.substring(0, 50) + "..." : "Instagram Feed Media Stream";
+            const formattedDate = new Date(post.timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+
             const card = document.createElement("div");
             card.className = "post-card";
             card.innerHTML = `
-                <img src="${post.img}" class="post-thumb" alt="thumb">
+                <img src="${mediaThumb}" class="post-thumb" alt="thumb">
                 <div class="post-meta-badges">
-                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#ec4899;"></i> ${post.comments}</span>
-                    <span class="meta-badge"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> ${post.likes}</span>
+                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#ec4899;"></i> ${post.comments_count || 0}</span>
+                    <span class="meta-badge"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> ${post.like_count || 0}</span>
                 </div>
                 <div class="post-details">
                     <div>
-                        <h4>${post.title}</h4>
-                        <p><i class="fa-solid fa-clock"></i> ${post.date}</p>
+                        <h4>${captionText}</h4>
+                        <p><i class="fa-solid fa-clock"></i> ${formattedDate}</p>
                     </div>
-                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${post.img}">
+                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}">
                         <i class="fa-solid fa-link"></i> Link Post Setup
                     </button>
                 </div>
@@ -67,7 +94,44 @@ async function loadInstagramPageData() {
 
         bindLinkButtons();
 
-    } catch (gErr) { console.error(gErr); }
+    } catch (gErr) { 
+        console.error(gErr);
+        loadSandboxFallbackPosts(); 
+    }
+}
+
+// FALLBACK SANDBOX DATA ENGINE
+function loadSandboxFallbackPosts() {
+    const postsContainer = document.getElementById("postsContainer");
+    const mockInstagramPosts = [
+        { id: "ig_01", title: "Smart Solar Step Lights for Stairs & Walls! 🔥", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&q=80", comments: "48", likes: "2.4k" },
+        { id: "ig_02", title: "Stop Dust, Insects & AC Cooling Loss with This!", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&q=80", comments: "12", likes: "840" },
+        { id: "ig_03", title: "High Power 3-in-1 Mini Vacuum Cleaner for Car 🚗", date: "03 Jul 2026", img: "https://images.unsplash.com/photo-1563720223185-11003d516935?w=400&q=80", comments: "93", likes: "4.1k" }
+    ];
+
+    postsContainer.innerHTML = "";
+    mockInstagramPosts.forEach(post => {
+        const card = document.createElement("div");
+        card.className = "post-card";
+        card.innerHTML = `
+            <img src="${post.img}" class="post-thumb" alt="thumb">
+            <div class="post-meta-badges">
+                <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#ec4899;"></i> ${post.comments}</span>
+                <span class="meta-badge"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> ${post.likes}</span>
+            </div>
+            <div class="post-details">
+                <div>
+                    <h4>${post.title}</h4>
+                    <p><i class="fa-solid fa-clock"></i> ${post.date}</p>
+                </div>
+                <button class="replyrush-btn" data-post-id="${post.id}" data-img="${post.img}">
+                    <i class="fa-solid fa-link"></i> Link Post Setup
+                </button>
+            </div>
+        `;
+        postsContainer.appendChild(card);
+    });
+    bindLinkButtons();
 }
 
 // ==========================================
@@ -100,7 +164,7 @@ function bindLinkButtons() {
             base64CustomUploadedImage = postImg; 
 
             const imgSlot = document.getElementById("previewImageSlot");
-            if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;">`; }
+            if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`; }
 
             document.getElementById("automationOptionsCard").style.display = "grid";
             document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
@@ -142,7 +206,7 @@ function handleTemplateTypeSwitch(type) {
     liveBtn.style.display = "block";
 
     if (type === "media") {
-        // Media Template - standard active view mapping
+        // Keeps all blocks visible
     } else if (type === "attach") {
         autoRadioLabel.style.display = "none";
         const manualRadio = document.querySelector("input[name='imageSourceToggle'][value='manual']");
@@ -194,17 +258,7 @@ function triggerLiveMirrorUpdate() {
 }
 
 // ==========================================
-// 5. SMART IMAGE SCRAPER FALLBACK ENGINE
-// ==========================================
-function updatePreviewImage(srcPath) {
-    const imgSlot = document.getElementById("previewImageSlot");
-    if (imgSlot) {
-        imgSlot.innerHTML = `<img src="${srcPath}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
-    }
-}
-
-// ==========================================
-// 6. LIFE CYCLE & ACTION LISTENERS SETUP
+// 5. INPUT ACTION LISTENERS CONTROL SETUP
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
@@ -239,7 +293,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
 
-    // Toggle source selections routers
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
             if (e.target.value === "manual") {
@@ -248,15 +301,12 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 document.getElementById("manualUploadWrapper").style.display = "none";
                 document.getElementById("autoFetchWrapper").style.display = "block";
-                
-                // Trigger smart extractor if input contains valid headers
                 const activeUrl = document.getElementById("templateUrl").value.trim();
                 if (activeUrl && activeUrl.startsWith("http")) { processSmartAutoImageFetch(activeUrl); }
             }
         });
     });
 
-    // Local file binary base64 converter streams
     document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -269,7 +319,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // URL change listen channel binding
     document.getElementById("templateUrl")?.addEventListener("input", (e) => {
         const targetUrl = e.target.value.trim();
         const selectedRadio = document.querySelector("input[name='imageSourceToggle']:checked")?.value;
@@ -278,17 +327,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 🎯 SMART PRODUCT LINK EXTRACTION FALLBACK
     function processSmartAutoImageFetch(urlStr) {
         if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
             base64CustomUploadedImage = urlStr;
             updatePreviewImage(urlStr);
         } else {
-            // அமேசான் / மற்ற லிங்க்குகளில் இருந்து தப்பான எர்ரர் வராமல் தடுக்க, நமது அசல் போஸ்ட்டின் இமேஜையே இதற்கும் எடுத்துக்கொள்கிறது!
             const currentActivePostBtn = document.querySelector(`.replyrush-btn[data-post-id='${currentActivePostId}']`);
             const fallbackSrc = currentActivePostBtn ? currentActivePostBtn.getAttribute("data-img") : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
             base64CustomUploadedImage = fallbackSrc;
             updatePreviewImage(fallbackSrc);
+        }
+    }
+
+    function updatePreviewImage(srcPath) {
+        const imgSlot = document.getElementById("previewImageSlot");
+        if (imgSlot) {
+            imgSlot.innerHTML = `<img src="${srcPath}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
         }
     }
 
@@ -302,7 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 7. RELIABLE DATA ARCHIVE SAVE ENGINE
+// 6. SAVE HANDLER TO SUPABASE DB
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
@@ -359,7 +413,4 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
     navLinks.forEach(link => {
         const btn = document.getElementById(link.id);
-        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
-    });
-});
-    
+        if (btn) btn.addEventList
