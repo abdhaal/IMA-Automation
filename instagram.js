@@ -17,14 +17,13 @@ let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
 // ==========================================
-// 2. FETCH AND RENDER REAL INSTAGRAM POSTS & REELS
+// 2. FETCH AND RENDER REAL INSTAGRAM POSTS ONLY
 // ==========================================
 async function loadInstagramPageData() {
     const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
 
     try {
-        // Auth session validation check
         const { data, error } = await supabaseClient.auth.getSession();
         if (error || !data || !data.session) {
             window.location.href = "login.html";
@@ -37,38 +36,47 @@ async function loadInstagramPageData() {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
 
-        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Syncing your live Instagram posts and reels...</p>";
+        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Instagram posts and reels...</p>";
 
-        // 🎯 REAL API TO FETCH POSTS (சுபாபேஸில் சேமிக்கப்பட்டுள்ள Meta Access Token மூலமாக அசல் போஸ்ட்களை எடுக்கிறது)
+        // சுபாபேஸ் டேட்டாபேஸில் இருந்து உங்க அசல் மெட்டா டோக்கனை எடுக்கிறது
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles')
             .select('instagram_access_token, instagram_business_id')
             .eq('id', currentUserUuid)
-            .single();
+            .maybeSingle();
 
-        // உங்க அக்கவுண்ட் இன்னும் மெட்டாவில் லிங்க் ஆகவில்லை என்றால், சாண்ட்பாக்ஸ் மாடல் போஸ்ட்களைக் காட்டும்
-        if (dbErr || !profileData || !profileData.instagram_access_token) {
-            console.log("No active Meta token found, loading local interactive sandbox streams.");
-            loadSandboxFallbackPosts();
+        // டோக்கன் அல்லது பிசினஸ் ஐடி இல்லை என்றால் பயனர் லிங்க் செய்யச் சொல்லி அலர்ட் காட்டும்
+        if (dbErr || !profileData || !profileData.instagram_access_token || !profileData.instagram_business_id) {
+            postsContainer.innerHTML = `
+                <div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'>
+                    <i class="fa-brands fa-instagram" style="font-size: 40px; color: #ec4899; margin-bottom: 15px;"></i>
+                    <p style="font-size:15px; margin-bottom:15px;">Your Instagram Business Account is not linked yet.</p>
+                    <p style="font-size:13px; color:#64748b;">Please connect your Facebook Page / Instagram Business account in Settings to view your live posts.</p>
+                </div>`;
             return;
         }
 
-        // Meta Graph API integration channel endpoint
+        // Meta Graph API Live Endpoint Connection
         const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
         
         const response = await fetch(metaApiUrl);
         const metaJson = await response.json();
 
+        if (metaJson.error) {
+            postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; width:100%; padding:20px;'>Meta API Error: ${metaJson.error.message}</p>`;
+            return;
+        }
+
         if (!metaJson.data || metaJson.data.length === 0) {
-            postsContainer.innerHTML = "<p style='color:#94a3b8; text-align:center; width:100%;'>No active posts found on your Instagram feed.</p>";
+            postsContainer.innerHTML = "<p style='color:#94a3b8; text-align:center; width:100%; padding:20px;'>No posts or reels found on your active Instagram profile.</p>";
             return;
         }
 
         postsContainer.innerHTML = "";
         metaJson.data.forEach(post => {
-            // Video / Reel Fallback thumbnail logic
+            // இமேஜ் மற்றும் ரீல்ஸ் வீடியோக்களுக்கான தம்ப்நெயில் செட்டப்
             const mediaThumb = (post.media_type === "VIDEO") ? "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400" : post.media_url;
-            const captionText = post.caption ? post.caption.substring(0, 50) + "..." : "Instagram Feed Media Stream";
+            const captionText = post.caption ? post.caption.substring(0, 55) + "..." : "Instagram Feed Post";
             const formattedDate = new Date(post.timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
             const card = document.createElement("div");
@@ -96,42 +104,8 @@ async function loadInstagramPageData() {
 
     } catch (gErr) { 
         console.error(gErr);
-        loadSandboxFallbackPosts(); 
+        postsContainer.innerHTML = "<p style='color:#ef4444; text-align:center; width:100%; padding:20px;'>Failed to load live Instagram feed. Please check connection.</p>";
     }
-}
-
-// FALLBACK SANDBOX DATA ENGINE
-function loadSandboxFallbackPosts() {
-    const postsContainer = document.getElementById("postsContainer");
-    const mockInstagramPosts = [
-        { id: "ig_01", title: "Smart Solar Step Lights for Stairs & Walls! 🔥", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&q=80", comments: "48", likes: "2.4k" },
-        { id: "ig_02", title: "Stop Dust, Insects & AC Cooling Loss with This!", date: "04 Jul 2026", img: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&q=80", comments: "12", likes: "840" },
-        { id: "ig_03", title: "High Power 3-in-1 Mini Vacuum Cleaner for Car 🚗", date: "03 Jul 2026", img: "https://images.unsplash.com/photo-1563720223185-11003d516935?w=400&q=80", comments: "93", likes: "4.1k" }
-    ];
-
-    postsContainer.innerHTML = "";
-    mockInstagramPosts.forEach(post => {
-        const card = document.createElement("div");
-        card.className = "post-card";
-        card.innerHTML = `
-            <img src="${post.img}" class="post-thumb" alt="thumb">
-            <div class="post-meta-badges">
-                <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#ec4899;"></i> ${post.comments}</span>
-                <span class="meta-badge"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> ${post.likes}</span>
-            </div>
-            <div class="post-details">
-                <div>
-                    <h4>${post.title}</h4>
-                    <p><i class="fa-solid fa-clock"></i> ${post.date}</p>
-                </div>
-                <button class="replyrush-btn" data-post-id="${post.id}" data-img="${post.img}">
-                    <i class="fa-solid fa-link"></i> Link Post Setup
-                </button>
-            </div>
-        `;
-        postsContainer.appendChild(card);
-    });
-    bindLinkButtons();
 }
 
 // ==========================================
@@ -258,7 +232,7 @@ function triggerLiveMirrorUpdate() {
 }
 
 // ==========================================
-// 5. INPUT ACTION LISTENERS CONTROL SETUP
+// 5. INPUT ACTION LISTENERS
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
@@ -413,4 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
     navLinks.forEach(link => {
         const btn = document.getElementById(link.id);
-        if (btn) btn.addEventList
+        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
+    });
+});
+            
