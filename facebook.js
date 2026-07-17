@@ -49,7 +49,7 @@ async function loadFacebookPageData() {
             .eq('id', currentUserUuid)
             .maybeSingle();
 
-        if (dbErr || !profileData || !profileData.instagram_access_token || !profileData.facebook_page_id) {
+        if (dbErr || !profileData || !profileData.facebook_access_token || !profileData.facebook_user_id) {
             postsContainer.innerHTML = `
                 <div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'>
                     <i class="fa-brands fa-facebook" style="font-size: 40px; color: #1877f2; margin-bottom: 15px;"></i>
@@ -59,7 +59,7 @@ async function loadFacebookPageData() {
             return;
         }
 
-        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/feed?fields=id,message,created_time,full_picture,likes.summary(true),comments.summary(true)&access_token=${profileData.instagram_access_token}`;
+        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_user_id}/feed?fields=id,message,created_time,full_picture,likes.summary(true),comments.summary(true)&access_token=${profileData.facebook_access_token}`;
         
         const response = await fetch(metaApiUrl);
         const metaJson = await response.json();
