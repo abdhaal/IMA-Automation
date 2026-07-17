@@ -20,8 +20,8 @@ let base64CustomUploadedImage = "";
 // 2. FETCH AND RENDER REAL FACEBOOK POSTS
 // ==========================================
 async function loadFacebookPageData() {
-    // உங்க facebook.html-ல் இருக்கும் ஃபீட் கன்டைனர் ID
-    const postsContainer = document.getElementById("postsContainer") || document.getElementById("facebookFeedGrid");
+    // FIX: உங்க அசல் facebook.html-ல் இருக்கும் ID 'facebookFeedGrid' மட்டுமே
+    const postsContainer = document.getElementById("facebookFeedGrid") || document.getElementById("postsContainer");
     if (!postsContainer) return;
 
     try {
@@ -34,19 +34,21 @@ async function loadFacebookPageData() {
         const user = data.session.user;
         currentUserUuid = user.id;
         
-        if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
-        if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
+        // எலிமெண்ட்கள் இருந்தால் மட்டுமே டெக்ஸ்ட்டை அப்டேட் செய்யும் பாதுகாப்பான செட்டப்
+        const userEmailEl = document.getElementById("userEmail") || document.querySelector(".user-info span:last-child");
+        const userNameEl = document.getElementById("userName") || document.querySelector(".user-info span:first-child");
+        
+        if (userEmailEl) userEmailEl.innerText = user.email;
+        if (userNameEl) userNameEl.innerText = user.email.split("@")[0];
 
         postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Facebook page posts...</p>";
 
-        // சுபாபேஸ் டேட்டாபேஸில் இருந்து உங்க அசல் மெட்டா டோக்கனை எடுக்கிறது (Profiles Table)
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles')
-            .select('instagram_access_token, facebook_page_id') // இங்க உங்க டோக்கன் மற்றும் FB Page ID-ஐ எடுக்கிறோம்
+            .select('instagram_access_token, facebook_page_id')
             .eq('id', currentUserUuid)
             .maybeSingle();
 
-        // டோக்கன் அல்லது ஃபேஸ்புக் பேஜ் ஐடி இல்லை என்றால் அலர்ட் காட்டும்
         if (dbErr || !profileData || !profileData.instagram_access_token || !profileData.facebook_page_id) {
             postsContainer.innerHTML = `
                 <div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'>
@@ -57,7 +59,6 @@ async function loadFacebookPageData() {
             return;
         }
 
-        // Meta Graph API Facebook Page Feed Endpoint Connection
         const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/feed?fields=id,message,created_time,full_picture,likes.summary(true),comments.summary(true)&access_token=${profileData.instagram_access_token}`;
         
         const response = await fetch(metaApiUrl);
@@ -75,7 +76,6 @@ async function loadFacebookPageData() {
 
         postsContainer.innerHTML = "";
         metaJson.data.forEach(post => {
-            // ஃபேஸ்புக் போஸ்டில் படம் இருந்தால் அதை எடுக்கும், இல்லை என்றால் டீஃபால்ட் பிசினஸ் படம்
             const mediaThumb = post.full_picture || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400";
             const captionText = post.message ? post.message.substring(0, 55) + "..." : "Facebook Wall Post";
             const formattedDate = new Date(post.created_time).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -85,23 +85,23 @@ async function loadFacebookPageData() {
 
             const card = document.createElement("div");
             card.className = "post-card";
-            card.style.background = "#ffffff";
+            card.style.background = "rgba(30, 41, 59, 0.5)";
             card.style.padding = "15px";
-            card.style.borderRadius = "10px";
-            card.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
+            card.style.borderRadius = "12px";
+            card.style.border = "1px solid rgba(255, 255, 255, 0.05)";
             
             card.innerHTML = `
                 <img src="${mediaThumb}" class="post-thumb" alt="thumb" style="width:100%; height:200px; object-fit:cover; border-radius:8px;">
-                <div class="post-meta-badges" style="margin-top:10px; display:flex; gap:10px;">
-                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#1877f2;"></i> ${commentsCount}</span>
-                    <span class="meta-badge"><i class="fa-solid fa-thumbs-up" style="color:#1877f2;"></i> ${likesCount}</span>
+                <div class="post-meta-badges" style="margin-top:10px; display:flex; gap:10px; font-size: 13px; color: #94a3b8;">
+                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#1877f2;"></i> ${commentsCount} Comments</span>
+                    <span class="meta-badge"><i class="fa-solid fa-thumbs-up" style="color:#1877f2;"></i> ${likesCount} Likes</span>
                 </div>
                 <div class="post-details" style="margin-top:10px;">
                     <div>
-                        <h4 style="margin:0 0 5px 0; font-size:14px;">${captionText}</h4>
-                        <p style="margin:0 0 10px 0; font-size:12px; color:gray;"><i class="fa-solid fa-clock"></i> ${formattedDate}</p>
+                        <h4 style="margin:0 0 5px 0; font-size:14px; color:#f8fafc;">${captionText}</h4>
+                        <p style="margin:0 0 10px 0; font-size:12px; color:#64748b;"><i class="fa-solid fa-clock"></i> ${formattedDate}</p>
                     </div>
-                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}" style="width:100%; padding:8px; border:none; background:#1877f2; color:white; border-radius:6px; cursor:pointer;">
+                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}" style="width:100%; padding:10px; border:none; background:#1877f2; color:white; border-radius:8px; cursor:pointer; font-weight:500; display:flex; justify-content:center; align-items:center; gap:8px;">
                         <i class="fa-solid fa-link"></i> Link Post Setup
                     </button>
                 </div>
@@ -355,12 +355,11 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
 
     const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
 
-    // ஃபேஸ்புக் ஆட்டோமேஷன் ரூல்களை பாதுகாப்பாக சுபாபேஸ் ப்ரொஃபைலில் அப்சர்ட் செய்கிறோம்
     const { error } = await supabaseClient
         .from('profiles')
         .upsert({
             id: currentUserUuid,
-            fb_active_post_id: currentActivePostId, // Facebook Active Post Id 
+            fb_active_post_id: currentActivePostId, 
             fb_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             fb_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
             fb_exclude_keywords: document.getElementById("excludeKeywords")?.value.trim() || "",
@@ -396,4 +395,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const navLinks = [
         { id: "dashboardBtn", url: "dashboard.html" },
         { id: "instagramBtn", url: "instagram.html" },
-        { id: "facebookBtn"
+        { id: "facebookBtn", url: "facebook.html" },
+        { id: "automationBtn", url: "automation.html" },
+        { id: "commentsBtn", url: "comments.html" },
+        { id: "autodmBtn", url: "autodm.html" },
+        { id: "keywordsBtn", url: "keywords.html" },
+        { id: "analyticsBtn", url: "analytics.html" },
+        { id: "settingsBtn", url: "settings.html" }
+    ];
+    navLinks.forEach(link => {
+        const btn = document.getElementById(link.id);
+        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
+    });
+});
