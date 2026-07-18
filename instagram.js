@@ -13,6 +13,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 let currentActivePostId = "";
 let currentUserUuid = "";
+let currentInstagramBusinessId = ""; // 💡 பிசினஸ் ஐடியை சேமிக்க புதிய குளோபல் வேரியபிள்
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
@@ -38,7 +39,7 @@ async function loadInstagramPageData() {
 
         postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Instagram posts and reels...</p>";
 
-        // சுபாபேஸ் டேட்டாபேஸில் இருந்து உங்க அசல் மெட்டா டோக்கனை எடுக்கிறது
+        // சுபாபேஸ் டேட்டாவில் இருந்து உங்க அசல் மெட்டா டோக்கனை எடுக்கிறது
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles')
             .select('instagram_access_token, instagram_business_id')
@@ -56,8 +57,11 @@ async function loadInstagramPageData() {
             return;
         }
 
+        // 💡 சேவ் செய்யும்போது பயன்படுத்த பிசினஸ் ஐடியை குளோபல் வேரியபிளில் வைக்கிறோம்
+        currentInstagramBusinessId = profileData.instagram_business_id;
+
         // Meta Graph API Live Endpoint Connection
-        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
+        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
         
         const response = await fetch(metaApiUrl);
         const metaJson = await response.json();
@@ -74,8 +78,8 @@ async function loadInstagramPageData() {
 
         postsContainer.innerHTML = "";
         metaJson.data.forEach(post => {
-            // FIX: வீடியோவாக இருந்தால் மெட்டாவின் thumbnail_url பயன்படுத்தும் படி மாற்றப்பட்டுள்ளது
-            const mediaThumb = (post.media_type === "VIDEO") ? (post.thumbnail_url || post.media_url) : post.media_url;
+            // இமேஜ் மற்றும் ரீல்ஸ் வீடியோக்களுக்கான தம்ப்நெயில் செட்டப்
+            const mediaThumb = (post.media_type === "VIDEO") ? "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400" : post.media_url;
             const captionText = post.caption ? post.caption.substring(0, 55) + "..." : "Instagram Feed Post";
             const formattedDate = new Date(post.timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -134,19 +138,14 @@ function bindLinkButtons() {
             const title = btn.closest(".post-card").querySelector("h4").innerText;
             const postImg = btn.getAttribute("data-img");
             
-            const titleEl = document.getElementById("selectedPostTitle");
-            if (titleEl) titleEl.innerText = "Link Settings: " + title;
-            
+            document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
             base64CustomUploadedImage = postImg; 
 
             const imgSlot = document.getElementById("previewImageSlot");
             if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`; }
 
-            const optionsCard = document.getElementById("automationOptionsCard");
-            if (optionsCard) {
-                optionsCard.style.display = "grid";
-                optionsCard.scrollIntoView({ behavior: 'smooth' });
-            }
+            document.getElementById("automationOptionsCard").style.display = "grid";
+            document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
             
             window.toggleAccordion('triggerAcc');
         });
@@ -171,46 +170,45 @@ function handleTemplateTypeSwitch(type) {
     const bodyContent = document.getElementById("previewCardBodyContent");
     const liveBtn = document.getElementById("livePreviewBtn");
 
-    // FIX: ஒரு சில எலிமெண்ட்டுகள் HTML-ல் இல்லாவிட்டாலும் எர்ரர் வராமல் தடுக்க 'if block' மாற்றியமைக்கப்பட்டுள்ளது
-    if (hBlock) hBlock.style.display = "block";
-    if (dBlock) dBlock.style.display = "block";
-    if (bBlock) bBlock.style.display = "block";
-    if (uBlock) uBlock.style.display = "block";
-    if (mSourceBlock) mSourceBlock.style.display = "block";
-    if (autoRadioLabel) autoRadioLabel.style.display = "flex";
-    if (richCard) richCard.style.display = "flex";
-    if (imgSlot) imgSlot.style.display = "flex";
-    if (bodyContent) bodyContent.style.display = "block";
-    if (liveBtn) liveBtn.style.display = "block";
+    if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn || !mSourceBlock || !autoRadioLabel) return;
+
+    hBlock.style.display = "block";
+    dBlock.style.display = "block";
+    bBlock.style.display = "block";
+    uBlock.style.display = "block";
+    mSourceBlock.style.display = "block";
+    autoRadioLabel.style.display = "flex";
+    richCard.style.display = "flex";
+    imgSlot.style.display = "flex";
+    bodyContent.style.display = "block";
+    liveBtn.style.display = "block";
 
     if (type === "media") {
         // Keeps all blocks visible
     } else if (type === "attach") {
-        if (autoRadioLabel) autoRadioLabel.style.display = "none";
+        autoRadioLabel.style.display = "none";
         const manualRadio = document.querySelector("input[name='imageSourceToggle'][value='manual']");
         if (manualRadio) {
             manualRadio.checked = true;
-            const manWrap = document.getElementById("manualUploadWrapper");
-            const autoWrap = document.getElementById("autoFetchWrapper");
-            if (manWrap) manWrap.style.display = "block";
-            if (autoWrap) autoWrap.style.display = "none";
+            document.getElementById("manualUploadWrapper").style.display = "block";
+            document.getElementById("autoFetchWrapper").style.display = "none";
         }
-        if (hBlock) hBlock.style.display = "none";
-        if (dBlock) dBlock.style.display = "none";
-        if (bBlock) bBlock.style.display = "none";
-        if (uBlock) uBlock.style.display = "none";
-        if (bodyContent) bodyContent.style.display = "none";
-        if (liveBtn) liveBtn.style.display = "none";
+        hBlock.style.display = "none";
+        dBlock.style.display = "none";
+        bBlock.style.display = "none";
+        uBlock.style.display = "none";
+        bodyContent.style.display = "none";
+        liveBtn.style.display = "none";
     } else if (type === "text") {
-        if (hBlock) hBlock.style.display = "none";
-        if (bBlock) bBlock.style.display = "none";
-        if (uBlock) uBlock.style.display = "none";
-        if (mSourceBlock) mSourceBlock.style.display = "none";
-        if (imgSlot) imgSlot.style.display = "none";
-        if (liveBtn) liveBtn.style.display = "none";
+        hBlock.style.display = "none";
+        bBlock.style.display = "none";
+        uBlock.style.display = "none";
+        mSourceBlock.style.display = "none";
+        imgSlot.style.display = "none";
+        liveBtn.style.display = "none";
     } else if (type === "quick" || type === "button") {
-        if (imgSlot) imgSlot.style.display = "none";
-        if (mSourceBlock) mSourceBlock.style.display = "none";
+        imgSlot.style.display = "none";
+        mSourceBlock.style.display = "none";
     }
     
     triggerLiveMirrorUpdate();
@@ -225,14 +223,15 @@ function triggerLiveMirrorUpdate() {
     const liveDesc = document.getElementById("livePreviewDesc");
     const liveBtn = document.getElementById("livePreviewBtn");
 
+    if (!liveHeadline || !liveDesc || !liveBtn) return;
+
     if (currentSelectedTemplateType === "text") {
-        if (liveDesc) liveDesc.innerText = document.getElementById("templateDescription")?.value || "Text Message flow placeholder...";
-        if (liveHeadline) liveHeadline.innerText = "";
+        liveDesc.innerText = document.getElementById("templateDescription")?.value || "Text Message flow placeholder...";
+        liveHeadline.innerText = "";
     } else {
-        if (liveHeadline) liveHeadline.innerText = headlineValue;
-        if (liveDesc) liveDesc.innerText = descValue;
-        if (liveBtn) liveBtn.style.display = "block";
-        if (liveBtn) liveBtn.innerText = btnTitleValue;
+        liveHeadline.innerText = headlineValue;
+        liveDesc.innerText = descValue;
+        liveBtn.innerText = btnTitleValue;
     }
 }
 
@@ -243,8 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
 
     document.getElementById("closeOptionsBtn")?.addEventListener("click", () => {
-        const optionsCard = document.getElementById("automationOptionsCard");
-        if (optionsCard) optionsCard.style.display = "none";
+        document.getElementById("automationOptionsCard").style.display = "none";
     });
 
     document.getElementById("triggerMechanism")?.addEventListener("change", (e) => {
@@ -275,15 +273,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
-            const manWrap = document.getElementById("manualUploadWrapper");
-            const autoWrap = document.getElementById("autoFetchWrapper");
             if (e.target.value === "manual") {
-                if (manWrap) manWrap.style.display = "block";
-                if (autoWrap) autoWrap.style.display = "none";
+                document.getElementById("manualUploadWrapper").style.display = "block";
+                document.getElementById("autoFetchWrapper").style.display = "none";
             } else {
-                if (manWrap) manWrap.style.display = "none";
-                if (autoWrap) autoWrap.style.display = "block";
-                const activeUrl = document.getElementById("templateUrl")?.value.trim();
+                document.getElementById("manualUploadWrapper").style.display = "none";
+                document.getElementById("autoFetchWrapper").style.display = "block";
+                const activeUrl = document.getElementById("templateUrl").value.trim();
                 if (activeUrl && activeUrl.startsWith("http")) { processSmartAutoImageFetch(activeUrl); }
             }
         });
@@ -338,25 +334,31 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB
+// 6. SAVE HANDLER TO NEW AUTOMATION TABLE (UPDATED)
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
+    if (!currentActivePostId) {
+        alert("Please select an Instagram post first bro!");
+        return;
+    }
 
     const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
 
-    // FIX: எலிமெண்ட்டுகள் நல் (null) ஆக இருந்தாலும் எர்ரர் வராமல் தடுக்க பாதுகாப்பான செட்டப் செய்யப்பட்டுள்ளது
+    // 💡 மாஸ் மாற்றம்: பழைய 'profiles' டேபிளுக்குப் பதிலா, புதிய 'instagram_posts_automation' டேபிளுக்குள் upsert செய்கிறோம்!
     const { error } = await supabaseClient
-        .from('profiles')
+        .from('instagram_posts_automation')
         .upsert({
-            id: currentUserUuid,
-            ig_active_post_id: currentActivePostId,
+            profile_id: currentUserUuid, // profiles டேபிளுடன் ரிலேஷன்ஷிப் ஆகிடும்
+            instagram_business_id: currentInstagramBusinessId || "17841463993777074", // குளோபல் பிசினஸ் ஐடி
+            ig_active_post_id: currentActivePostId, // தனித்தனி போஸ்ட் ஐடி
+            
             ig_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
             ig_exclude_keywords: document.getElementById("excludeKeywords")?.value.trim() || "",
             
             ig_comment_reply_active: document.getElementById("commentAutoReplyCheck")?.checked || false,
-            ig_custom_comment_text: document.getElementById("customCommentReplyText")?.value.trim() || "",
+            ig_comment_text: document.getElementById("customCommentReplyText")?.value.trim() || "", // வெப்ஹூக் கோடுடன் மேட்ச் செய்ய 'ig_comment_text' என மாற்றப்பட்டுள்ளது
             ig_dm_active: document.getElementById("sendDMCheck")?.checked || false,
             ig_custom_engagement_text: document.getElementById("customEngagementText")?.value.trim() || "",
             
@@ -370,6 +372,9 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_url: document.getElementById("templateUrl")?.value.trim() || "",
             ig_desc: document.getElementById("templateDescription")?.value.trim() || "",
             updated_at: new Date()
+        }, {
+            // 💡 இந்த இரண்டு ஐடிகளும் ஏற்கனவே ஒரே ரோ-வில் இருந்தால் மட்டும் Update ஆகும், இல்லைனா New Row விழும்!
+            onConflict: 'profile_id,ig_active_post_id'
         });
 
     if (error) {
