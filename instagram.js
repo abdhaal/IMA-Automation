@@ -61,8 +61,8 @@ async function loadInstagramPageData() {
         currentInstagramBusinessId = profileData.instagram_business_id;
 
         // Meta Graph API Live Endpoint Connection
-        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
-        
+        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
+
         const response = await fetch(metaApiUrl);
         const metaJson = await response.json();
 
@@ -79,7 +79,8 @@ async function loadInstagramPageData() {
         postsContainer.innerHTML = "";
         metaJson.data.forEach(post => {
             // இமேஜ் மற்றும் ரீல்ஸ் வீடியோக்களுக்கான தம்ப்நெயில் செட்டப்
-            const mediaThumb = (post.media_type === "VIDEO") ? "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400" : post.media_url;
+            // ஒருவேளை வீடியோ/ரீல்ஸ் ஆக இருந்தால் மெட்டா வழங்கும் அசல் தம்ப்நெயிலை எடுக்கும், இல்லையென்றால் அசல் இமேஜ் URL எடுக்கும்
+            const mediaThumb = (post.media_type === "VIDEO" || post.media_type === "REELS") ? (post.thumbnail_url || post.media_url) : post.media_url;
             const captionText = post.caption ? post.caption.substring(0, 55) + "..." : "Instagram Feed Post";
             const formattedDate = new Date(post.timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
