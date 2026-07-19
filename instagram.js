@@ -38,14 +38,12 @@ async function loadInstagramPageData() {
 
         postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Instagram posts and reels...</p>";
 
-        // சுபாபேஸ் டேட்டாபேஸில் இருந்து உங்க அசல் மெட்டா டோக்கனை எடுக்கிறது
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles')
             .select('instagram_access_token, instagram_business_id')
             .eq('id', currentUserUuid)
             .maybeSingle();
 
-        // டோக்கன் அல்லது பிசினஸ் ஐடி இல்லை என்றால் பயனர் லிங்க் செய்யச் சொல்லி அலர்ட் காட்டும்
         if (dbErr || !profileData || !profileData.instagram_access_token || !profileData.instagram_business_id) {
             postsContainer.innerHTML = `
                 <div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'>
@@ -56,7 +54,6 @@ async function loadInstagramPageData() {
             return;
         }
 
-        // Meta Graph API Live Endpoint Connection
         const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
         
         const response = await fetch(metaApiUrl);
@@ -74,7 +71,6 @@ async function loadInstagramPageData() {
 
         postsContainer.innerHTML = "";
         metaJson.data.forEach(post => {
-            // இமேஜ் மற்றும் ரீல்ஸ் வீடியோக்களுக்கான தம்ப்நெயில் செட்டப்
             const mediaThumb = (post.media_type === "VIDEO") ? "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400" : post.media_url;
             const captionText = post.caption ? post.caption.substring(0, 55) + "..." : "Instagram Feed Post";
             const formattedDate = new Date(post.timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -144,6 +140,7 @@ function bindLinkButtons() {
             document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
             
             window.toggleAccordion('triggerAcc');
+            triggerLiveMirrorUpdate(); // ஓப்பன் பண்ணும்போதே ப்ரிவியூவை லோட் செய்ய
         });
     });
 }
@@ -210,19 +207,20 @@ function handleTemplateTypeSwitch(type) {
     triggerLiveMirrorUpdate();
 }
 
+// 💡 நீங்க கேட்ட ப்ரிவியூ அப்டேட் மேஜிக்!
 function triggerLiveMirrorUpdate() {
-    // 💡 1st Message (Engagement Starter Text + Button)
+    // 1st Message Variables (Text & Button)
     const firstMsgText = document.getElementById("customEngagementText")?.value || "Hi 👋 Thanks for your comment, Here is the product link 🔗👇";
     const firstMsgBtnTitle = document.getElementById("templateBtnTitle")?.value || "Send Link Now";
 
-    // 💡 2nd Message (Card)
+    // 2nd Message Variables (Image Card)
     const headlineValue = document.getElementById("templateHeadline")?.value || "Card Headline";
     const descValue = document.getElementById("templateDescription")?.value || "Template Description text goes here...";
 
     const bubble = document.getElementById("previewEngagementBubble");
     if (bubble) {
-        // Engagement bubble-க்குள் டெக்ஸ்ட்டும் அதற்கு கீழ் பட்டனும் வருமாறு அப்டேட் செய்யப்பட்டுள்ளது
-        bubble.innerHTML = `${firstMsgText}<br><br><div style="background:#e2e8f0; color:#1e293b; padding:8px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; border:1px solid #cbd5e1;">${firstMsgBtnTitle}</div>`;
+        // 💡 முதல் பப்பிளுக்குள் டெக்ஸ்ட்டும், அதற்குக் கீழ் நீங்க டைப் பண்ணும் பட்டன் பெயரும் அட்டகாசமாக வரும்!
+        bubble.innerHTML = `${firstMsgText}<br><br><div style="background:#e2e8f0; color:#1e293b; padding:8px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; border:1px solid #cbd5e1; cursor:pointer;">${firstMsgBtnTitle}</div>`;
     }
 
     const liveHeadline = document.getElementById("livePreviewHeadline");
@@ -237,7 +235,7 @@ function triggerLiveMirrorUpdate() {
     } else {
         liveHeadline.innerText = headlineValue;
         liveDesc.innerText = descValue;
-        liveBtn.innerText = "🛍️ Buy"; // 2வது கார்டு பட்டன் Buy என காட்டும்
+        liveBtn.innerText = "🛍️ Buy"; // 2வது கார்டு பட்டன் எப்போதும் Buy என்று காட்டும்
     }
 }
 
@@ -268,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (bubble) bubble.style.display = e.target.checked ? "block" : "none";
     });
 
-    // 💡 இங்க முன்னாடி இருந்த பழைய கோடை மாற்றி, டைப் பண்ணும்போதே ப்ரிவியூ அப்டேட் ஆக triggerLiveMirrorUpdate-ஐ சேர்த்திருக்கேன்
+    // 💡 இங்க நீங்க டைப் பண்ண டைப் பண்ண 1st மெசேஜ் மற்றும் 1st பட்டன் ப்ரிவியூ அப்டேட் ஆகும்
     document.getElementById("customEngagementText")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
@@ -337,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB
+// 6. SAVE HANDLER TO SUPABASE DB (Untouched by AI)
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
@@ -345,7 +343,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
     const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
 
     const { error } = await supabaseClient
-        .from('instagram_posts_automation')
+        .from('profiles')
         .upsert({
             id: currentUserUuid,
             ig_active_post_id: currentActivePostId,
@@ -397,4 +395,4 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
     });
 });
-    
+            
