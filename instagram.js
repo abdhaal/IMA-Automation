@@ -289,37 +289,39 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // 💡 இங்கதான் மேஜிக் நடக்குது! Product லிங்க்கில் இருந்து ஒரிஜினல் இமேஜை உருவி எடுக்கும் API 
-    async function processSmartAutoImageFetch(urlStr) {
+        async function processSmartAutoImageFetch(urlStr) {
         const imgSlot = document.getElementById("previewImageSlot");
         
         if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
             base64CustomUploadedImage = urlStr;
             updatePreviewImage(urlStr);
         } else {
-            // Loading Animation காட்டுகிறோம்
-            if(imgSlot) imgSlot.innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#94a3b8; background:#1e293b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i></div>`;
+            // Loading Animation காட்டும்
+            if(imgSlot) imgSlot.innerHTML = `<div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; background:#1e293b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px; margin-bottom:10px;"></i><span style="font-size:10px; text-align:center; padding:0 10px;">Bypassing Affiliate Link...<br>Fetching product image</span></div>`;
             
             try {
-                // Microlink API மூலமாக e-commerce லிங்கின் இமேஜை எடுக்கிறோம்
-                const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(urlStr)}`);
+                // &prerender=true added to bypass initial affiliate redirects
+                const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(urlStr)}&prerender=true`);
                 const data = await res.json();
                 
                 if (data.status === 'success' && data.data.image && data.data.image.url) {
                     base64CustomUploadedImage = data.data.image.url;
                     updatePreviewImage(data.data.image.url);
                 } else {
-                    throw new Error("No image found");
+                    throw new Error("No specific product image found");
                 }
             } catch(e) {
-                // எடுக்க முடியலைனா, போஸ்ட் இமேஜையே டீபால்ட்டா வச்சுரும்
+                // Fallback to Post Image if scraper is blocked by Meesho
                 const currentActivePostBtn = document.querySelector(`.replyrush-btn[data-post-id='${currentActivePostId}']`);
                 const fallbackSrc = currentActivePostBtn ? currentActivePostBtn.getAttribute("data-img") : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
                 base64CustomUploadedImage = fallbackSrc;
                 updatePreviewImage(fallbackSrc);
+                
+                alert("⚠️ Meesho security blocked the image fetcher for this affiliate link. Please select 'Manually Upload' to set the product image directly. (Your link will still work!)");
             }
         }
-    }
-
+        }
+    
     function updatePreviewImage(srcPath) {
         const imgSlot = document.getElementById("previewImageSlot");
         if (imgSlot) {
