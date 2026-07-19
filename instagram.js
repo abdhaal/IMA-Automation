@@ -13,7 +13,6 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 let currentActivePostId = "";
 let currentUserUuid = "";
-let currentInstagramBusinessId = ""; // 💡 பிசினஸ் ஐடியை சேமிக்க புதிய குளோபல் வேரியபிள்
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
@@ -39,7 +38,7 @@ async function loadInstagramPageData() {
 
         postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Instagram posts and reels...</p>";
 
-        // சுபாபேஸ் டேட்டாவில் இருந்து உங்க அசல் மெட்டா டோக்கனை எடுக்கிறது
+        // சுபாபேஸ் டேட்டாபேஸில் இருந்து உங்க அசல் மெட்டா டோக்கனை எடுக்கிறது
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles')
             .select('instagram_access_token, instagram_business_id')
@@ -57,12 +56,9 @@ async function loadInstagramPageData() {
             return;
         }
 
-        // 💡 சேவ் செய்யும்போது பயன்படுத்த பிசினஸ் ஐடியை குளோபல் வேரியபிளில் வைக்கிறோம்
-        currentInstagramBusinessId = profileData.instagram_business_id;
-
         // Meta Graph API Live Endpoint Connection
-        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
-
+        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
+        
         const response = await fetch(metaApiUrl);
         const metaJson = await response.json();
 
@@ -79,8 +75,7 @@ async function loadInstagramPageData() {
         postsContainer.innerHTML = "";
         metaJson.data.forEach(post => {
             // இமேஜ் மற்றும் ரீல்ஸ் வீடியோக்களுக்கான தம்ப்நெயில் செட்டப்
-            // ஒருவேளை வீடியோ/ரீல்ஸ் ஆக இருந்தால் மெட்டா வழங்கும் அசல் தம்ப்நெயிலை எடுக்கும், இல்லையென்றால் அசல் இமேஜ் URL எடுக்கும்
-            const mediaThumb = (post.media_type === "VIDEO" || post.media_type === "REELS") ? (post.thumbnail_url || post.media_url) : post.media_url;
+            const mediaThumb = (post.media_type === "VIDEO") ? "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400" : post.media_url;
             const captionText = post.caption ? post.caption.substring(0, 55) + "..." : "Instagram Feed Post";
             const formattedDate = new Date(post.timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -216,9 +211,19 @@ function handleTemplateTypeSwitch(type) {
 }
 
 function triggerLiveMirrorUpdate() {
+    // 💡 1st Message (Engagement Starter Text + Button)
+    const firstMsgText = document.getElementById("customEngagementText")?.value || "Hi 👋 Thanks for your comment, Here is the product link 🔗👇";
+    const firstMsgBtnTitle = document.getElementById("templateBtnTitle")?.value || "Send Link Now";
+
+    // 💡 2nd Message (Card)
     const headlineValue = document.getElementById("templateHeadline")?.value || "Card Headline";
     const descValue = document.getElementById("templateDescription")?.value || "Template Description text goes here...";
-    const btnTitleValue = document.getElementById("templateBtnTitle")?.value || "Button Title";
+
+    const bubble = document.getElementById("previewEngagementBubble");
+    if (bubble) {
+        // Engagement bubble-க்குள் டெக்ஸ்ட்டும் அதற்கு கீழ் பட்டனும் வருமாறு அப்டேட் செய்யப்பட்டுள்ளது
+        bubble.innerHTML = `${firstMsgText}<br><br><div style="background:#e2e8f0; color:#1e293b; padding:8px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; border:1px solid #cbd5e1;">${firstMsgBtnTitle}</div>`;
+    }
 
     const liveHeadline = document.getElementById("livePreviewHeadline");
     const liveDesc = document.getElementById("livePreviewDesc");
@@ -227,12 +232,12 @@ function triggerLiveMirrorUpdate() {
     if (!liveHeadline || !liveDesc || !liveBtn) return;
 
     if (currentSelectedTemplateType === "text") {
-        liveDesc.innerText = document.getElementById("templateDescription")?.value || "Text Message flow placeholder...";
+        liveDesc.innerText = descValue || "Text Message flow placeholder...";
         liveHeadline.innerText = "";
     } else {
         liveHeadline.innerText = headlineValue;
         liveDesc.innerText = descValue;
-        liveBtn.innerText = btnTitleValue;
+        liveBtn.innerText = "🛍️ Buy"; // 2வது கார்டு பட்டன் Buy என காட்டும்
     }
 }
 
@@ -263,14 +268,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (bubble) bubble.style.display = e.target.checked ? "block" : "none";
     });
 
-    document.getElementById("customEngagementText")?.addEventListener("input", (e) => {
-        const bubble = document.getElementById("previewEngagementBubble");
-        if (bubble) bubble.innerText = e.target.value || "Hi there! Thanks for your interest! 👋";
-    });
-
+    // 💡 இங்க முன்னாடி இருந்த பழைய கோடை மாற்றி, டைப் பண்ணும்போதே ப்ரிவியூ அப்டேட் ஆக triggerLiveMirrorUpdate-ஐ சேர்த்திருக்கேன்
+    document.getElementById("customEngagementText")?.addEventListener("input", triggerLiveMirrorUpdate);
+    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
-    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
 
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
@@ -335,31 +337,24 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO NEW AUTOMATION TABLE (UPDATED)
+// 6. SAVE HANDLER TO SUPABASE DB
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
-    if (!currentActivePostId) {
-        alert("Please select an Instagram post first bro!");
-        return;
-    }
 
     const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
 
-    // 💡 மாஸ் மாற்றம்: பழைய 'profiles' டேபிளுக்குப் பதிலா, புதிய 'instagram_posts_automation' டேபிளுக்குள் upsert செய்கிறோம்!
     const { error } = await supabaseClient
-        .from('instagram_posts_automation')
+        .from('profiles')
         .upsert({
-            profile_id: currentUserUuid, // profiles டேபிளுடன் ரிலேஷன்ஷிப் ஆகிடும்
-            instagram_business_id: currentInstagramBusinessId || "17841463993777074", // குளோபல் பிசினஸ் ஐடி
-            ig_active_post_id: currentActivePostId, // தனித்தனி போஸ்ட் ஐடி
-            
+            id: currentUserUuid,
+            ig_active_post_id: currentActivePostId,
             ig_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
             ig_exclude_keywords: document.getElementById("excludeKeywords")?.value.trim() || "",
             
             ig_comment_reply_active: document.getElementById("commentAutoReplyCheck")?.checked || false,
-            ig_comment_text: document.getElementById("customCommentReplyText")?.value.trim() || "", // வெப்ஹூக் கோடுடன் மேட்ச் செய்ய 'ig_comment_text' என மாற்றப்பட்டுள்ளது
+            ig_custom_comment_text: document.getElementById("customCommentReplyText")?.value.trim() || "",
             ig_dm_active: document.getElementById("sendDMCheck")?.checked || false,
             ig_custom_engagement_text: document.getElementById("customEngagementText")?.value.trim() || "",
             
@@ -373,9 +368,6 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_url: document.getElementById("templateUrl")?.value.trim() || "",
             ig_desc: document.getElementById("templateDescription")?.value.trim() || "",
             updated_at: new Date()
-        }, {
-            // 💡 இந்த இரண்டு ஐடிகளும் ஏற்கனவே ஒரே ரோ-வில் இருந்தால் மட்டும் Update ஆகும், இல்லைனா New Row விழும்!
-            onConflict: 'profile_id,ig_active_post_id'
         });
 
     if (error) {
@@ -405,4 +397,4 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
     });
 });
-            
+    
