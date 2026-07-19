@@ -212,7 +212,7 @@ window.updateBtnUrl = function(i, val) { buttonTemplateBtns[i].url = val; }
 window.removeBtn = function(i) { buttonTemplateBtns.splice(i, 1); renderButtonTemplateUI(); }
 
 // ==========================================
-// 5. IMAGE UPLOAD & LIVE PREVIEW
+// 5. IMAGE UPLOAD & LIVE PREVIEW (FIXED FOR INSTAGRAM API 🔥)
 // ==========================================
 function triggerLiveMirrorUpdate() {
     const bubble = document.getElementById("previewEngagementBubble");
@@ -262,22 +262,60 @@ document.getElementById("cardUrl")?.addEventListener("input", (e) => {
     const url = e.target.value.trim();
     if (document.querySelector("input[name='imageSourceToggle']:checked")?.value === "auto" && url.startsWith("http")) processSmartAutoImageFetch(url);
 });
+
+// 🔥 UPLOAD TO SUPABASE SERVER DIRECTLY INSTEAD OF BASE64
 document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
     if (e.target.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(event) { mediaCards[activeCardIndex].image = event.target.result; triggerLiveMirrorUpdate(); };
-        reader.readAsDataURL(e.target.files[0]);
+        uploadImageToSupabase(e.target.files[0], (publicUrl) => {
+            mediaCards[activeCardIndex].image = publicUrl;
+            triggerLiveMirrorUpdate();
+        });
     }
 });
+
 document.getElementById("otherImageFileInput")?.addEventListener("change", (e) => {
     if (e.target.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(event) { base64CustomUploadedImage = event.target.result; triggerLiveMirrorUpdate(); };
-        reader.readAsDataURL(e.target.files[0]);
+        uploadImageToSupabase(e.target.files[0], (publicUrl) => {
+            base64CustomUploadedImage = publicUrl;
+            triggerLiveMirrorUpdate();
+        });
     }
 });
-document.getElementById("otherDesc")?.addEventListener("input", triggerLiveMirrorUpdate);
-document.getElementById("otherQuickReplyBtn")?.addEventListener("input", triggerLiveMirrorUpdate);
+
+// 🔥 Supabase Storage Upload Function
+async function uploadImageToSupabase(file, callback) {
+    const btn = document.getElementById("savePostAutomationBtn");
+    const originalText = btn.innerHTML;
+    
+    // UI Loading State
+    btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Uploading Image to Server...";
+    btn.disabled = true;
+
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+        const filePath = `${currentUserUuid}/${fileName}`; 
+
+        // Uploading to the 'automation_images' bucket we created via SQL
+        const { data, error } = await supabaseClient.storage
+            .from('automation_images')
+            .upload(filePath, file);
+
+        if (error) throw error;
+
+        // Getting the Public Live URL
+        const { data: publicUrlData } = supabaseClient.storage
+            .from('automation_images')
+            .getPublicUrl(filePath);
+
+        callback(publicUrlData.publicUrl);
+    } catch (err) {
+        alert("Image Upload Failed! ⚠️ Did you run the SQL code to create the 'automation_images' bucket? Error: " + err.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
 
 async function processSmartAutoImageFetch(urlStr) {
     if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) { mediaCards[activeCardIndex].image = urlStr; triggerLiveMirrorUpdate(); } 
@@ -291,11 +329,9 @@ async function processSmartAutoImageFetch(urlStr) {
     }
 }
 
-// 🔥 FIXED: Image Source Toggle Listeners properly connected
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
 
-    // Handling Image Source Toggle specifically to hide/show manual upload wrapper
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
             if (e.target.value === "manual") {
@@ -318,6 +354,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("sendDMCheck")?.addEventListener("change", (e) => { document.getElementById("engagementTextInputWrapper").style.display = e.target.checked ? "block" : "none"; document.getElementById("previewEngagementBubble").style.display = e.target.checked ? "block" : "none"; });
     document.getElementById("customEngagementText")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("engagementBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); 
+    document.getElementById("otherDesc")?.addEventListener("input", triggerLiveMirrorUpdate);
+    document.getElementById("otherQuickReplyBtn")?.addEventListener("input", triggerLiveMirrorUpdate);
+
     document.querySelectorAll(".template-type-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove("active"));
