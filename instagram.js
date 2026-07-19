@@ -70,7 +70,6 @@ async function loadInstagramPageData() {
 
         postsContainer.innerHTML = "";
         metaJson.data.forEach(post => {
-            // 💡 Video Thumbnail Fix
             const mediaThumb = (post.media_type === "VIDEO" || post.media_type === "REELS") ? (post.thumbnail_url || post.media_url) : post.media_url;
             const captionText = post.caption ? post.caption.substring(0, 55) + "..." : "Instagram Feed Post";
             const formattedDate = new Date(post.timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -128,7 +127,6 @@ function bindLinkButtons() {
             e.preventDefault();
             currentActivePostId = btn.getAttribute("data-post-id");
             
-            // 💡 பழையபடி Title & Scroll லாஜிக் இங்கே சேர்க்கப்பட்டுள்ளது!
             const title = btn.closest(".post-card").querySelector("h4").innerText;
             const postImg = btn.getAttribute("data-img");
             
@@ -197,6 +195,9 @@ function triggerLiveMirrorUpdate() {
 
     const headlineValue = document.getElementById("templateHeadline")?.value || "Card Headline";
     const descValue = document.getElementById("templateDescription")?.value || "Template Description text goes here...";
+    
+    // 💡 இங்க நீங்க டைப் பண்ணும் Button Title-ஐ டைரக்டா எடுக்குறோம்!
+    const secondMsgBtnTitle = document.getElementById("templateBtnTitle")?.value || "Button Title"; 
 
     const bubble = document.getElementById("previewEngagementBubble");
     if (bubble) {
@@ -215,7 +216,8 @@ function triggerLiveMirrorUpdate() {
     } else {
         liveHeadline.innerText = headlineValue;
         liveDesc.innerText = descValue;
-        liveBtn.innerText = "🛍️ Buy"; 
+        // 💡 2வது கார்டு பட்டன் இப்போ டைனமிக்கா மாறிடும்!
+        liveBtn.innerText = secondMsgBtnTitle; 
     }
 }
 
@@ -250,6 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("engagementBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); 
     document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
+    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); // 💡 பட்டன் அப்டேட்க்கான லிசனர்
 
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
@@ -277,7 +280,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 💡 Product Link டைப் செய்யும்போதே இமேஜ் அப்டேட் ஆக!
     document.getElementById("templateUrl")?.addEventListener("input", (e) => {
         const targetUrl = e.target.value.trim();
         const selectedRadio = document.querySelector("input[name='imageSourceToggle']:checked")?.value;
@@ -286,15 +288,35 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    function processSmartAutoImageFetch(urlStr) {
+    // 💡 இங்கதான் மேஜிக் நடக்குது! Product லிங்க்கில் இருந்து ஒரிஜினல் இமேஜை உருவி எடுக்கும் API 
+    async function processSmartAutoImageFetch(urlStr) {
+        const imgSlot = document.getElementById("previewImageSlot");
+        
         if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
             base64CustomUploadedImage = urlStr;
             updatePreviewImage(urlStr);
         } else {
-            const currentActivePostBtn = document.querySelector(`.replyrush-btn[data-post-id='${currentActivePostId}']`);
-            const fallbackSrc = currentActivePostBtn ? currentActivePostBtn.getAttribute("data-img") : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
-            base64CustomUploadedImage = fallbackSrc;
-            updatePreviewImage(fallbackSrc);
+            // Loading Animation காட்டுகிறோம்
+            if(imgSlot) imgSlot.innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#94a3b8; background:#1e293b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i></div>`;
+            
+            try {
+                // Microlink API மூலமாக e-commerce லிங்கின் இமேஜை எடுக்கிறோம்
+                const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(urlStr)}`);
+                const data = await res.json();
+                
+                if (data.status === 'success' && data.data.image && data.data.image.url) {
+                    base64CustomUploadedImage = data.data.image.url;
+                    updatePreviewImage(data.data.image.url);
+                } else {
+                    throw new Error("No image found");
+                }
+            } catch(e) {
+                // எடுக்க முடியலைனா, போஸ்ட் இமேஜையே டீபால்ட்டா வச்சுரும்
+                const currentActivePostBtn = document.querySelector(`.replyrush-btn[data-post-id='${currentActivePostId}']`);
+                const fallbackSrc = currentActivePostBtn ? currentActivePostBtn.getAttribute("data-img") : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
+                base64CustomUploadedImage = fallbackSrc;
+                updatePreviewImage(fallbackSrc);
+            }
         }
     }
 
@@ -370,9 +392,3 @@ document.addEventListener("DOMContentLoaded", () => {
         { id: "analyticsBtn", url: "analytics.html" },
         { id: "settingsBtn", url: "settings.html" }
     ];
-    navLinks.forEach(link => {
-        const btn = document.getElementById(link.id);
-        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
-    });
-});
-        
