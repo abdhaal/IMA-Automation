@@ -349,7 +349,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
     const { error } = await supabaseClient
         .from('instagram_posts_automation')
         .upsert({
-            id: currentUserUuid,
+            profile_id: currentUserUuid,
             ig_active_post_id: currentActivePostId,
             ig_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
