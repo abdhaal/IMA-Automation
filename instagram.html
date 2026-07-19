@@ -136,18 +136,21 @@
                     </div>
                 </div>
 
-                <!-- 3. MESSAGE TEMPLATES (DYNAMC) -->
+                <!-- 3. MESSAGE TEMPLATES (DYNAMIC) -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="window.toggleAccordion('templateAcc')">
                         <span>3. Message - Media Template</span>
                         <i class="fa-solid fa-chevron-down"></i>
                     </div>
                     <div class="accordion-content" id="templateAcc">
+                        
+                        <!-- 💡 பழையபடி 5 பட்டன்களும் மீண்டும் வந்துவிட்டன! -->
                         <div class="template-type-grid">
                             <div class="template-type-btn active" data-type="media"><i class="fa-solid fa-photo-film"></i> Media Template</div>
+                            <div class="template-type-btn" data-type="text"><i class="fa-solid fa-align-left"></i> Text Message</div>
+                            <div class="template-type-btn" data-type="quick"><i class="fa-solid fa-reply-all"></i> Quick Replies</div>
+                            <div class="template-type-btn" data-type="attach"><i class="fa-solid fa-paperclip"></i> Media Attachment</div>
                             <div class="template-type-btn" data-type="button"><i class="fa-solid fa-square-check"></i> Button Template</div>
-                            <!-- Disabled others for now to focus on the 2 core templates requested -->
-                            <div class="template-type-btn" style="opacity:0.5; pointer-events:none;"><i class="fa-solid fa-align-left"></i> Text Message</div>
                         </div>
 
                         <div id="dynamicTemplateFormFields" style="margin-top: 20px;">
@@ -240,7 +243,7 @@
                         </div>
                         <div class="chat-area" id="liveChatArea" style="overflow-x: hidden;">
                             
-                            <div class="chat-bubble received" id="previewEngagementBubble">
+                             <div class="chat-bubble received" id="previewEngagementBubble">
                                 Hi there! Thanks for your interest! 👋
                             </div>
 
