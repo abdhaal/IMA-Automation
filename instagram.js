@@ -140,7 +140,7 @@ function bindLinkButtons() {
             document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
             
             window.toggleAccordion('triggerAcc');
-            triggerLiveMirrorUpdate(); // ஓப்பன் பண்ணும்போதே ப்ரிவியூவை லோட் செய்ய
+            triggerLiveMirrorUpdate();
         });
     });
 }
@@ -153,7 +153,7 @@ function handleTemplateTypeSwitch(type) {
     
     const hBlock = document.getElementById("headlineFieldBlock");
     const dBlock = document.getElementById("descriptionFieldBlock");
-    const bBlock = document.getElementById("buttonTitleFieldBlock");
+    const bBlock = document.getElementById("buttonTitleFieldBlock"); // Old button ID block (if it still exists in sec 3)
     const uBlock = document.getElementById("urlFieldBlock");
     const mSourceBlock = document.getElementById("mediaSourceSelectionBlock");
     const autoRadioLabel = document.getElementById("autoFetchRadioLabel");
@@ -207,11 +207,10 @@ function handleTemplateTypeSwitch(type) {
     triggerLiveMirrorUpdate();
 }
 
-// 💡 நீங்க கேட்ட ப்ரிவியூ அப்டேட் மேஜிக்!
 function triggerLiveMirrorUpdate() {
-    // 1st Message Variables (Text & Button)
+    // 💡 1st Message Variables (நீங்க கேட்ட புது Input ID-ல் இருந்து எடுக்கிறோம்)
     const firstMsgText = document.getElementById("customEngagementText")?.value || "Hi 👋 Thanks for your comment, Here is the product link 🔗👇";
-    const firstMsgBtnTitle = document.getElementById("templateBtnTitle")?.value || "Send Link Now";
+    const firstMsgBtnTitle = document.getElementById("engagementBtnTitle")?.value || "Send Link Now";
 
     // 2nd Message Variables (Image Card)
     const headlineValue = document.getElementById("templateHeadline")?.value || "Card Headline";
@@ -219,7 +218,7 @@ function triggerLiveMirrorUpdate() {
 
     const bubble = document.getElementById("previewEngagementBubble");
     if (bubble) {
-        // 💡 முதல் பப்பிளுக்குள் டெக்ஸ்ட்டும், அதற்குக் கீழ் நீங்க டைப் பண்ணும் பட்டன் பெயரும் அட்டகாசமாக வரும்!
+        // 💡 முதல் பப்பிளுக்குள் டெக்ஸ்ட்டும், அதற்குக் கீழ் நீங்க டைப் பண்ணும் பட்டனும் காட்டும்!
         bubble.innerHTML = `${firstMsgText}<br><br><div style="background:#e2e8f0; color:#1e293b; padding:8px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; border:1px solid #cbd5e1; cursor:pointer;">${firstMsgBtnTitle}</div>`;
     }
 
@@ -235,7 +234,7 @@ function triggerLiveMirrorUpdate() {
     } else {
         liveHeadline.innerText = headlineValue;
         liveDesc.innerText = descValue;
-        liveBtn.innerText = "🛍️ Buy"; // 2வது கார்டு பட்டன் எப்போதும் Buy என்று காட்டும்
+        liveBtn.innerText = "🛍️ Buy"; // 2வது கார்டு பட்டன் Buy என காட்டும்
     }
 }
 
@@ -266,9 +265,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (bubble) bubble.style.display = e.target.checked ? "block" : "none";
     });
 
-    // 💡 இங்க நீங்க டைப் பண்ண டைப் பண்ண 1st மெசேஜ் மற்றும் 1st பட்டன் ப்ரிவியூ அப்டேட் ஆகும்
+    // 💡 இங்க நீங்க புதுசா சேர்த்த பட்டன் இன்புட் பாக்ஸை லிசன் பண்றோம்!
     document.getElementById("customEngagementText")?.addEventListener("input", triggerLiveMirrorUpdate);
-    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
+    document.getElementById("engagementBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); 
     document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
 
@@ -335,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB (Untouched by AI)
+// 6. SAVE HANDLER TO SUPABASE DB
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
@@ -361,7 +360,9 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_image_source_mode: selectedImageSource,
             ig_custom_image_data: base64CustomUploadedImage, 
             
-            ig_btn_title: document.getElementById("templateBtnTitle")?.value.trim() || "",
+            // 💡 புது இன்புட் ஐடியை டேட்டாபேஸில் `ig_btn_title`-க்கு சேவ் செய்கிறோம்!
+            ig_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "",
+            
             ig_headline: document.getElementById("templateHeadline")?.value.trim() || "",
             ig_url: document.getElementById("templateUrl")?.value.trim() || "",
             ig_desc: document.getElementById("templateDescription")?.value.trim() || "",
@@ -395,4 +396,4 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
     });
 });
-            
+                          
