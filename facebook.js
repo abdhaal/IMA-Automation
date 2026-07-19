@@ -13,127 +13,84 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 let currentActivePostId = "";
 let currentUserUuid = "";
+let currentFacebookPageId = ""; 
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
 // ==========================================
-// 2. FETCH AND RENDER REAL FACEBOOK POSTS
+// 2. DYNAMIC STATE BUILDERS
+// ==========================================
+let mediaCards = [{ image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500", headline: "Card 1 Headline", desc: "Template Description text goes here...", btnTitle: "Link 🔗", url: "" }];
+let activeCardIndex = 0;
+let buttonTemplateText = "Please select an option below:";
+let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
+
+// ==========================================
+// 3. FETCH AND RENDER REAL FACEBOOK POSTS
 // ==========================================
 async function loadFacebookPageData() {
-    // FIX: உங்க அசல் facebook.html-ல் இருக்கும் ID 'facebookFeedGrid' மட்டுமே
-    const postsContainer = document.getElementById("facebookFeedGrid") || document.getElementById("postsContainer");
+    const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
 
     try {
         const { data, error } = await supabaseClient.auth.getSession();
-        if (error || !data || !data.session) {
-            window.location.href = "login.html";
-            return;
-        }
+        if (error || !data || !data.session) { window.location.href = "login.html"; return; }
 
-        const user = data.session.user;
-        currentUserUuid = user.id;
+        currentUserUuid = data.session.user.id;
         
-        // எலிமெண்ட்கள் இருந்தால் மட்டுமே டெக்ஸ்ட்டை அப்டேட் செய்யும் பாதுகாப்பான செட்டப்
-        const userEmailEl = document.getElementById("userEmail") || document.querySelector(".user-info span:last-child");
-        const userNameEl = document.getElementById("userName") || document.querySelector(".user-info span:first-child");
-        
-        if (userEmailEl) userEmailEl.innerText = user.email;
-        if (userNameEl) userNameEl.innerText = user.email.split("@")[0];
+        if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
+        if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Facebook page posts...</p>";
+        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Facebook Page posts...</p>";
 
         const { data: profileData, error: dbErr } = await supabaseClient
-            .from('profiles')
-            .select('instagram_access_token, facebook_page_id')
-            .eq('id', currentUserUuid)
-            .maybeSingle();
+            .from('profiles').select('facebook_page_access_token, facebook_page_id').eq('id', currentUserUuid).maybeSingle();
 
-        if (dbErr || !profileData || !profileData.facebook_access_token || !profileData.facebook_user_id) {
-            postsContainer.innerHTML = `
-                <div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'>
-                    <i class="fa-brands fa-facebook" style="font-size: 40px; color: #1877f2; margin-bottom: 15px;"></i>
-                    <p style="font-size:15px; margin-bottom:15px;">Your Facebook Page is not linked yet.</p>
-                    <p style="font-size:13px; color:#64748b;">Please connect your Facebook Page in Settings to view your live feed.</p>
-                </div>`;
+        if (dbErr || !profileData || !profileData.facebook_page_id) {
+            postsContainer.innerHTML = `<div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'><i class="fa-brands fa-facebook" style="font-size: 40px; color: #1877f2; margin-bottom: 15px;"></i><p>Your Facebook Page is not linked yet.</p></div>`;
             return;
         }
 
-        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_user_id}/feed?fields=id,message,created_time,full_picture,likes.summary(true),comments.summary(true)&access_token=${profileData.facebook_access_token}`;
-        
+        currentFacebookPageId = profileData.facebook_page_id;
+
+        // Fetching Facebook Posts from Graph API
+        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,created_time,comments.summary(total_count),likes.summary(total_count)&access_token=${profileData.facebook_page_access_token}`;
         const response = await fetch(metaApiUrl);
         const metaJson = await response.json();
 
         if (metaJson.error) {
-            postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; width:100%; padding:20px;'>Meta API Error: ${metaJson.error.message}</p>`;
-            return;
-        }
-
-        if (!metaJson.data || metaJson.data.length === 0) {
-            postsContainer.innerHTML = "<p style='color:#94a3b8; text-align:center; width:100%; padding:20px;'>No posts found on your active Facebook Page profile.</p>";
-            return;
+            postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px;'>API Error: ${metaJson.error.message}</p>`; return;
         }
 
         postsContainer.innerHTML = "";
         metaJson.data.forEach(post => {
-            const mediaThumb = post.full_picture || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400";
-            const captionText = post.message ? post.message.substring(0, 55) + "..." : "Facebook Wall Post";
+            const mediaThumb = post.full_picture || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
+            const captionText = post.message ? post.message.substring(0, 55) + "..." : "Facebook Page Post";
             const formattedDate = new Date(post.created_time).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
             
-            const likesCount = post.likes ? post.likes.summary.total_count : 0;
-            const commentsCount = post.comments ? post.comments.summary.total_count : 0;
+            // Safety checks for counts
+            const commentsCount = post.comments?.summary?.total_count || 0;
+            const likesCount = post.likes?.summary?.total_count || 0;
 
             const card = document.createElement("div");
             card.className = "post-card";
-            card.style.background = "rgba(30, 41, 59, 0.5)";
-            card.style.padding = "15px";
-            card.style.borderRadius = "12px";
-            card.style.border = "1px solid rgba(255, 255, 255, 0.05)";
-            
             card.innerHTML = `
-                <img src="${mediaThumb}" class="post-thumb" alt="thumb" style="width:100%; height:200px; object-fit:cover; border-radius:8px;">
-                <div class="post-meta-badges" style="margin-top:10px; display:flex; gap:10px; font-size: 13px; color: #94a3b8;">
-                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#1877f2;"></i> ${commentsCount} Comments</span>
-                    <span class="meta-badge"><i class="fa-solid fa-thumbs-up" style="color:#1877f2;"></i> ${likesCount} Likes</span>
+                <img src="${mediaThumb}" class="post-thumb" alt="thumb">
+                <div class="post-meta-badges">
+                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#1877f2;"></i> ${commentsCount}</span>
+                    <span class="meta-badge"><i class="fa-solid fa-thumbs-up" style="color:#1877f2;"></i> ${likesCount}</span>
                 </div>
-                <div class="post-details" style="margin-top:10px;">
-                    <div>
-                        <h4 style="margin:0 0 5px 0; font-size:14px; color:#f8fafc;">${captionText}</h4>
-                        <p style="margin:0 0 10px 0; font-size:12px; color:#64748b;"><i class="fa-solid fa-clock"></i> ${formattedDate}</p>
-                    </div>
-                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}" style="width:100%; padding:10px; border:none; background:#1877f2; color:white; border-radius:8px; cursor:pointer; font-weight:500; display:flex; justify-content:center; align-items:center; gap:8px;">
-                        <i class="fa-solid fa-link"></i> Link Post Setup
-                    </button>
+                <div class="post-details">
+                    <div><h4>${captionText}</h4><p><i class="fa-solid fa-clock"></i> ${formattedDate}</p></div>
+                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}"><i class="fa-solid fa-link"></i> Link Post Setup</button>
                 </div>
             `;
             postsContainer.appendChild(card);
         });
 
         bindLinkButtons();
-
-    } catch (gErr) { 
-        console.error(gErr);
-        postsContainer.innerHTML = "<p style='color:#ef4444; text-align:center; width:100%; padding:20px;'>Failed to load live Facebook feed. Please check connection.</p>";
-    }
+    } catch (gErr) { console.error(gErr); }
 }
-
-// ==========================================
-// 3. ACCORDION VIEW CONTROLLERS
-// ==========================================
-window.toggleAccordion = function(accId) {
-    const content = document.getElementById(accId);
-    if (!content) return;
-    const isVisible = content.style.display === "block";
-    
-    document.querySelectorAll(".accordion-content").forEach(el => { el.style.display = "none"; });
-    document.querySelectorAll(".accordion-header i").forEach(el => { el.className = "fa-solid fa-chevron-down"; });
-    
-    if (!isVisible) {
-        content.style.display = "block";
-        const header = content.previousElementSibling;
-        if (header && header.querySelector("i")) { header.querySelector("i").className = "fa-solid fa-chevron-up"; }
-    }
-};
 
 function bindLinkButtons() {
     document.querySelectorAll(".replyrush-btn").forEach(btn => {
@@ -143,200 +100,264 @@ function bindLinkButtons() {
             const title = btn.closest(".post-card").querySelector("h4").innerText;
             const postImg = btn.getAttribute("data-img");
             
-            const titleEl = document.getElementById("selectedPostTitle");
-            if (titleEl) titleEl.innerText = "Facebook Link Settings: " + title;
+            mediaCards[0].image = postImg;
+            base64CustomUploadedImage = postImg;
+            activeCardIndex = 0;
             
-            base64CustomUploadedImage = postImg; 
+            renderCarouselUI();
+            renderButtonTemplateUI();
 
-            const imgSlot = document.getElementById("previewImageSlot");
-            if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`; }
-
-            const optionsCard = document.getElementById("automationOptionsCard");
-            if (optionsCard) {
-                optionsCard.style.display = "grid";
-                optionsCard.scrollIntoView({ behavior: 'smooth' });
-            }
+            document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
+            document.getElementById("automationOptionsCard").style.display = "grid";
+            document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
             
             window.toggleAccordion('triggerAcc');
         });
     });
 }
 
+window.toggleAccordion = function(accId) {
+    const content = document.getElementById(accId);
+    if (!content) return;
+    const isVisible = content.style.display === "block";
+    document.querySelectorAll(".accordion-content").forEach(el => { el.style.display = "none"; });
+    document.querySelectorAll(".accordion-header i").forEach(el => { el.className = "fa-solid fa-chevron-down"; });
+    if (!isVisible) {
+        content.style.display = "block";
+        const header = content.previousElementSibling;
+        if (header && header.querySelector("i")) { header.querySelector("i").className = "fa-solid fa-chevron-up"; }
+    }
+};
+
 // ==========================================
-// 4. REAL-TIME MULTI-TEMPLATE CONTROLLER
+// 4. UI BUILDERS (Tabs logic)
 // ==========================================
 function handleTemplateTypeSwitch(type) {
     currentSelectedTemplateType = type;
     
-    const hBlock = document.getElementById("headlineFieldBlock");
-    const dBlock = document.getElementById("descriptionFieldBlock");
-    const bBlock = document.getElementById("buttonTitleFieldBlock");
-    const uBlock = document.getElementById("urlFieldBlock");
-    const mSourceBlock = document.getElementById("mediaSourceSelectionBlock");
-    const autoRadioLabel = document.getElementById("autoFetchRadioLabel");
+    document.getElementById("mediaTemplateWrapper").style.display = (type === 'media') ? "block" : "none";
+    document.getElementById("buttonTemplateWrapper").style.display = (type === 'button') ? "block" : "none";
     
-    const richCard = document.getElementById("previewRichCardContainer");
-    const imgSlot = document.getElementById("previewImageSlot");
-    const bodyContent = document.getElementById("previewCardBodyContent");
-    const liveBtn = document.getElementById("livePreviewBtn");
-
-    if (hBlock) hBlock.style.display = "block";
-    if (dBlock) dBlock.style.display = "block";
-    if (bBlock) bBlock.style.display = "block";
-    if (uBlock) uBlock.style.display = "block";
-    if (mSourceBlock) mSourceBlock.style.display = "block";
-    if (autoRadioLabel) autoRadioLabel.style.display = "flex";
-    if (richCard) richCard.style.display = "flex";
-    if (imgSlot) imgSlot.style.display = "flex";
-    if (bodyContent) bodyContent.style.display = "block";
-    if (liveBtn) liveBtn.style.display = "block";
-
-    if (type === "media") {
-        // Keeps all blocks visible
-    } else if (type === "attach") {
-        if (autoRadioLabel) autoRadioLabel.style.display = "none";
-        const manualRadio = document.querySelector("input[name='imageSourceToggle'][value='manual']");
-        if (manualRadio) {
-            manualRadio.checked = true;
-            const manWrap = document.getElementById("manualUploadWrapper");
-            const autoWrap = document.getElementById("autoFetchWrapper");
-            if (manWrap) manWrap.style.display = "block";
-            if (autoWrap) autoWrap.style.display = "none";
+    const otherWrapper = document.getElementById("otherTemplatesWrapper");
+    const oMedia = document.getElementById("otherMediaSourceBlock");
+    const oQuick = document.getElementById("otherQuickReplyBlock");
+    
+    if (type === 'media' || type === 'button') {
+        otherWrapper.style.display = "none";
+    } else {
+        otherWrapper.style.display = "flex";
+        if (type === 'text') {
+            oMedia.style.display = "none";
+            oQuick.style.display = "none";
+        } else if (type === 'quick') {
+            oMedia.style.display = "none";
+            oQuick.style.display = "block";
+        } else if (type === 'attach') {
+            oMedia.style.display = "block";
+            oQuick.style.display = "none";
         }
-        if (hBlock) hBlock.style.display = "none";
-        if (dBlock) dBlock.style.display = "none";
-        if (bBlock) bBlock.style.display = "none";
-        if (uBlock) uBlock.style.display = "none";
-        if (bodyContent) bodyContent.style.display = "none";
-        if (liveBtn) liveBtn.style.display = "none";
-    } else if (type === "text") {
-        if (hBlock) hBlock.style.display = "none";
-        if (bBlock) bBlock.style.display = "none";
-        if (uBlock) uBlock.style.display = "none";
-        if (mSourceBlock) mSourceBlock.style.display = "none";
-        if (imgSlot) imgSlot.style.display = "none";
-        if (liveBtn) liveBtn.style.display = "none";
-    } else if (type === "quick" || type === "button") {
-        if (imgSlot) imgSlot.style.display = "none";
-        if (mSourceBlock) mSourceBlock.style.display = "none";
     }
-    
     triggerLiveMirrorUpdate();
 }
 
+function renderCarouselUI() {
+    document.getElementById('cardCount').innerText = mediaCards.length;
+    document.getElementById('carouselTabsContainer').innerHTML = mediaCards.map((c, i) => `
+        <div class="card-tab ${i === activeCardIndex ? 'active' : ''}" onclick="switchCard(${i})">
+            Card ${i+1} ${mediaCards.length > 1 ? `<i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-left:5px;" onclick="removeCard(${i}, event)"></i>` : ''}
+        </div>
+    `).join('');
+
+    const active = mediaCards[activeCardIndex];
+    document.getElementById('cardHeadline').value = active.headline;
+    document.getElementById('cardDesc').value = active.desc;
+    document.getElementById('cardBtnTitle').value = active.btnTitle;
+    document.getElementById('cardUrl').value = active.url;
+    triggerLiveMirrorUpdate();
+}
+
+window.switchCard = function(index) { activeCardIndex = index; renderCarouselUI(); }
+window.removeCard = function(index, event) { event.stopPropagation(); mediaCards.splice(index, 1); if(activeCardIndex >= mediaCards.length) activeCardIndex = mediaCards.length - 1; renderCarouselUI(); }
+document.getElementById('addCardBtn')?.addEventListener('click', () => {
+    if(mediaCards.length >= 10) return alert("Maximum 10 cards allowed!");
+    mediaCards.push({ image: mediaCards[0].image, headline: `Card ${mediaCards.length + 1} Headline`, desc: "Template Description...", btnTitle: "Link 🔗", url: "" });
+    activeCardIndex = mediaCards.length - 1;
+    renderCarouselUI();
+});
+
+['cardHeadline', 'cardDesc', 'cardBtnTitle', 'cardUrl'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', (e) => {
+        const keyMap = { 'cardHeadline': 'headline', 'cardDesc': 'desc', 'cardBtnTitle': 'btnTitle', 'cardUrl': 'url' };
+        mediaCards[activeCardIndex][keyMap[id]] = e.target.value;
+        triggerLiveMirrorUpdate();
+    });
+});
+
+function renderButtonTemplateUI() {
+    document.getElementById('btnCount').innerText = buttonTemplateBtns.length;
+    document.getElementById('btnTemplateText').value = buttonTemplateText;
+    document.getElementById('btnTemplateList').innerHTML = buttonTemplateBtns.map((b, i) => `
+        <div class="dynamic-btn-row">
+            <input type="text" placeholder="Button Title" value="${b.title}" oninput="updateBtnTitle(${i}, this.value)">
+            <input type="url" placeholder="URL Link" value="${b.url}" oninput="updateBtnUrl(${i}, this.value)">
+            ${buttonTemplateBtns.length > 1 ? `<button onclick="removeBtn(${i})"><i class="fa-solid fa-trash"></i></button>` : ''}
+        </div>
+    `).join('');
+    triggerLiveMirrorUpdate();
+}
+
+document.getElementById('btnTemplateText')?.addEventListener('input', (e) => { buttonTemplateText = e.target.value; triggerLiveMirrorUpdate(); });
+document.getElementById('addTemplateBtn')?.addEventListener('click', () => {
+    if(buttonTemplateBtns.length >= 3) return alert("Maximum 3 buttons allowed!");
+    buttonTemplateBtns.push({ title: `Button ${buttonTemplateBtns.length + 1}`, url: "" });
+    renderButtonTemplateUI();
+});
+window.updateBtnTitle = function(i, val) { buttonTemplateBtns[i].title = val; triggerLiveMirrorUpdate(); }
+window.updateBtnUrl = function(i, val) { buttonTemplateBtns[i].url = val; }
+window.removeBtn = function(i) { buttonTemplateBtns.splice(i, 1); renderButtonTemplateUI(); }
+
+// ==========================================
+// 5. IMAGE UPLOAD & LIVE PREVIEW
+// ==========================================
 function triggerLiveMirrorUpdate() {
-    const headlineValue = document.getElementById("templateHeadline")?.value || "Card Headline";
-    const descValue = document.getElementById("templateDescription")?.value || "Template Description text goes here...";
-    const btnTitleValue = document.getElementById("templateBtnTitle")?.value || "Button Title";
+    const bubble = document.getElementById("previewEngagementBubble");
+    if (bubble) {
+        bubble.innerHTML = `${document.getElementById("customEngagementText")?.value || "Hi 👋 Thanks for your comment!"}<br><br><div style="background:#e2e8f0; color:#1e293b; padding:8px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; border:1px solid #cbd5e1;">${document.getElementById("engagementBtnTitle")?.value || "Send Link Now"}</div>`;
+    }
 
-    const liveHeadline = document.getElementById("livePreviewHeadline");
-    const liveDesc = document.getElementById("livePreviewDesc");
-    const liveBtn = document.getElementById("livePreviewBtn");
+    const carouselContainer = document.getElementById("previewCarouselContainer");
+    const btnContainer = document.getElementById("previewButtonTemplateContainer");
+    const simpleContainer = document.getElementById("previewSimpleContainer");
 
-    if (currentSelectedTemplateType === "text") {
-        if (liveDesc) liveDesc.innerText = document.getElementById("templateDescription")?.value || "Text Message flow placeholder...";
-        if (liveHeadline) liveHeadline.innerText = "";
+    if (currentSelectedTemplateType === 'media') {
+        carouselContainer.style.display = "flex"; btnContainer.style.display = "none"; simpleContainer.style.display = "none";
+        carouselContainer.innerHTML = mediaCards.map(c => `
+            <div class="preview-carousel-card" style="scroll-snap-align: center;">
+                <div style="height: 140px; width: 100%; background: #1e293b;"><img src="${c.image}" style="width:100%; height:100%; object-fit:cover;"></div>
+                <div style="padding: 12px;">
+                    <h5 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">${c.headline || 'Headline'}</h5>
+                    <p style="margin: 0 0 10px 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">${c.desc || 'Description'}</p>
+                    <div style="text-align: center; color: #1877f2; font-weight: 600; font-size: 13px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">${c.btnTitle || 'Button'}</div>
+                </div>
+            </div>`).join('');
+    } else if (currentSelectedTemplateType === 'button') {
+        carouselContainer.style.display = "none"; btnContainer.style.display = "flex"; simpleContainer.style.display = "none";
+        document.getElementById("previewBtnTextBubble").innerText = buttonTemplateText || "Select an option:";
+        document.getElementById("previewBtnList").innerHTML = buttonTemplateBtns.map(b => `<div style="background: rgba(255,255,255,0.05); color: #1877f2; padding: 10px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.1);">${b.title || 'Button'}</div>`).join('');
     } else {
-        if (liveHeadline) liveHeadline.innerText = headlineValue;
-        if (liveDesc) liveDesc.innerText = descValue;
-        if (liveBtn) {
-            liveBtn.style.display = "block";
-            liveBtn.innerText = btnTitleValue;
-        }
+        carouselContainer.style.display = "none"; btnContainer.style.display = "none"; simpleContainer.style.display = "flex";
+        document.getElementById("previewSimpleTextBubble").innerText = document.getElementById("otherDesc")?.value || "Your text message goes here...";
+        
+        const imgSlot = document.getElementById("previewSimpleImgSlot");
+        if (currentSelectedTemplateType === 'attach') {
+            imgSlot.style.display = "block";
+            imgSlot.innerHTML = `<img src="${base64CustomUploadedImage}" style="width:100%; height:100%; object-fit:cover;">`;
+        } else imgSlot.style.display = "none";
+        
+        const quickBtn = document.getElementById("previewSimpleQuickBtn");
+        if (currentSelectedTemplateType === 'quick') {
+            quickBtn.style.display = "block";
+            quickBtn.innerText = document.getElementById("otherQuickReplyBtn")?.value || "Quick Reply";
+        } else quickBtn.style.display = "none";
     }
 }
 
-// ==========================================
-// 5. INPUT ACTION LISTENERS
-// ==========================================
+// Media Uploaders & Inputs
+document.getElementById("cardUrl")?.addEventListener("input", (e) => {
+    const url = e.target.value.trim();
+    if (document.querySelector("input[name='imageSourceToggle']:checked")?.value === "auto" && url.startsWith("http")) processSmartAutoImageFetch(url);
+});
+
+// 🔥 UPLOAD TO SUPABASE SERVER DIRECTLY INSTEAD OF BASE64
+document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
+    if (e.target.files[0]) {
+        uploadImageToSupabase(e.target.files[0], (publicUrl) => {
+            mediaCards[activeCardIndex].image = publicUrl;
+            triggerLiveMirrorUpdate();
+        });
+    }
+});
+
+document.getElementById("otherImageFileInput")?.addEventListener("change", (e) => {
+    if (e.target.files[0]) {
+        uploadImageToSupabase(e.target.files[0], (publicUrl) => {
+            base64CustomUploadedImage = publicUrl;
+            triggerLiveMirrorUpdate();
+        });
+    }
+});
+
+// 🔥 Supabase Storage Upload Function
+async function uploadImageToSupabase(file, callback) {
+    const btn = document.getElementById("savePostAutomationBtn");
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Uploading Image to Server...";
+    btn.disabled = true;
+
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+        const filePath = `${currentUserUuid}/${fileName}`; 
+
+        const { data, error } = await supabaseClient.storage
+            .from('automation_images')
+            .upload(filePath, file);
+
+        if (error) throw error;
+
+        const { data: publicUrlData } = supabaseClient.storage
+            .from('automation_images')
+            .getPublicUrl(filePath);
+
+        callback(publicUrlData.publicUrl);
+    } catch (err) {
+        alert("Image Upload Failed! ⚠️ Did you run the SQL code to create the 'automation_images' bucket? Error: " + err.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function processSmartAutoImageFetch(urlStr) {
+    if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) { mediaCards[activeCardIndex].image = urlStr; triggerLiveMirrorUpdate(); } 
+    else {
+        try {
+            const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(urlStr)}&prerender=true`);
+            const data = await res.json();
+            if (data.status === 'success' && data.data.image && data.data.image.url) { mediaCards[activeCardIndex].image = data.data.image.url; triggerLiveMirrorUpdate(); }
+            else throw new Error("No image");
+        } catch(e) { alert("⚠️ Cannot extract image automatically. Switch to 'Manually Upload'."); }
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     loadFacebookPageData();
 
-    document.getElementById("closeOptionsBtn")?.addEventListener("click", () => {
-        const optionsCard = document.getElementById("automationOptionsCard");
-        if (optionsCard) optionsCard.style.display = "none";
-    });
-
-    document.getElementById("triggerMechanism")?.addEventListener("change", (e) => {
-        const wrapper = document.getElementById("keywordInputWrapper");
-        if (wrapper) wrapper.style.display = (e.target.value === "keywords") ? "block" : "none";
-    });
-
-    document.getElementById("commentAutoReplyCheck")?.addEventListener("change", (e) => {
-        const wrapper = document.getElementById("commentTextInputWrapper");
-        if (wrapper) wrapper.style.display = e.target.checked ? "block" : "none";
-    });
-
-    document.getElementById("sendDMCheck")?.addEventListener("change", (e) => {
-        const wrapper = document.getElementById("engagementTextInputWrapper");
-        const bubble = document.getElementById("previewEngagementBubble");
-        if (wrapper) wrapper.style.display = e.target.checked ? "block" : "none";
-        if (bubble) bubble.style.display = e.target.checked ? "block" : "none";
-    });
-
-    document.getElementById("customEngagementText")?.addEventListener("input", (e) => {
-        const bubble = document.getElementById("previewEngagementBubble");
-        if (bubble) bubble.innerText = e.target.value || "Hi there! Thanks for your interest! 👋";
-    });
-
-    document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
-    document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
-    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
-
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
-            const manWrap = document.getElementById("manualUploadWrapper");
-            const autoWrap = document.getElementById("autoFetchWrapper");
             if (e.target.value === "manual") {
-                if (manWrap) manWrap.style.display = "block";
-                if (autoWrap) autoWrap.style.display = "none";
+                document.getElementById("manualUploadWrapper").style.display = "block";
+                document.getElementById("autoFetchWrapper").style.display = "none";
             } else {
-                if (manWrap) manWrap.style.display = "none";
-                if (autoWrap) autoWrap.style.display = "block";
-                const activeUrl = document.getElementById("templateUrl")?.value.trim();
-                if (activeUrl && activeUrl.startsWith("http")) { processSmartAutoImageFetch(activeUrl); }
+                document.getElementById("manualUploadWrapper").style.display = "none";
+                document.getElementById("autoFetchWrapper").style.display = "block";
+                const activeUrl = document.getElementById("cardUrl").value.trim();
+                if (activeUrl && activeUrl.startsWith("http")) {
+                    processSmartAutoImageFetch(activeUrl);
+                }
             }
         });
     });
 
-    document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                base64CustomUploadedImage = event.target.result;
-                updatePreviewImage(base64CustomUploadedImage);
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    document.getElementById("templateUrl")?.addEventListener("input", (e) => {
-        const targetUrl = e.target.value.trim();
-        const selectedRadio = document.querySelector("input[name='imageSourceToggle']:checked")?.value;
-        if (selectedRadio === "auto" && targetUrl.startsWith("http")) {
-            processSmartAutoImageFetch(targetUrl);
-        }
-    });
-
-    function processSmartAutoImageFetch(urlStr) {
-        if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
-            base64CustomUploadedImage = urlStr;
-            updatePreviewImage(urlStr);
-        } else {
-            const currentActivePostBtn = document.querySelector(`.replyrush-btn[data-post-id='${currentActivePostId}']`);
-            const fallbackSrc = currentActivePostBtn ? currentActivePostBtn.getAttribute("data-img") : "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400";
-            base64CustomUploadedImage = fallbackSrc;
-            updatePreviewImage(fallbackSrc);
-        }
-    }
-
-    function updatePreviewImage(srcPath) {
-        const imgSlot = document.getElementById("previewImageSlot");
-        if (imgSlot) {
-            imgSlot.innerHTML = `<img src="${srcPath}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
-        }
-    }
+    document.getElementById("closeOptionsBtn")?.addEventListener("click", () => { document.getElementById("automationOptionsCard").style.display = "none"; });
+    document.getElementById("triggerMechanism")?.addEventListener("change", (e) => { document.getElementById("keywordInputWrapper").style.display = (e.target.value === "keywords") ? "block" : "none"; });
+    document.getElementById("commentAutoReplyCheck")?.addEventListener("change", (e) => { document.getElementById("commentTextInputWrapper").style.display = e.target.checked ? "block" : "none"; });
+    document.getElementById("sendDMCheck")?.addEventListener("change", (e) => { document.getElementById("engagementTextInputWrapper").style.display = e.target.checked ? "block" : "none"; document.getElementById("previewEngagementBubble").style.display = e.target.checked ? "block" : "none"; });
+    document.getElementById("customEngagementText")?.addEventListener("input", triggerLiveMirrorUpdate);
+    document.getElementById("engagementBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); 
+    document.getElementById("otherDesc")?.addEventListener("input", triggerLiveMirrorUpdate);
+    document.getElementById("otherQuickReplyBtn")?.addEventListener("input", triggerLiveMirrorUpdate);
 
     document.querySelectorAll(".template-type-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -348,18 +369,18 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB (FACEBOOK AUTOMS)
+// 6. SAVE HANDLER TO SUPABASE DB (FOR FACEBOOK)
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
-
     const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
 
     const { error } = await supabaseClient
-        .from('profiles')
+        .from('facebook_posts_automation') // 💡 Saving to Facebook DB Table
         .upsert({
-            id: currentUserUuid,
-            fb_active_post_id: currentActivePostId, 
+            profile_id: currentUserUuid,
+            facebook_page_id: currentFacebookPageId,
+            fb_active_post_id: currentActivePostId,
             fb_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             fb_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
             fb_exclude_keywords: document.getElementById("excludeKeywords")?.value.trim() || "",
@@ -369,42 +390,25 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             fb_dm_active: document.getElementById("sendDMCheck")?.checked || false,
             fb_custom_engagement_text: document.getElementById("customEngagementText")?.value.trim() || "",
             
-            fb_delay: document.getElementById("delayTime")?.value.trim() || "",
+            fb_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "",
             fb_template_type: currentSelectedTemplateType,
-            fb_image_source_mode: selectedImageSource,
-            fb_custom_image_data: base64CustomUploadedImage, 
             
-            fb_btn_title: document.getElementById("templateBtnTitle")?.value.trim() || "",
-            fb_headline: document.getElementById("templateHeadline")?.value.trim() || "",
-            fb_url: document.getElementById("templateUrl")?.value.trim() || "",
-            fb_desc: document.getElementById("templateDescription")?.value.trim() || "",
+            // DYNAMIC JSON ARRAYS
+            fb_carousel_data: JSON.stringify(mediaCards),
+            fb_button_data: JSON.stringify({ text: buttonTemplateText, buttons: buttonTemplateBtns }),
+            
+            // LEGACY FIELDS
+            fb_desc: document.getElementById("otherDesc")?.value.trim() || "",
+            fb_second_btn_title: document.getElementById("otherQuickReplyBtn")?.value.trim() || "",
+            fb_custom_image_data: base64CustomUploadedImage,
+            fb_image_source_mode: selectedImageSource,
+            
             updated_at: new Date()
-        });
+        }, { onConflict: 'profile_id,fb_active_post_id' });
 
-    if (error) {
-        alert("Facebook Sync Failed: " + error.message);
-    } else {
-        alert("Facebook Configuration Saved and Real-time Media Flows Synced Successfully! 🚀🎉");
-        const optionsCard = document.getElementById("automationOptionsCard");
-        if (optionsCard) optionsCard.style.display = "none";
+    if (error) alert("Facebook Sync Failed: " + error.message);
+    else {
+        alert("Configuration Saved Successfully! 🚀🎉");
+        document.getElementById("automationOptionsCard").style.display = "none";
     }
-});
-
-// CORE NAVIGATION
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = [
-        { id: "dashboardBtn", url: "dashboard.html" },
-        { id: "instagramBtn", url: "instagram.html" },
-        { id: "facebookBtn", url: "facebook.html" },
-        { id: "automationBtn", url: "automation.html" },
-        { id: "commentsBtn", url: "comments.html" },
-        { id: "autodmBtn", url: "autodm.html" },
-        { id: "keywordsBtn", url: "keywords.html" },
-        { id: "analyticsBtn", url: "analytics.html" },
-        { id: "settingsBtn", url: "settings.html" }
-    ];
-    navLinks.forEach(link => {
-        const btn = document.getElementById(link.id);
-        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
-    });
 });
