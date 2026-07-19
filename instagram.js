@@ -392,3 +392,8 @@ document.addEventListener("DOMContentLoaded", () => {
         { id: "analyticsBtn", url: "analytics.html" },
         { id: "settingsBtn", url: "settings.html" }
     ];
+    navLinks.forEach(link => {
+        const btn = document.getElementById(link.id);
+        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
+    });
+});
