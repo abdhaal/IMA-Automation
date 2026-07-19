@@ -15,7 +15,7 @@ let currentActivePostId = "";
 let currentUserUuid = "";
 let currentInstagramBusinessId = ""; 
 let currentSelectedTemplateType = "media";
-let base64CustomUploadedImage = ""; // Used for attachment
+let base64CustomUploadedImage = ""; 
 
 // ==========================================
 // 2. DYNAMIC STATE BUILDERS
@@ -133,7 +133,6 @@ function handleTemplateTypeSwitch(type) {
     document.getElementById("mediaTemplateWrapper").style.display = (type === 'media') ? "block" : "none";
     document.getElementById("buttonTemplateWrapper").style.display = (type === 'button') ? "block" : "none";
     
-    // 💡 Legacy Templates Display Logic
     const otherWrapper = document.getElementById("otherTemplatesWrapper");
     const oMedia = document.getElementById("otherMediaSourceBlock");
     const oQuick = document.getElementById("otherQuickReplyBlock");
@@ -241,7 +240,6 @@ function triggerLiveMirrorUpdate() {
         document.getElementById("previewBtnTextBubble").innerText = buttonTemplateText || "Select an option:";
         document.getElementById("previewBtnList").innerHTML = buttonTemplateBtns.map(b => `<div style="background: rgba(255,255,255,0.05); color: #3b82f6; padding: 10px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.1);">${b.title || 'Button'}</div>`).join('');
     } else {
-        // 💡 Other Templates Preview Logic
         carouselContainer.style.display = "none"; btnContainer.style.display = "none"; simpleContainer.style.display = "flex";
         document.getElementById("previewSimpleTextBubble").innerText = document.getElementById("otherDesc")?.value || "Your text message goes here...";
         
@@ -293,8 +291,27 @@ async function processSmartAutoImageFetch(urlStr) {
     }
 }
 
+// 🔥 FIXED: Image Source Toggle Listeners properly connected
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
+
+    // Handling Image Source Toggle specifically to hide/show manual upload wrapper
+    document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
+        radio.addEventListener("change", (e) => {
+            if (e.target.value === "manual") {
+                document.getElementById("manualUploadWrapper").style.display = "block";
+                document.getElementById("autoFetchWrapper").style.display = "none";
+            } else {
+                document.getElementById("manualUploadWrapper").style.display = "none";
+                document.getElementById("autoFetchWrapper").style.display = "block";
+                const activeUrl = document.getElementById("cardUrl").value.trim();
+                if (activeUrl && activeUrl.startsWith("http")) {
+                    processSmartAutoImageFetch(activeUrl);
+                }
+            }
+        });
+    });
+
     document.getElementById("closeOptionsBtn")?.addEventListener("click", () => { document.getElementById("automationOptionsCard").style.display = "none"; });
     document.getElementById("triggerMechanism")?.addEventListener("change", (e) => { document.getElementById("keywordInputWrapper").style.display = (e.target.value === "keywords") ? "block" : "none"; });
     document.getElementById("commentAutoReplyCheck")?.addEventListener("change", (e) => { document.getElementById("commentTextInputWrapper").style.display = e.target.checked ? "block" : "none"; });
@@ -339,7 +356,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_carousel_data: JSON.stringify(mediaCards),
             ig_button_data: JSON.stringify({ text: buttonTemplateText, buttons: buttonTemplateBtns }),
             
-            // LEGACY FIELDS (For Text, Quick Reply, Attach)
+            // LEGACY FIELDS
             ig_desc: document.getElementById("otherDesc")?.value.trim() || "",
             ig_second_btn_title: document.getElementById("otherQuickReplyBtn")?.value.trim() || "",
             ig_custom_image_data: base64CustomUploadedImage,
