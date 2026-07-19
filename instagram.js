@@ -386,4 +386,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const navLinks = [
         { id: "dashboardBtn", url: "dashboard.html" },
         { id: "instagramBtn", url: "instagram.html" },
-        { i
+        { id: "facebookBtn", url: "facebook.html" },
+        { id: "automationBtn", url: "automation.html" },
+        { id: "commentsBtn", url: "comments.html" },
+        { id: "autodmBtn", url: "autodm.html" },
+        { id: "keywordsBtn", url: "keywords.html" },
+        { id: "analyticsBtn", url: "analytics.html" },
+        { id: "settingsBtn", url: "settings.html" }
+    ];
+    navLinks.forEach(link => {
+        const btn = document.getElementById(link.id);
+        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
+    });
+});
