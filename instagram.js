@@ -15,22 +15,13 @@ let currentActivePostId = "";
 let currentUserUuid = "";
 let currentInstagramBusinessId = ""; 
 let currentSelectedTemplateType = "media";
+let base64CustomUploadedImage = ""; // Used for attachment
 
 // ==========================================
-// 2. DYNAMIC STATE BUILDERS (NEW 🔥)
+// 2. DYNAMIC STATE BUILDERS
 // ==========================================
-
-// --- Media Carousel State (Max 10) ---
-let mediaCards = [{
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500",
-    headline: "Card 1 Headline",
-    desc: "Template Description text goes here...",
-    btnTitle: "Link 🔗",
-    url: ""
-}];
+let mediaCards = [{ image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500", headline: "Card 1 Headline", desc: "Template Description text goes here...", btnTitle: "Link 🔗", url: "" }];
 let activeCardIndex = 0;
-
-// --- Button Template State (Max 3) ---
 let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
@@ -102,10 +93,12 @@ function bindLinkButtons() {
             e.preventDefault();
             currentActivePostId = btn.getAttribute("data-post-id");
             const title = btn.closest(".post-card").querySelector("h4").innerText;
+            const postImg = btn.getAttribute("data-img");
             
-            // Reset for new post configuration
-            mediaCards[0].image = btn.getAttribute("data-img");
+            mediaCards[0].image = postImg;
+            base64CustomUploadedImage = postImg;
             activeCardIndex = 0;
+            
             renderCarouselUI();
             renderButtonTemplateUI();
 
@@ -122,10 +115,8 @@ window.toggleAccordion = function(accId) {
     const content = document.getElementById(accId);
     if (!content) return;
     const isVisible = content.style.display === "block";
-    
     document.querySelectorAll(".accordion-content").forEach(el => { el.style.display = "none"; });
     document.querySelectorAll(".accordion-header i").forEach(el => { el.className = "fa-solid fa-chevron-down"; });
-    
     if (!isVisible) {
         content.style.display = "block";
         const header = content.previousElementSibling;
@@ -134,65 +125,62 @@ window.toggleAccordion = function(accId) {
 };
 
 // ==========================================
-// 4. UI BUILDERS (Carousel & Button Template)
+// 4. UI BUILDERS (Tabs logic)
 // ==========================================
-
 function handleTemplateTypeSwitch(type) {
     currentSelectedTemplateType = type;
+    
     document.getElementById("mediaTemplateWrapper").style.display = (type === 'media') ? "block" : "none";
     document.getElementById("buttonTemplateWrapper").style.display = (type === 'button') ? "block" : "none";
+    
+    // 💡 Legacy Templates Display Logic
+    const otherWrapper = document.getElementById("otherTemplatesWrapper");
+    const oMedia = document.getElementById("otherMediaSourceBlock");
+    const oQuick = document.getElementById("otherQuickReplyBlock");
+    
+    if (type === 'media' || type === 'button') {
+        otherWrapper.style.display = "none";
+    } else {
+        otherWrapper.style.display = "flex";
+        if (type === 'text') {
+            oMedia.style.display = "none";
+            oQuick.style.display = "none";
+        } else if (type === 'quick') {
+            oMedia.style.display = "none";
+            oQuick.style.display = "block";
+        } else if (type === 'attach') {
+            oMedia.style.display = "block";
+            oQuick.style.display = "none";
+        }
+    }
     triggerLiveMirrorUpdate();
 }
 
-// ---- MEDIA CAROUSEL LOGIC ----
 function renderCarouselUI() {
     document.getElementById('cardCount').innerText = mediaCards.length;
-    
-    // Render Tabs
-    const tabsHtml = mediaCards.map((c, i) => `
+    document.getElementById('carouselTabsContainer').innerHTML = mediaCards.map((c, i) => `
         <div class="card-tab ${i === activeCardIndex ? 'active' : ''}" onclick="switchCard(${i})">
-            Card ${i+1} 
-            ${mediaCards.length > 1 ? `<i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-left:5px;" onclick="removeCard(${i}, event)"></i>` : ''}
+            Card ${i+1} ${mediaCards.length > 1 ? `<i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-left:5px;" onclick="removeCard(${i}, event)"></i>` : ''}
         </div>
     `).join('');
-    document.getElementById('carouselTabsContainer').innerHTML = tabsHtml;
 
-    // Load active card data into inputs
     const active = mediaCards[activeCardIndex];
     document.getElementById('cardHeadline').value = active.headline;
     document.getElementById('cardDesc').value = active.desc;
     document.getElementById('cardBtnTitle').value = active.btnTitle;
     document.getElementById('cardUrl').value = active.url;
-    
     triggerLiveMirrorUpdate();
 }
 
-window.switchCard = function(index) {
-    activeCardIndex = index;
-    renderCarouselUI();
-}
-
-window.removeCard = function(index, event) {
-    event.stopPropagation();
-    mediaCards.splice(index, 1);
-    if(activeCardIndex >= mediaCards.length) activeCardIndex = mediaCards.length - 1;
-    renderCarouselUI();
-}
-
+window.switchCard = function(index) { activeCardIndex = index; renderCarouselUI(); }
+window.removeCard = function(index, event) { event.stopPropagation(); mediaCards.splice(index, 1); if(activeCardIndex >= mediaCards.length) activeCardIndex = mediaCards.length - 1; renderCarouselUI(); }
 document.getElementById('addCardBtn')?.addEventListener('click', () => {
     if(mediaCards.length >= 10) return alert("Maximum 10 cards allowed!");
-    mediaCards.push({
-        image: mediaCards[0].image, // Default to first image
-        headline: `Card ${mediaCards.length + 1} Headline`,
-        desc: "Template Description text goes here...",
-        btnTitle: "Link 🔗",
-        url: ""
-    });
+    mediaCards.push({ image: mediaCards[0].image, headline: `Card ${mediaCards.length + 1} Headline`, desc: "Template Description...", btnTitle: "Link 🔗", url: "" });
     activeCardIndex = mediaCards.length - 1;
     renderCarouselUI();
 });
 
-// Sync Inputs to Array
 ['cardHeadline', 'cardDesc', 'cardBtnTitle', 'cardUrl'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', (e) => {
         const keyMap = { 'cardHeadline': 'headline', 'cardDesc': 'desc', 'cardBtnTitle': 'btnTitle', 'cardUrl': 'url' };
@@ -201,123 +189,110 @@ document.getElementById('addCardBtn')?.addEventListener('click', () => {
     });
 });
 
-// ---- BUTTON TEMPLATE LOGIC ----
 function renderButtonTemplateUI() {
     document.getElementById('btnCount').innerText = buttonTemplateBtns.length;
     document.getElementById('btnTemplateText').value = buttonTemplateText;
-    
-    const btnHtml = buttonTemplateBtns.map((b, i) => `
+    document.getElementById('btnTemplateList').innerHTML = buttonTemplateBtns.map((b, i) => `
         <div class="dynamic-btn-row">
             <input type="text" placeholder="Button Title" value="${b.title}" oninput="updateBtnTitle(${i}, this.value)">
             <input type="url" placeholder="URL Link" value="${b.url}" oninput="updateBtnUrl(${i}, this.value)">
             ${buttonTemplateBtns.length > 1 ? `<button onclick="removeBtn(${i})"><i class="fa-solid fa-trash"></i></button>` : ''}
         </div>
     `).join('');
-    document.getElementById('btnTemplateList').innerHTML = btnHtml;
-    
     triggerLiveMirrorUpdate();
 }
 
-document.getElementById('btnTemplateText')?.addEventListener('input', (e) => {
-    buttonTemplateText = e.target.value;
-    triggerLiveMirrorUpdate();
-});
-
+document.getElementById('btnTemplateText')?.addEventListener('input', (e) => { buttonTemplateText = e.target.value; triggerLiveMirrorUpdate(); });
 document.getElementById('addTemplateBtn')?.addEventListener('click', () => {
     if(buttonTemplateBtns.length >= 3) return alert("Maximum 3 buttons allowed!");
     buttonTemplateBtns.push({ title: `Button ${buttonTemplateBtns.length + 1}`, url: "" });
     renderButtonTemplateUI();
 });
-
 window.updateBtnTitle = function(i, val) { buttonTemplateBtns[i].title = val; triggerLiveMirrorUpdate(); }
 window.updateBtnUrl = function(i, val) { buttonTemplateBtns[i].url = val; }
 window.removeBtn = function(i) { buttonTemplateBtns.splice(i, 1); renderButtonTemplateUI(); }
 
-
 // ==========================================
 // 5. IMAGE UPLOAD & LIVE PREVIEW
 // ==========================================
-
 function triggerLiveMirrorUpdate() {
-    const firstMsgText = document.getElementById("customEngagementText")?.value || "Hi 👋 Thanks for your comment!";
-    const firstMsgBtnTitle = document.getElementById("engagementBtnTitle")?.value || "Send Link Now";
-
     const bubble = document.getElementById("previewEngagementBubble");
     if (bubble) {
-        bubble.innerHTML = `${firstMsgText}<br><br><div style="background:#e2e8f0; color:#1e293b; padding:8px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; border:1px solid #cbd5e1; cursor:pointer;">${firstMsgBtnTitle}</div>`;
+        bubble.innerHTML = `${document.getElementById("customEngagementText")?.value || "Hi 👋 Thanks for your comment!"}<br><br><div style="background:#e2e8f0; color:#1e293b; padding:8px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; border:1px solid #cbd5e1;">${document.getElementById("engagementBtnTitle")?.value || "Send Link Now"}</div>`;
     }
 
     const carouselContainer = document.getElementById("previewCarouselContainer");
     const btnContainer = document.getElementById("previewButtonTemplateContainer");
+    const simpleContainer = document.getElementById("previewSimpleContainer");
 
     if (currentSelectedTemplateType === 'media') {
-        carouselContainer.style.display = "flex";
-        btnContainer.style.display = "none";
-        
+        carouselContainer.style.display = "flex"; btnContainer.style.display = "none"; simpleContainer.style.display = "none";
         carouselContainer.innerHTML = mediaCards.map(c => `
             <div class="preview-carousel-card" style="scroll-snap-align: center;">
-                <div style="height: 140px; width: 100%; background: #1e293b;">
-                    <img src="${c.image}" style="width:100%; height:100%; object-fit:cover;">
-                </div>
+                <div style="height: 140px; width: 100%; background: #1e293b;"><img src="${c.image}" style="width:100%; height:100%; object-fit:cover;"></div>
                 <div style="padding: 12px;">
                     <h5 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">${c.headline || 'Headline'}</h5>
                     <p style="margin: 0 0 10px 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">${c.desc || 'Description'}</p>
                     <div style="text-align: center; color: #3b82f6; font-weight: 600; font-size: 13px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">${c.btnTitle || 'Button'}</div>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     } else if (currentSelectedTemplateType === 'button') {
-        carouselContainer.style.display = "none";
-        btnContainer.style.display = "flex";
-        
+        carouselContainer.style.display = "none"; btnContainer.style.display = "flex"; simpleContainer.style.display = "none";
         document.getElementById("previewBtnTextBubble").innerText = buttonTemplateText || "Select an option:";
-        document.getElementById("previewBtnList").innerHTML = buttonTemplateBtns.map(b => `
-            <div style="background: rgba(255,255,255,0.05); color: #3b82f6; padding: 10px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.1); cursor:pointer;">
-                ${b.title || 'Button'}
-            </div>
-        `).join('');
+        document.getElementById("previewBtnList").innerHTML = buttonTemplateBtns.map(b => `<div style="background: rgba(255,255,255,0.05); color: #3b82f6; padding: 10px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.1);">${b.title || 'Button'}</div>`).join('');
+    } else {
+        // 💡 Other Templates Preview Logic
+        carouselContainer.style.display = "none"; btnContainer.style.display = "none"; simpleContainer.style.display = "flex";
+        document.getElementById("previewSimpleTextBubble").innerText = document.getElementById("otherDesc")?.value || "Your text message goes here...";
+        
+        const imgSlot = document.getElementById("previewSimpleImgSlot");
+        if (currentSelectedTemplateType === 'attach') {
+            imgSlot.style.display = "block";
+            imgSlot.innerHTML = `<img src="${base64CustomUploadedImage}" style="width:100%; height:100%; object-fit:cover;">`;
+        } else imgSlot.style.display = "none";
+        
+        const quickBtn = document.getElementById("previewSimpleQuickBtn");
+        if (currentSelectedTemplateType === 'quick') {
+            quickBtn.style.display = "block";
+            quickBtn.innerText = document.getElementById("otherQuickReplyBtn")?.value || "Quick Reply";
+        } else quickBtn.style.display = "none";
     }
 }
 
-// Smart Image Fetcher for active Card
+// Media Uploaders & Inputs
 document.getElementById("cardUrl")?.addEventListener("input", (e) => {
     const url = e.target.value.trim();
-    if (document.querySelector("input[name='imageSourceToggle']:checked")?.value === "auto" && url.startsWith("http")) {
-        processSmartAutoImageFetch(url);
-    }
+    if (document.querySelector("input[name='imageSourceToggle']:checked")?.value === "auto" && url.startsWith("http")) processSmartAutoImageFetch(url);
 });
-
 document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    if (e.target.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(event) {
-            mediaCards[activeCardIndex].image = event.target.result;
-            triggerLiveMirrorUpdate();
-        };
-        reader.readAsDataURL(file);
+        reader.onload = function(event) { mediaCards[activeCardIndex].image = event.target.result; triggerLiveMirrorUpdate(); };
+        reader.readAsDataURL(e.target.files[0]);
     }
 });
+document.getElementById("otherImageFileInput")?.addEventListener("change", (e) => {
+    if (e.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(event) { base64CustomUploadedImage = event.target.result; triggerLiveMirrorUpdate(); };
+        reader.readAsDataURL(e.target.files[0]);
+    }
+});
+document.getElementById("otherDesc")?.addEventListener("input", triggerLiveMirrorUpdate);
+document.getElementById("otherQuickReplyBtn")?.addEventListener("input", triggerLiveMirrorUpdate);
 
 async function processSmartAutoImageFetch(urlStr) {
-    if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
-        mediaCards[activeCardIndex].image = urlStr;
-        triggerLiveMirrorUpdate();
-    } else {
+    if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) { mediaCards[activeCardIndex].image = urlStr; triggerLiveMirrorUpdate(); } 
+    else {
         try {
             const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(urlStr)}&prerender=true`);
             const data = await res.json();
-            if (data.status === 'success' && data.data.image && data.data.image.url) {
-                mediaCards[activeCardIndex].image = data.data.image.url;
-                triggerLiveMirrorUpdate();
-            } else throw new Error("No image");
-        } catch(e) {
-            alert("⚠️ Cannot extract image automatically from this affiliate link. Please switch to 'Manually Upload'.");
-        }
+            if (data.status === 'success' && data.data.image && data.data.image.url) { mediaCards[activeCardIndex].image = data.data.image.url; triggerLiveMirrorUpdate(); }
+            else throw new Error("No image");
+        } catch(e) { alert("⚠️ Cannot extract image automatically. Switch to 'Manually Upload'."); }
     }
 }
 
-// Init Setup Listeners
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
     document.getElementById("closeOptionsBtn")?.addEventListener("click", () => { document.getElementById("automationOptionsCard").style.display = "none"; });
@@ -326,7 +301,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("sendDMCheck")?.addEventListener("change", (e) => { document.getElementById("engagementTextInputWrapper").style.display = e.target.checked ? "block" : "none"; document.getElementById("previewEngagementBubble").style.display = e.target.checked ? "block" : "none"; });
     document.getElementById("customEngagementText")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("engagementBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); 
-    
     document.querySelectorAll(".template-type-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove("active"));
@@ -337,12 +311,12 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB (JSON ARRAYS 🔥)
+// 6. SAVE HANDLER TO SUPABASE DB
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
+    const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
 
-    // 🔥 Saving our advanced arrays to DB
     const { error } = await supabaseClient
         .from('instagram_posts_automation')
         .upsert({
@@ -361,17 +335,22 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "",
             ig_template_type: currentSelectedTemplateType,
             
-            // NEW JSON COLUMNS
+            // DYNAMIC JSON ARRAYS
             ig_carousel_data: JSON.stringify(mediaCards),
             ig_button_data: JSON.stringify({ text: buttonTemplateText, buttons: buttonTemplateBtns }),
+            
+            // LEGACY FIELDS (For Text, Quick Reply, Attach)
+            ig_desc: document.getElementById("otherDesc")?.value.trim() || "",
+            ig_second_btn_title: document.getElementById("otherQuickReplyBtn")?.value.trim() || "",
+            ig_custom_image_data: base64CustomUploadedImage,
+            ig_image_source_mode: selectedImageSource,
             
             updated_at: new Date()
         }, { onConflict: 'profile_id,ig_active_post_id' });
 
     if (error) alert("Instagram Sync Failed: " + error.message);
     else {
-        alert("Advanced Templates Saved Successfully! 🚀🎉");
+        alert("Configuration Saved Successfully! 🚀🎉");
         document.getElementById("automationOptionsCard").style.display = "none";
     }
 });
-                            
