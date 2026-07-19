@@ -13,6 +13,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 let currentActivePostId = "";
 let currentUserUuid = "";
+let currentInstagramBusinessId = ""; // 💡 இதை புதுசா சேர்த்திருக்கோம்
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
@@ -52,6 +53,9 @@ async function loadInstagramPageData() {
                 </div>`;
             return;
         }
+
+        // 💡 லாகின் ஆன யூசரோட பிசினஸ் ஐடியை இங்க ஸ்டோர் பண்றோம்
+        currentInstagramBusinessId = profileData.instagram_business_id;
 
         const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
         
@@ -195,8 +199,6 @@ function triggerLiveMirrorUpdate() {
 
     const headlineValue = document.getElementById("templateHeadline")?.value || "Card Headline";
     const descValue = document.getElementById("templateDescription")?.value || "Template Description text goes here...";
-    
-    // 💡 இங்க நீங்க டைப் பண்ணும் Button Title-ஐ டைரக்டா எடுக்குறோம்!
     const secondMsgBtnTitle = document.getElementById("templateBtnTitle")?.value || "Button Title"; 
 
     const bubble = document.getElementById("previewEngagementBubble");
@@ -216,7 +218,6 @@ function triggerLiveMirrorUpdate() {
     } else {
         liveHeadline.innerText = headlineValue;
         liveDesc.innerText = descValue;
-        // 💡 2வது கார்டு பட்டன் இப்போ டைனமிக்கா மாறிடும்!
         liveBtn.innerText = secondMsgBtnTitle; 
     }
 }
@@ -252,7 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("engagementBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); 
     document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
-    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); // 💡 பட்டன் அப்டேட்க்கான லிசனர்
+    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
 
     document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
         radio.addEventListener("change", (e) => {
@@ -288,19 +289,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 💡 இங்கதான் மேஜிக் நடக்குது! Product லிங்க்கில் இருந்து ஒரிஜினல் இமேஜை உருவி எடுக்கும் API 
-        async function processSmartAutoImageFetch(urlStr) {
+    async function processSmartAutoImageFetch(urlStr) {
         const imgSlot = document.getElementById("previewImageSlot");
         
         if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
             base64CustomUploadedImage = urlStr;
             updatePreviewImage(urlStr);
         } else {
-            // Loading Animation காட்டும்
             if(imgSlot) imgSlot.innerHTML = `<div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; background:#1e293b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px; margin-bottom:10px;"></i><span style="font-size:10px; text-align:center; padding:0 10px;">Bypassing Affiliate Link...<br>Fetching product image</span></div>`;
             
             try {
-                // &prerender=true added to bypass initial affiliate redirects
                 const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(urlStr)}&prerender=true`);
                 const data = await res.json();
                 
@@ -311,17 +309,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw new Error("No specific product image found");
                 }
             } catch(e) {
-                // Fallback to Post Image if scraper is blocked by Meesho
                 const currentActivePostBtn = document.querySelector(`.replyrush-btn[data-post-id='${currentActivePostId}']`);
                 const fallbackSrc = currentActivePostBtn ? currentActivePostBtn.getAttribute("data-img") : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
                 base64CustomUploadedImage = fallbackSrc;
                 updatePreviewImage(fallbackSrc);
                 
-                alert("⚠️ Meesho security blocked the image fetcher for this affiliate link. Please select 'Manually Upload' to set the product image directly. (Your link will still work!)");
+                alert("⚠️ E-commerce security blocked the image fetcher for this affiliate link. Please select 'Manually Upload' to set the product image directly. (Your link will still work!)");
             }
         }
-        }
-    
+    }
+
     function updatePreviewImage(srcPath) {
         const imgSlot = document.getElementById("previewImageSlot");
         if (imgSlot) {
@@ -350,6 +347,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
         .from('instagram_posts_automation')
         .upsert({
             profile_id: currentUserUuid,
+            instagram_business_id: currentInstagramBusinessId, // 💡 இங்க உங்க Business ID-ஐ புதுசா சேர்த்தாச்சு!
             ig_active_post_id: currentActivePostId,
             ig_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
@@ -370,6 +368,8 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_url: document.getElementById("templateUrl")?.value.trim() || "",
             ig_desc: document.getElementById("templateDescription")?.value.trim() || "",
             updated_at: new Date()
+        }, {
+            onConflict: 'profile_id,ig_active_post_id'
         });
 
     if (error) {
@@ -386,16 +386,4 @@ document.addEventListener("DOMContentLoaded", () => {
     const navLinks = [
         { id: "dashboardBtn", url: "dashboard.html" },
         { id: "instagramBtn", url: "instagram.html" },
-        { id: "facebookBtn", url: "facebook.html" },
-        { id: "automationBtn", url: "automation.html" },
-        { id: "commentsBtn", url: "comments.html" },
-        { id: "autodmBtn", url: "autodm.html" },
-        { id: "keywordsBtn", url: "keywords.html" },
-        { id: "analyticsBtn", url: "analytics.html" },
-        { id: "settingsBtn", url: "settings.html" }
-    ];
-    navLinks.forEach(link => {
-        const btn = document.getElementById(link.id);
-        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
-    });
-});
+        { i
