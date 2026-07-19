@@ -345,7 +345,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
     const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
 
     const { error } = await supabaseClient
-        .from('profiles')
+        .from('instagram_posts_automation')
         .upsert({
             id: currentUserUuid,
             ig_active_post_id: currentActivePostId,
