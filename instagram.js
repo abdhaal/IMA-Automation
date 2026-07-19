@@ -347,7 +347,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
         .from('instagram_posts_automation')
         .upsert({
             profile_id: currentUserUuid,
-            instagram_business_id: currentInstagramBusinessId, // 💡 இங்க உங்க Business ID-ஐ புதுசா சேர்த்தாச்சு!
+            instagram_business_id: currentInstagramBusinessId,
             ig_active_post_id: currentActivePostId,
             ig_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
@@ -363,7 +363,9 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_image_source_mode: selectedImageSource,
             ig_custom_image_data: base64CustomUploadedImage, 
             
-            ig_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "",
+            ig_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "", // 💡 1st Button
+            ig_second_btn_title: document.getElementById("templateBtnTitle")?.value.trim() || "", // 💡 2nd Button (New)
+            
             ig_headline: document.getElementById("templateHeadline")?.value.trim() || "",
             ig_url: document.getElementById("templateUrl")?.value.trim() || "",
             ig_desc: document.getElementById("templateDescription")?.value.trim() || "",
@@ -380,6 +382,7 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
         if (optionsCard) optionsCard.style.display = "none";
     }
 });
+
 
 // CORE NAVIGATION
 document.addEventListener("DOMContentLoaded", () => {
