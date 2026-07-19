@@ -13,12 +13,29 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 let currentActivePostId = "";
 let currentUserUuid = "";
-let currentInstagramBusinessId = ""; // 💡 இதை புதுசா சேர்த்திருக்கோம்
+let currentInstagramBusinessId = ""; 
 let currentSelectedTemplateType = "media";
-let base64CustomUploadedImage = ""; 
 
 // ==========================================
-// 2. FETCH AND RENDER REAL INSTAGRAM POSTS ONLY
+// 2. DYNAMIC STATE BUILDERS (NEW 🔥)
+// ==========================================
+
+// --- Media Carousel State (Max 10) ---
+let mediaCards = [{
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500",
+    headline: "Card 1 Headline",
+    desc: "Template Description text goes here...",
+    btnTitle: "Link 🔗",
+    url: ""
+}];
+let activeCardIndex = 0;
+
+// --- Button Template State (Max 3) ---
+let buttonTemplateText = "Please select an option below:";
+let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
+
+// ==========================================
+// 3. FETCH AND RENDER REAL INSTAGRAM POSTS
 // ==========================================
 async function loadInstagramPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -26,50 +43,31 @@ async function loadInstagramPageData() {
 
     try {
         const { data, error } = await supabaseClient.auth.getSession();
-        if (error || !data || !data.session) {
-            window.location.href = "login.html";
-            return;
-        }
+        if (error || !data || !data.session) { window.location.href = "login.html"; return; }
 
-        const user = data.session.user;
-        currentUserUuid = user.id;
+        currentUserUuid = data.session.user.id;
         
-        if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = user.email;
-        if (document.getElementById("userName")) document.getElementById("userName").innerText = user.email.split("@")[0];
+        if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
+        if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Instagram posts and reels...</p>";
+        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Instagram posts...</p>";
 
         const { data: profileData, error: dbErr } = await supabaseClient
-            .from('profiles')
-            .select('instagram_access_token, instagram_business_id')
-            .eq('id', currentUserUuid)
-            .maybeSingle();
+            .from('profiles').select('instagram_access_token, instagram_business_id').eq('id', currentUserUuid).maybeSingle();
 
-        if (dbErr || !profileData || !profileData.instagram_access_token || !profileData.instagram_business_id) {
-            postsContainer.innerHTML = `
-                <div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'>
-                    <i class="fa-brands fa-instagram" style="font-size: 40px; color: #ec4899; margin-bottom: 15px;"></i>
-                    <p style="font-size:15px; margin-bottom:15px;">Your Instagram Business Account is not linked yet.</p>
-                </div>`;
+        if (dbErr || !profileData || !profileData.instagram_business_id) {
+            postsContainer.innerHTML = `<div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'><i class="fa-brands fa-instagram" style="font-size: 40px; color: #ec4899; margin-bottom: 15px;"></i><p>Your Instagram Business Account is not linked yet.</p></div>`;
             return;
         }
 
-        // 💡 லாகின் ஆன யூசரோட பிசினஸ் ஐடியை இங்க ஸ்டோர் பண்றோம்
         currentInstagramBusinessId = profileData.instagram_business_id;
 
         const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.instagram_business_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,comments_count,like_count&access_token=${profileData.instagram_access_token}`;
-        
         const response = await fetch(metaApiUrl);
         const metaJson = await response.json();
 
         if (metaJson.error) {
-            postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; width:100%; padding:20px;'>Meta API Error: ${metaJson.error.message}</p>`;
-            return;
-        }
-
-        if (!metaJson.data || metaJson.data.length === 0) {
-            postsContainer.innerHTML = "<p style='color:#94a3b8; text-align:center; width:100%; padding:20px;'>No posts or reels found.</p>";
-            return;
+            postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px;'>API Error: ${metaJson.error.message}</p>`; return;
         }
 
         postsContainer.innerHTML = "";
@@ -87,29 +85,39 @@ async function loadInstagramPageData() {
                     <span class="meta-badge"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> ${post.like_count || 0}</span>
                 </div>
                 <div class="post-details">
-                    <div>
-                        <h4>${captionText}</h4>
-                        <p><i class="fa-solid fa-clock"></i> ${formattedDate}</p>
-                    </div>
-                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}">
-                        <i class="fa-solid fa-link"></i> Link Post Setup
-                    </button>
+                    <div><h4>${captionText}</h4><p><i class="fa-solid fa-clock"></i> ${formattedDate}</p></div>
+                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}"><i class="fa-solid fa-link"></i> Link Post Setup</button>
                 </div>
             `;
             postsContainer.appendChild(card);
         });
 
         bindLinkButtons();
-
-    } catch (gErr) { 
-        console.error(gErr);
-        postsContainer.innerHTML = "<p style='color:#ef4444; text-align:center; width:100%; padding:20px;'>Failed to load live Instagram feed.</p>";
-    }
+    } catch (gErr) { console.error(gErr); }
 }
 
-// ==========================================
-// 3. ACCORDION VIEW & SCROLL CONTROLLERS
-// ==========================================
+function bindLinkButtons() {
+    document.querySelectorAll(".replyrush-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            currentActivePostId = btn.getAttribute("data-post-id");
+            const title = btn.closest(".post-card").querySelector("h4").innerText;
+            
+            // Reset for new post configuration
+            mediaCards[0].image = btn.getAttribute("data-img");
+            activeCardIndex = 0;
+            renderCarouselUI();
+            renderButtonTemplateUI();
+
+            document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
+            document.getElementById("automationOptionsCard").style.display = "grid";
+            document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
+            
+            window.toggleAccordion('triggerAcc');
+        });
+    });
+}
+
 window.toggleAccordion = function(accId) {
     const content = document.getElementById(accId);
     if (!content) return;
@@ -125,207 +133,200 @@ window.toggleAccordion = function(accId) {
     }
 };
 
-function bindLinkButtons() {
-    document.querySelectorAll(".replyrush-btn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            currentActivePostId = btn.getAttribute("data-post-id");
-            
-            const title = btn.closest(".post-card").querySelector("h4").innerText;
-            const postImg = btn.getAttribute("data-img");
-            
-            document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
-            base64CustomUploadedImage = postImg; 
-
-            const imgSlot = document.getElementById("previewImageSlot");
-            if (imgSlot) { imgSlot.innerHTML = `<img src="${postImg}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`; }
-
-            document.getElementById("automationOptionsCard").style.display = "grid";
-            document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
-            
-            window.toggleAccordion('triggerAcc');
-            triggerLiveMirrorUpdate();
-        });
-    });
-}
-
 // ==========================================
-// 4. REAL-TIME MULTI-TEMPLATE CONTROLLER
+// 4. UI BUILDERS (Carousel & Button Template)
 // ==========================================
+
 function handleTemplateTypeSwitch(type) {
     currentSelectedTemplateType = type;
+    document.getElementById("mediaTemplateWrapper").style.display = (type === 'media') ? "block" : "none";
+    document.getElementById("buttonTemplateWrapper").style.display = (type === 'button') ? "block" : "none";
+    triggerLiveMirrorUpdate();
+}
+
+// ---- MEDIA CAROUSEL LOGIC ----
+function renderCarouselUI() {
+    document.getElementById('cardCount').innerText = mediaCards.length;
     
-    const hBlock = document.getElementById("headlineFieldBlock");
-    const dBlock = document.getElementById("descriptionFieldBlock");
-    const bBlock = document.getElementById("buttonTitleFieldBlock");
-    const uBlock = document.getElementById("urlFieldBlock");
-    const mSourceBlock = document.getElementById("mediaSourceSelectionBlock");
-    const autoRadioLabel = document.getElementById("autoFetchRadioLabel");
-    
-    const richCard = document.getElementById("previewRichCardContainer");
-    const imgSlot = document.getElementById("previewImageSlot");
-    const bodyContent = document.getElementById("previewCardBodyContent");
-    const liveBtn = document.getElementById("livePreviewBtn");
+    // Render Tabs
+    const tabsHtml = mediaCards.map((c, i) => `
+        <div class="card-tab ${i === activeCardIndex ? 'active' : ''}" onclick="switchCard(${i})">
+            Card ${i+1} 
+            ${mediaCards.length > 1 ? `<i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-left:5px;" onclick="removeCard(${i}, event)"></i>` : ''}
+        </div>
+    `).join('');
+    document.getElementById('carouselTabsContainer').innerHTML = tabsHtml;
 
-    if (!hBlock || !dBlock || !bBlock || !uBlock || !richCard || !imgSlot || !bodyContent || !liveBtn || !mSourceBlock || !autoRadioLabel) return;
-
-    hBlock.style.display = "block"; dBlock.style.display = "block"; bBlock.style.display = "block";
-    uBlock.style.display = "block"; mSourceBlock.style.display = "block"; autoRadioLabel.style.display = "flex";
-    richCard.style.display = "flex"; imgSlot.style.display = "flex"; bodyContent.style.display = "block"; liveBtn.style.display = "block";
-
-    if (type === "attach") {
-        autoRadioLabel.style.display = "none";
-        const manualRadio = document.querySelector("input[name='imageSourceToggle'][value='manual']");
-        if (manualRadio) {
-            manualRadio.checked = true;
-            document.getElementById("manualUploadWrapper").style.display = "block";
-            document.getElementById("autoFetchWrapper").style.display = "none";
-        }
-        hBlock.style.display = "none"; dBlock.style.display = "none"; bBlock.style.display = "none";
-        uBlock.style.display = "none"; bodyContent.style.display = "none"; liveBtn.style.display = "none";
-    } else if (type === "text") {
-        hBlock.style.display = "none"; bBlock.style.display = "none"; uBlock.style.display = "none";
-        mSourceBlock.style.display = "none"; imgSlot.style.display = "none"; liveBtn.style.display = "none";
-    } else if (type === "quick" || type === "button") {
-        imgSlot.style.display = "none"; mSourceBlock.style.display = "none";
-    }
+    // Load active card data into inputs
+    const active = mediaCards[activeCardIndex];
+    document.getElementById('cardHeadline').value = active.headline;
+    document.getElementById('cardDesc').value = active.desc;
+    document.getElementById('cardBtnTitle').value = active.btnTitle;
+    document.getElementById('cardUrl').value = active.url;
     
     triggerLiveMirrorUpdate();
 }
 
-function triggerLiveMirrorUpdate() {
-    const firstMsgText = document.getElementById("customEngagementText")?.value || "Hi 👋 Thanks for your comment, Here is the product link 🔗👇";
-    const firstMsgBtnTitle = document.getElementById("engagementBtnTitle")?.value || "Send Link Now";
+window.switchCard = function(index) {
+    activeCardIndex = index;
+    renderCarouselUI();
+}
 
-    const headlineValue = document.getElementById("templateHeadline")?.value || "Card Headline";
-    const descValue = document.getElementById("templateDescription")?.value || "Template Description text goes here...";
-    const secondMsgBtnTitle = document.getElementById("templateBtnTitle")?.value || "Button Title"; 
+window.removeCard = function(index, event) {
+    event.stopPropagation();
+    mediaCards.splice(index, 1);
+    if(activeCardIndex >= mediaCards.length) activeCardIndex = mediaCards.length - 1;
+    renderCarouselUI();
+}
+
+document.getElementById('addCardBtn')?.addEventListener('click', () => {
+    if(mediaCards.length >= 10) return alert("Maximum 10 cards allowed!");
+    mediaCards.push({
+        image: mediaCards[0].image, // Default to first image
+        headline: `Card ${mediaCards.length + 1} Headline`,
+        desc: "Template Description text goes here...",
+        btnTitle: "Link 🔗",
+        url: ""
+    });
+    activeCardIndex = mediaCards.length - 1;
+    renderCarouselUI();
+});
+
+// Sync Inputs to Array
+['cardHeadline', 'cardDesc', 'cardBtnTitle', 'cardUrl'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', (e) => {
+        const keyMap = { 'cardHeadline': 'headline', 'cardDesc': 'desc', 'cardBtnTitle': 'btnTitle', 'cardUrl': 'url' };
+        mediaCards[activeCardIndex][keyMap[id]] = e.target.value;
+        triggerLiveMirrorUpdate();
+    });
+});
+
+// ---- BUTTON TEMPLATE LOGIC ----
+function renderButtonTemplateUI() {
+    document.getElementById('btnCount').innerText = buttonTemplateBtns.length;
+    document.getElementById('btnTemplateText').value = buttonTemplateText;
+    
+    const btnHtml = buttonTemplateBtns.map((b, i) => `
+        <div class="dynamic-btn-row">
+            <input type="text" placeholder="Button Title" value="${b.title}" oninput="updateBtnTitle(${i}, this.value)">
+            <input type="url" placeholder="URL Link" value="${b.url}" oninput="updateBtnUrl(${i}, this.value)">
+            ${buttonTemplateBtns.length > 1 ? `<button onclick="removeBtn(${i})"><i class="fa-solid fa-trash"></i></button>` : ''}
+        </div>
+    `).join('');
+    document.getElementById('btnTemplateList').innerHTML = btnHtml;
+    
+    triggerLiveMirrorUpdate();
+}
+
+document.getElementById('btnTemplateText')?.addEventListener('input', (e) => {
+    buttonTemplateText = e.target.value;
+    triggerLiveMirrorUpdate();
+});
+
+document.getElementById('addTemplateBtn')?.addEventListener('click', () => {
+    if(buttonTemplateBtns.length >= 3) return alert("Maximum 3 buttons allowed!");
+    buttonTemplateBtns.push({ title: `Button ${buttonTemplateBtns.length + 1}`, url: "" });
+    renderButtonTemplateUI();
+});
+
+window.updateBtnTitle = function(i, val) { buttonTemplateBtns[i].title = val; triggerLiveMirrorUpdate(); }
+window.updateBtnUrl = function(i, val) { buttonTemplateBtns[i].url = val; }
+window.removeBtn = function(i) { buttonTemplateBtns.splice(i, 1); renderButtonTemplateUI(); }
+
+
+// ==========================================
+// 5. IMAGE UPLOAD & LIVE PREVIEW
+// ==========================================
+
+function triggerLiveMirrorUpdate() {
+    const firstMsgText = document.getElementById("customEngagementText")?.value || "Hi 👋 Thanks for your comment!";
+    const firstMsgBtnTitle = document.getElementById("engagementBtnTitle")?.value || "Send Link Now";
 
     const bubble = document.getElementById("previewEngagementBubble");
     if (bubble) {
         bubble.innerHTML = `${firstMsgText}<br><br><div style="background:#e2e8f0; color:#1e293b; padding:8px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; border:1px solid #cbd5e1; cursor:pointer;">${firstMsgBtnTitle}</div>`;
     }
 
-    const liveHeadline = document.getElementById("livePreviewHeadline");
-    const liveDesc = document.getElementById("livePreviewDesc");
-    const liveBtn = document.getElementById("livePreviewBtn");
+    const carouselContainer = document.getElementById("previewCarouselContainer");
+    const btnContainer = document.getElementById("previewButtonTemplateContainer");
 
-    if (!liveHeadline || !liveDesc || !liveBtn) return;
-
-    if (currentSelectedTemplateType === "text") {
-        liveDesc.innerText = descValue || "Text Message flow placeholder...";
-        liveHeadline.innerText = "";
-    } else {
-        liveHeadline.innerText = headlineValue;
-        liveDesc.innerText = descValue;
-        liveBtn.innerText = secondMsgBtnTitle; 
+    if (currentSelectedTemplateType === 'media') {
+        carouselContainer.style.display = "flex";
+        btnContainer.style.display = "none";
+        
+        carouselContainer.innerHTML = mediaCards.map(c => `
+            <div class="preview-carousel-card" style="scroll-snap-align: center;">
+                <div style="height: 140px; width: 100%; background: #1e293b;">
+                    <img src="${c.image}" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+                <div style="padding: 12px;">
+                    <h5 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">${c.headline || 'Headline'}</h5>
+                    <p style="margin: 0 0 10px 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">${c.desc || 'Description'}</p>
+                    <div style="text-align: center; color: #3b82f6; font-weight: 600; font-size: 13px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">${c.btnTitle || 'Button'}</div>
+                </div>
+            </div>
+        `).join('');
+    } else if (currentSelectedTemplateType === 'button') {
+        carouselContainer.style.display = "none";
+        btnContainer.style.display = "flex";
+        
+        document.getElementById("previewBtnTextBubble").innerText = buttonTemplateText || "Select an option:";
+        document.getElementById("previewBtnList").innerHTML = buttonTemplateBtns.map(b => `
+            <div style="background: rgba(255,255,255,0.05); color: #3b82f6; padding: 10px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.1); cursor:pointer;">
+                ${b.title || 'Button'}
+            </div>
+        `).join('');
     }
 }
 
-// ==========================================
-// 5. INPUT ACTION LISTENERS
-// ==========================================
+// Smart Image Fetcher for active Card
+document.getElementById("cardUrl")?.addEventListener("input", (e) => {
+    const url = e.target.value.trim();
+    if (document.querySelector("input[name='imageSourceToggle']:checked")?.value === "auto" && url.startsWith("http")) {
+        processSmartAutoImageFetch(url);
+    }
+});
+
+document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            mediaCards[activeCardIndex].image = event.target.result;
+            triggerLiveMirrorUpdate();
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+async function processSmartAutoImageFetch(urlStr) {
+    if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
+        mediaCards[activeCardIndex].image = urlStr;
+        triggerLiveMirrorUpdate();
+    } else {
+        try {
+            const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(urlStr)}&prerender=true`);
+            const data = await res.json();
+            if (data.status === 'success' && data.data.image && data.data.image.url) {
+                mediaCards[activeCardIndex].image = data.data.image.url;
+                triggerLiveMirrorUpdate();
+            } else throw new Error("No image");
+        } catch(e) {
+            alert("⚠️ Cannot extract image automatically from this affiliate link. Please switch to 'Manually Upload'.");
+        }
+    }
+}
+
+// Init Setup Listeners
 document.addEventListener("DOMContentLoaded", () => {
     loadInstagramPageData();
-
-    document.getElementById("closeOptionsBtn")?.addEventListener("click", () => {
-        document.getElementById("automationOptionsCard").style.display = "none";
-    });
-
-    document.getElementById("triggerMechanism")?.addEventListener("change", (e) => {
-        const wrapper = document.getElementById("keywordInputWrapper");
-        if (wrapper) wrapper.style.display = (e.target.value === "keywords") ? "block" : "none";
-    });
-
-    document.getElementById("commentAutoReplyCheck")?.addEventListener("change", (e) => {
-        const wrapper = document.getElementById("commentTextInputWrapper");
-        if (wrapper) wrapper.style.display = e.target.checked ? "block" : "none";
-    });
-
-    document.getElementById("sendDMCheck")?.addEventListener("change", (e) => {
-        const wrapper = document.getElementById("engagementTextInputWrapper");
-        const bubble = document.getElementById("previewEngagementBubble");
-        if (wrapper) wrapper.style.display = e.target.checked ? "block" : "none";
-        if (bubble) bubble.style.display = e.target.checked ? "block" : "none";
-    });
-
+    document.getElementById("closeOptionsBtn")?.addEventListener("click", () => { document.getElementById("automationOptionsCard").style.display = "none"; });
+    document.getElementById("triggerMechanism")?.addEventListener("change", (e) => { document.getElementById("keywordInputWrapper").style.display = (e.target.value === "keywords") ? "block" : "none"; });
+    document.getElementById("commentAutoReplyCheck")?.addEventListener("change", (e) => { document.getElementById("commentTextInputWrapper").style.display = e.target.checked ? "block" : "none"; });
+    document.getElementById("sendDMCheck")?.addEventListener("change", (e) => { document.getElementById("engagementTextInputWrapper").style.display = e.target.checked ? "block" : "none"; document.getElementById("previewEngagementBubble").style.display = e.target.checked ? "block" : "none"; });
     document.getElementById("customEngagementText")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("engagementBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate); 
-    document.getElementById("templateHeadline")?.addEventListener("input", triggerLiveMirrorUpdate);
-    document.getElementById("templateDescription")?.addEventListener("input", triggerLiveMirrorUpdate);
-    document.getElementById("templateBtnTitle")?.addEventListener("input", triggerLiveMirrorUpdate);
-
-    document.querySelectorAll("input[name='imageSourceToggle']").forEach(radio => {
-        radio.addEventListener("change", (e) => {
-            if (e.target.value === "manual") {
-                document.getElementById("manualUploadWrapper").style.display = "block";
-                document.getElementById("autoFetchWrapper").style.display = "none";
-            } else {
-                document.getElementById("manualUploadWrapper").style.display = "none";
-                document.getElementById("autoFetchWrapper").style.display = "block";
-                const activeUrl = document.getElementById("templateUrl").value.trim();
-                if (activeUrl && activeUrl.startsWith("http")) { processSmartAutoImageFetch(activeUrl); }
-            }
-        });
-    });
-
-    document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                base64CustomUploadedImage = event.target.result;
-                updatePreviewImage(base64CustomUploadedImage);
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    document.getElementById("templateUrl")?.addEventListener("input", (e) => {
-        const targetUrl = e.target.value.trim();
-        const selectedRadio = document.querySelector("input[name='imageSourceToggle']:checked")?.value;
-        if (selectedRadio === "auto" && targetUrl.startsWith("http")) {
-            processSmartAutoImageFetch(targetUrl);
-        }
-    });
-
-    async function processSmartAutoImageFetch(urlStr) {
-        const imgSlot = document.getElementById("previewImageSlot");
-        
-        if (urlStr.match(/\.(jpeg|jpg|gif|png|webp)/i) != null) {
-            base64CustomUploadedImage = urlStr;
-            updatePreviewImage(urlStr);
-        } else {
-            if(imgSlot) imgSlot.innerHTML = `<div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; background:#1e293b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px; margin-bottom:10px;"></i><span style="font-size:10px; text-align:center; padding:0 10px;">Bypassing Affiliate Link...<br>Fetching product image</span></div>`;
-            
-            try {
-                const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(urlStr)}&prerender=true`);
-                const data = await res.json();
-                
-                if (data.status === 'success' && data.data.image && data.data.image.url) {
-                    base64CustomUploadedImage = data.data.image.url;
-                    updatePreviewImage(data.data.image.url);
-                } else {
-                    throw new Error("No specific product image found");
-                }
-            } catch(e) {
-                const currentActivePostBtn = document.querySelector(`.replyrush-btn[data-post-id='${currentActivePostId}']`);
-                const fallbackSrc = currentActivePostBtn ? currentActivePostBtn.getAttribute("data-img") : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
-                base64CustomUploadedImage = fallbackSrc;
-                updatePreviewImage(fallbackSrc);
-                
-                alert("⚠️ E-commerce security blocked the image fetcher for this affiliate link. Please select 'Manually Upload' to set the product image directly. (Your link will still work!)");
-            }
-        }
-    }
-
-    function updatePreviewImage(srcPath) {
-        const imgSlot = document.getElementById("previewImageSlot");
-        if (imgSlot) {
-            imgSlot.innerHTML = `<img src="${srcPath}" style="width:100%; height:100%; object-fit:cover;" id="actualPreviewedImageSrc">`;
-        }
-    }
-
+    
     document.querySelectorAll(".template-type-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove("active"));
@@ -336,13 +337,12 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB
+// 6. SAVE HANDLER TO SUPABASE DB (JSON ARRAYS 🔥)
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
 
-    const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
-
+    // 🔥 Saving our advanced arrays to DB
     const { error } = await supabaseClient
         .from('instagram_posts_automation')
         .upsert({
@@ -358,47 +358,20 @@ document.getElementById("savePostAutomationBtn")?.addEventListener("click", asyn
             ig_dm_active: document.getElementById("sendDMCheck")?.checked || false,
             ig_custom_engagement_text: document.getElementById("customEngagementText")?.value.trim() || "",
             
-            ig_delay: document.getElementById("delayTime")?.value.trim() || "",
+            ig_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "",
             ig_template_type: currentSelectedTemplateType,
-            ig_image_source_mode: selectedImageSource,
-            ig_custom_image_data: base64CustomUploadedImage, 
             
-            ig_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "", // 💡 1st Button
-            ig_second_btn_title: document.getElementById("templateBtnTitle")?.value.trim() || "", // 💡 2nd Button (New)
+            // NEW JSON COLUMNS
+            ig_carousel_data: JSON.stringify(mediaCards),
+            ig_button_data: JSON.stringify({ text: buttonTemplateText, buttons: buttonTemplateBtns }),
             
-            ig_headline: document.getElementById("templateHeadline")?.value.trim() || "",
-            ig_url: document.getElementById("templateUrl")?.value.trim() || "",
-            ig_desc: document.getElementById("templateDescription")?.value.trim() || "",
             updated_at: new Date()
-        }, {
-            onConflict: 'profile_id,ig_active_post_id'
-        });
+        }, { onConflict: 'profile_id,ig_active_post_id' });
 
-    if (error) {
-        alert("Instagram Sync Failed: " + error.message);
-    } else {
-        alert("Configuration Saved and Real-time Media Flows Synced Successfully! 🚀🎉");
-        const optionsCard = document.getElementById("automationOptionsCard");
-        if (optionsCard) optionsCard.style.display = "none";
+    if (error) alert("Instagram Sync Failed: " + error.message);
+    else {
+        alert("Advanced Templates Saved Successfully! 🚀🎉");
+        document.getElementById("automationOptionsCard").style.display = "none";
     }
 });
-
-
-// CORE NAVIGATION
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = [
-        { id: "dashboardBtn", url: "dashboard.html" },
-        { id: "instagramBtn", url: "instagram.html" },
-        { id: "facebookBtn", url: "facebook.html" },
-        { id: "automationBtn", url: "automation.html" },
-        { id: "commentsBtn", url: "comments.html" },
-        { id: "autodmBtn", url: "autodm.html" },
-        { id: "keywordsBtn", url: "keywords.html" },
-        { id: "analyticsBtn", url: "analytics.html" },
-        { id: "settingsBtn", url: "settings.html" }
-    ];
-    navLinks.forEach(link => {
-        const btn = document.getElementById(link.id);
-        if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); window.location.href = link.url; });
-    });
-});
+                            
