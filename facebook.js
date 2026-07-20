@@ -268,7 +268,7 @@ document.getElementById("cardUrl")?.addEventListener("input", (e) => {
     if (document.querySelector("input[name='imageSourceToggle']:checked")?.value === "auto" && url.startsWith("http")) processSmartAutoImageFetch(url);
 });
 
-// 🔥 UPLOAD TO SUPABASE SERVER DIRECTLY INSTEAD OF BASE64
+// UPLOAD TO SUPABASE SERVER DIRECTLY INSTEAD OF BASE64
 document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
     if (e.target.files[0]) {
         uploadImageToSupabase(e.target.files[0], (publicUrl) => {
@@ -287,7 +287,7 @@ document.getElementById("otherImageFileInput")?.addEventListener("change", (e) =
     }
 });
 
-// 🔥 Supabase Storage Upload Function
+// Supabase Storage Upload Function
 async function uploadImageToSupabase(file, callback) {
     const btn = document.getElementById("savePostAutomationBtn");
     const originalText = btn.innerHTML;
@@ -327,10 +327,13 @@ async function processSmartAutoImageFetch(urlStr) {
             const data = await res.json();
             if (data.status === 'success' && data.data.image && data.data.image.url) { mediaCards[activeCardIndex].image = data.data.image.url; triggerLiveMirrorUpdate(); }
             else throw new Error("No image");
-        } catch(e) { alert("⚠️ Cannot extract image automatically. Switch to 'Manually Upload'."); }
+        } catch(e) { console.log("⚠️ Cannot extract image automatically."); }
     }
 }
 
+// ==========================================
+// 6. DOM LISTENERS & SAVE LOGIC (Exact DB mapping)
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadFacebookPageData();
 
@@ -359,56 +362,113 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("otherDesc")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("otherQuickReplyBtn")?.addEventListener("input", triggerLiveMirrorUpdate);
 
+    // Template Type Buttons Logic
     document.querySelectorAll(".template-type-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            handleTemplateTypeSwitch(btn.getAttribute("data-type"));
+            document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            handleTemplateTypeSwitch(btn.getAttribute('data-type'));
         });
     });
-});
 
-// ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB (FOR FACEBOOK)
-// ==========================================
-document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
-    if (!currentUserUuid) return;
-    const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
+    // ==========================================
+    // SAVE CONFIGURATION TO EXACT NEW DB SCHEMA
+    // ==========================================
+    document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
+        if (!currentActivePostId || !currentFacebookPageId) {
+            alert("⚠️ Please select a post first!");
+            return;
+        }
 
-    const { error } = await supabaseClient
-        .from('facebook_posts_automation') // 💡 Saving to Facebook DB Table
-        .upsert({
-            profile_id: currentUserUuid,
-            facebook_page_id: currentFacebookPageId,
-            fb_active_post_id: currentActivePostId,
-            fb_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
-            fb_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
-            fb_exclude_keywords: document.getElementById("excludeKeywords")?.value.trim() || "",
-            
-            fb_comment_reply_active: document.getElementById("commentAutoReplyCheck")?.checked || false,
-            fb_custom_comment_text: document.getElementById("customCommentReplyText")?.value.trim() || "",
-            fb_dm_active: document.getElementById("sendDMCheck")?.checked || false,
-            fb_custom_engagement_text: document.getElementById("customEngagementText")?.value.trim() || "",
-            
-            fb_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "",
-            fb_template_type: currentSelectedTemplateType,
-            
-            // DYNAMIC JSON ARRAYS
-            fb_carousel_data: JSON.stringify(mediaCards),
-            fb_button_data: JSON.stringify({ text: buttonTemplateText, buttons: buttonTemplateBtns }),
-            
-            // LEGACY FIELDS
-            fb_desc: document.getElementById("otherDesc")?.value.trim() || "",
-            fb_second_btn_title: document.getElementById("otherQuickReplyBtn")?.value.trim() || "",
-            fb_custom_image_data: base64CustomUploadedImage,
-            fb_image_source_mode: selectedImageSource,
-            
-            updated_at: new Date()
-        }, { onConflict: 'profile_id,fb_active_post_id' });
+        const btn = document.getElementById("savePostAutomationBtn");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Saving Config...";
+        btn.disabled = true;
 
-    if (error) alert("Facebook Sync Failed: " + error.message);
-    else {
-        alert("Configuration Saved Successfully! 🚀🎉");
-        document.getElementById("automationOptionsCard").style.display = "none";
-    }
+        try {
+            // Mapping UI values strictly to SQL columns
+            const templateType = currentSelectedTemplateType;
+            let customImageData = base64CustomUploadedImage;
+            let headline = "";
+            let desc = "";
+            let secondBtnTitle = "";
+            let url = "";
+            let quickReplyTitle = "";
+
+            if (templateType === 'media') {
+                headline = mediaCards[0]?.headline || "";
+                desc = mediaCards[0]?.desc || "";
+                secondBtnTitle = mediaCards[0]?.btnTitle || "";
+                url = mediaCards[0]?.url || "";
+                customImageData = mediaCards[0]?.image || ""; 
+            } else {
+                desc = document.getElementById("otherDesc")?.value || "";
+                if (templateType === 'quick') {
+                    quickReplyTitle = document.getElementById("otherQuickReplyBtn")?.value || "";
+                }
+            }
+
+            const payload = {
+                profile_id: currentUserUuid,
+                facebook_page_id: currentFacebookPageId,
+                fb_active_post_id: currentActivePostId,
+                
+                // Trigger Options
+                fb_trigger_type: document.getElementById("triggerMechanism")?.value || 'all',
+                fb_target_keywords: document.getElementById("targetKeywords")?.value || "",
+                fb_exclude_keywords: document.getElementById("excludeKeywords")?.value || "",
+                
+                // Config Options
+                fb_comment_reply_active: document.getElementById("commentAutoReplyCheck")?.checked || false,
+                fb_custom_comment_text: document.getElementById("customCommentText")?.value || "",
+                fb_dm_active: document.getElementById("sendDMCheck")?.checked || false,
+                fb_custom_engagement_text: document.getElementById("customEngagementText")?.value || "",
+                fb_btn_title: document.getElementById("engagementBtnTitle")?.value || "",
+                
+                // Media Template Options
+                fb_template_type: templateType,
+                fb_carousel_data: mediaCards,
+                fb_image_source_mode: document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual",
+                fb_custom_image_data: customImageData,
+                fb_headline: headline,
+                fb_desc: desc,
+                fb_second_btn_title: secondBtnTitle,
+                fb_url: url,
+                
+                fb_quick_reply_title: quickReplyTitle,
+                fb_button_data: buttonTemplateBtns
+            };
+
+            // Checking if record exists
+            const { data: existing } = await supabaseClient
+                .from('facebook_posts_automation')
+                .select('id')
+                .eq('facebook_page_id', currentFacebookPageId)
+                .eq('fb_active_post_id', currentActivePostId)
+                .maybeSingle();
+
+            let saveErr;
+            if (existing) {
+                // Update
+                const { error: uErr } = await supabaseClient.from('facebook_posts_automation').update(payload).eq('id', existing.id);
+                saveErr = uErr;
+            } else {
+                // Insert
+                const { error: iErr } = await supabaseClient.from('facebook_posts_automation').insert([payload]);
+                saveErr = iErr;
+            }
+
+            if (saveErr) throw saveErr;
+
+            alert("Facebook automation saved successfully! 🚀");
+            document.getElementById("automationOptionsCard").style.display = "none";
+            
+        } catch (err) {
+            console.error("Save Error:", err);
+            alert("Error saving configuration: " + err.message);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
 });
