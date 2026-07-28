@@ -10,20 +10,12 @@ const dPart3 = "bTTEhxMhIEZMkxR-aZKx2Hj8xFJsUkyuSkfZ1DwdBvA";
 const SUPABASE_ANON_KEY = dPart1 + dPart2 + dPart3;
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true
-    },
-    global: {
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    }
+    auth: { persistSession: true, autoRefreshToken: true },
+    global: { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
 });
 
 // ==========================================
-// 2. LOAD USER & DATA ACCESS LOGIC (HTML MATCHED)
+// 2. LOAD USER & DATA ACCESS LOGIC
 // ==========================================
 async function loadUser() {
     const { data, error } = await supabaseClient.auth.getSession();
@@ -111,62 +103,58 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🎯 C. CONNECT INSTAGRAM REAL NATIVE OAUTH (அசல் இன்ஸ்டாகிராம் ALLOW ஸ்கிரீன் கொண்டு வரும் பகுதி!)
+    // 🎯 C. UNIFIED META LOGIN (For both Instagram and Facebook)
+    const requiredScopes = 'public_profile,email,pages_show_list,pages_read_engagement,pages_read_user_content,pages_messaging,instagram_basic,instagram_manage_comments,instagram_manage_messages';
+
+    function handleMetaLogin(platform) {
+        if (typeof FB === 'undefined') {
+            alert("Meta SDK is still loading... Please wait a moment and try again.");
+            return;
+        }
+
+        const statusEl = document.getElementById(platform === 'instagram' ? "instagramStatus" : "facebook3Status");
+        if (statusEl) statusEl.innerHTML = "Connecting...";
+
+        FB.login(function(response) {
+            if (response.authResponse) {
+                const accessToken = response.authResponse.accessToken;
+                const userId = response.authResponse.userID;
+
+                if (statusEl) {
+                    statusEl.innerHTML = "Connected ✅";
+                    statusEl.style.color = "#22c55e";
+                    statusEl.className = "success";
+                }
+
+                // சேவ் செய்யும் போது இரண்டுக்கும் ஒரே டோக்கனை பயன்படுத்துகிறோம்
+                saveMetaToken(userId, accessToken);
+                alert(`Meta Account Connected Successfully! 🎉`);
+                
+            } else {
+                alert('User cancelled login or did not fully authorize.');
+                if (statusEl) {
+                    statusEl.innerHTML = "Failed ❌";
+                    statusEl.style.color = "#ef4444";
+                }
+            }
+        }, { scope: requiredScopes }); 
+    }
+
+    // Connect Instagram Button
     const targetInstaBtn = document.getElementById("connectInstagram");
     if (targetInstaBtn) {
-        console.log("Instagram Button correctly discovered via live HTML DOM.");
         targetInstaBtn.addEventListener("click", (e) => {
             e.preventDefault();
-
-            const INSTAGRAM_CLIENT_ID = "1021418946936223"; 
-            const REDIRECT_URI = "https://abdhaal.github.io/IMA-Automation/instagram.html"; 
-
-            // இன்ஸ்டாகிராம் பேசிக் மற்றும் மெசேஜ் அப்ரூவலுக்கான துல்லியமான ஸ்கோப்கள்
-            const scopes = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish";
-
-            // 🚀 லாகின் செஞ்ச உடனே அப்ரூவல் (Allow / Cancel) ஸ்கிரீனைக் காட்டும் அசல் இன்ஸ்டாகிராம் எண்ட்பாயிண்ட்:
-            const nativeInstagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scopes}&response_type=token`;
-
-            console.log("Launching Pure Instagram Authorization Window with Allow Workflow...");
-            window.location.href = nativeInstagramAuthUrl;
+            handleMetaLogin('instagram');
         });
     }
 
-    // 🔵 D. FACEBOOK OAUTH
+    // Connect Facebook Button
     const fbBtn = document.getElementById("connectFacebook");
     if (fbBtn) {
-        fbBtn.addEventListener("click", () => {
-            if (typeof FB === 'undefined') {
-                alert("Meta SDK is still loading... Please wait a moment and try again.");
-                return;
-            }
-
-            const fbStatusEl = document.getElementById("facebook3Status");
-            if (fbStatusEl) fbStatusEl.innerHTML = "Connecting...";
-
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    const accessToken = response.authResponse.accessToken;
-                    const userId = response.authResponse.userID;
-
-                    alert("Facebook Connected Successfully!");
-                    if (fbStatusEl) {
-                        fbStatusEl.innerHTML = "Connected ✅";
-                        fbStatusEl.style.color = "#22c55e";
-                        fbStatusEl.className = "success";
-                    }
-
-                    saveFacebookToken(userId, accessToken);
-                } else {
-                    alert('User cancelled login or did not fully authorize.');
-                    if (fbStatusEl) {
-                        fbStatusEl.innerHTML = "Failed ❌";
-                        fbStatusEl.style.color = "#ef4444";
-                    }
-                }
-            }, {
-                scope: 'pages_manage_metadata,pages_messaging,pages_read_engagement,public_profile,email'
-            });
+        fbBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            handleMetaLogin('facebook');
         });
     }
 
@@ -197,15 +185,16 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 window.fbAsyncInit = function() {
     FB.init({
-        appId      : '1021418946936223', 
+        appId      : '1021418946936223', // உங்களுடைய App ID
         cookie     : true,
         xfbml      : true,
-        version    : 'v20.0'
+        version    : 'v20.0' // லேட்டஸ்ட் API Version
     });
     console.log("Meta SDK successfully initialized.");
 };
 
-async function saveFacebookToken(metaUserId, token) {
+// Database-ல் Facebook மற்றும் Instagram இரண்டிற்கும் டோக்கனை சேவ் செய்கிறோம்
+async function saveMetaToken(metaUserId, token) {
     const { data: sessionData } = await supabaseClient.auth.getSession();
     if (sessionData && sessionData.session) {
         const userUuid = sessionData.session.user.id;
@@ -215,10 +204,11 @@ async function saveFacebookToken(metaUserId, token) {
                 id: userUuid, 
                 facebook_user_id: metaUserId,
                 facebook_access_token: token,
+                instagram_access_token: token, 
                 updated_at: new Date()
             });
 
-        if (error) alert("Database Error (FB): " + error.message);
+        if (error) alert("Database Error (Meta): " + error.message);
     }
 }
 
@@ -226,4 +216,3 @@ setInterval(() => {
     const toast = document.querySelector('.toast,.toastify,.notification,.success-toast,.Toastify__toast,.swal2-toast');
     if (toast) toast.remove();
 }, 500);
-        
