@@ -367,46 +367,88 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 6. SAVE HANDLER TO SUPABASE DB
+// 6. SAVE HANDLER TO SUPABASE DB (FIXED & MATCHED WITH DB 🔥)
 // ==========================================
 document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
     if (!currentUserUuid) return;
-    const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
+    
+    const btn = document.getElementById("savePostAutomationBtn");
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Saving Config...";
+    btn.disabled = true;
 
-    const { error } = await supabaseClient
-        .from('instagram_posts_automation')
-        .upsert({
+    try {
+        const selectedImageSource = document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual";
+
+        // 🛠️ 1. Extracting Data properly based on UI selection (Media vs Text)
+        let headline = "";
+        let desc = "";
+        let secondBtnTitle = "";
+        let url = "";
+
+        if (currentSelectedTemplateType === 'media') {
+            // Taking exact values from the Carousel Card UI that user typed
+            headline = mediaCards[0]?.headline || "";
+            desc = mediaCards[0]?.desc || "";
+            secondBtnTitle = mediaCards[0]?.btnTitle || "";
+            url = mediaCards[0]?.url || "";
+        } else {
+            // Taking values if it's a simple Text Template
+            desc = document.getElementById("otherDesc")?.value.trim() || "";
+        }
+
+        // Handling HTML ID variations for Comment Text
+        const commentReplyText = document.getElementById("customCommentText")?.value.trim() || document.getElementById("customCommentReplyText")?.value.trim() || "";
+
+        // 🛠️ 2. PREPARING PAYLOAD TO EXACTLY MATCH DB COLUMNS
+        const payload = {
             profile_id: currentUserUuid,
             instagram_business_id: currentInstagramBusinessId,
             ig_active_post_id: currentActivePostId,
+            
+            // Trigger
             ig_trigger_type: document.getElementById("triggerMechanism")?.value || "all",
             ig_target_keywords: document.getElementById("targetKeywords")?.value.trim() || "",
             ig_exclude_keywords: document.getElementById("excludeKeywords")?.value.trim() || "",
             
+            // Configurations
             ig_comment_reply_active: document.getElementById("commentAutoReplyCheck")?.checked || false,
-            ig_custom_comment_text: document.getElementById("customCommentReplyText")?.value.trim() || "",
+            ig_comment_text: commentReplyText, // FIXED: Matches your DB column EXACTLY
+            
             ig_dm_active: document.getElementById("sendDMCheck")?.checked || false,
             ig_custom_engagement_text: document.getElementById("customEngagementText")?.value.trim() || "",
-            
             ig_btn_title: document.getElementById("engagementBtnTitle")?.value.trim() || "",
+            
+            // Media Template Fields for Webhook
             ig_template_type: currentSelectedTemplateType,
+            ig_headline: headline, // NOW HEADLINE WILL SAVE
+            ig_desc: desc,         // NOW DESC WILL SAVE
+            ig_second_btn_title: secondBtnTitle, // NOW BUTTON TITLE WILL SAVE
+            ig_url: url,           // NOW URL WILL SAVE
             
-            // DYNAMIC JSON ARRAYS
-            ig_carousel_data: JSON.stringify(mediaCards),
-            ig_button_data: JSON.stringify({ text: buttonTemplateText, buttons: buttonTemplateBtns }),
-            
-            // LEGACY FIELDS
-            ig_desc: document.getElementById("otherDesc")?.value.trim() || "",
-            ig_second_btn_title: document.getElementById("otherQuickReplyBtn")?.value.trim() || "",
             ig_custom_image_data: base64CustomUploadedImage,
             ig_image_source_mode: selectedImageSource,
             
+            // JSON stringified for UI reloading
+            ig_carousel_data: JSON.stringify(mediaCards),
+            ig_button_data: JSON.stringify(buttonTemplateBtns),
+            
             updated_at: new Date()
-        }, { onConflict: 'profile_id,ig_active_post_id' });
+        };
 
-    if (error) alert("Instagram Sync Failed: " + error.message);
-    else {
+        const { error } = await supabaseClient
+            .from('instagram_posts_automation')
+            .upsert(payload, { onConflict: 'profile_id,ig_active_post_id' });
+
+        if (error) throw error;
+
         alert("Configuration Saved Successfully! 🚀🎉");
         document.getElementById("automationOptionsCard").style.display = "none";
+    } catch (err) {
+        console.error("Save Error:", err);
+        alert("Instagram Sync Failed: " + err.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 });
