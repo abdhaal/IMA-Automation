@@ -179,19 +179,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
-
 // ==========================================
 // 4. FACEBOOK ASYNC CORE INITIALIZER
 // ==========================================
 window.fbAsyncInit = function() {
     FB.init({
-        appId      : '1021418946936223', // உங்களுடைய App ID
+        appId      : '1560537785857026', // 🔥 இதுதான் உங்களுடைய உண்மையான App ID!
         cookie     : true,
         xfbml      : true,
-        version    : 'v20.0' // லேட்டஸ்ட் API Version
+        version    : 'v20.0'
     });
     console.log("Meta SDK successfully initialized.");
 };
+
 
 // Database-ல் Facebook மற்றும் Instagram இரண்டிற்கும் டோக்கனை சேவ் செய்கிறோம்
 async function saveMetaToken(metaUserId, token) {
