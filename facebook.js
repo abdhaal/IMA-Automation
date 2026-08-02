@@ -26,7 +26,7 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. FETCH AND RENDER REAL FACEBOOK POSTS
+// 3. FETCH AND RENDER REAL FACEBOOK POSTS (Includes Scheduled & Live Posts)
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -41,7 +41,7 @@ async function loadFacebookPageData() {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your live Facebook Page posts...</p>";
+        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching live & scheduled Facebook posts...</p>";
 
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles').select('facebook_page_access_token, facebook_page_id').eq('id', currentUserUuid).maybeSingle();
@@ -53,22 +53,54 @@ async function loadFacebookPageData() {
 
         currentFacebookPageId = profileData.facebook_page_id;
 
-        // Fetching Facebook Posts from Graph API
-        const metaApiUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,created_time,comments.summary(total_count),likes.summary(total_count)&access_token=${profileData.facebook_page_access_token}`;
-        const response = await fetch(metaApiUrl);
-        const metaJson = await response.json();
+        // Fetching Live Posts & Scheduled Posts simultaneously from Graph API
+        const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,created_time,comments.summary(total_count),likes.summary(total_count)&access_token=${profileData.facebook_page_access_token}`;
+        const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,created_time,scheduled_publish_time&access_token=${profileData.facebook_page_access_token}`;
 
-        if (metaJson.error) {
-            postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px;'>API Error: ${metaJson.error.message}</p>`; return;
+        const [liveRes, schedRes] = await Promise.all([
+            fetch(livePostsUrl),
+            fetch(scheduledPostsUrl)
+        ]);
+
+        const liveJson = await liveRes.json();
+        const schedJson = await schedRes.json();
+
+        let allCombinedPosts = [];
+
+        // Add Scheduled Posts with a Special Badge
+        if (schedJson.data && Array.isArray(schedJson.data)) {
+            schedJson.data.forEach(p => {
+                p.is_scheduled = true;
+                allCombinedPosts.push(p);
+            });
+        }
+
+        // Add Live Posts
+        if (liveJson.data && Array.isArray(liveJson.data)) {
+            liveJson.data.forEach(p => {
+                p.is_scheduled = false;
+                allCombinedPosts.push(p);
+            });
+        }
+
+        if (liveJson.error && schedJson.error) {
+            postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px;'>API Error: ${liveJson.error.message}</p>`; 
+            return;
         }
 
         postsContainer.innerHTML = "";
-        metaJson.data.forEach(post => {
+        
+        if (allCombinedPosts.length === 0) {
+            postsContainer.innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px;'>No posts found on this Facebook page.</p>`;
+            return;
+        }
+
+        allCombinedPosts.forEach(post => {
             const mediaThumb = post.full_picture || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
-            const captionText = post.message ? post.message.substring(0, 55) + "..." : "Facebook Page Post";
-            const formattedDate = new Date(post.created_time).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Facebook Page Post");
+            const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
+            const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
             
-            // Safety checks for counts
             const commentsCount = post.comments?.summary?.total_count || 0;
             const likesCount = post.likes?.summary?.total_count || 0;
 
@@ -77,11 +109,13 @@ async function loadFacebookPageData() {
             card.innerHTML = `
                 <img src="${mediaThumb}" class="post-thumb" alt="thumb">
                 <div class="post-meta-badges">
-                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#1877f2;"></i> ${commentsCount}</span>
-                    <span class="meta-badge"><i class="fa-solid fa-thumbs-up" style="color:#1877f2;"></i> ${likesCount}</span>
+                    ${post.is_scheduled ? '<span class="meta-badge" style="background:#f59e0b; color:#fff; font-weight:bold;"><i class="fa-solid fa-clock"></i> Scheduled</span>' : `
+                        <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#1877f2;"></i> ${commentsCount}</span>
+                        <span class="meta-badge"><i class="fa-solid fa-thumbs-up" style="color:#1877f2;"></i> ${likesCount}</span>
+                    `}
                 </div>
                 <div class="post-details">
-                    <div><h4>${captionText}</h4><p><i class="fa-solid fa-clock"></i> ${formattedDate}</p></div>
+                    <div><h4>${captionText}</h4><p><i class="fa-solid fa-calendar"></i> ${formattedDate}</p></div>
                     <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}"><i class="fa-solid fa-link"></i> Link Post Setup</button>
                 </div>
             `;
@@ -262,13 +296,11 @@ function triggerLiveMirrorUpdate() {
     }
 }
 
-// Media Uploaders & Inputs
 document.getElementById("cardUrl")?.addEventListener("input", (e) => {
     const url = e.target.value.trim();
     if (document.querySelector("input[name='imageSourceToggle']:checked")?.value === "auto" && url.startsWith("http")) processSmartAutoImageFetch(url);
 });
 
-// UPLOAD TO SUPABASE SERVER DIRECTLY INSTEAD OF BASE64
 document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
     if (e.target.files[0]) {
         uploadImageToSupabase(e.target.files[0], (publicUrl) => {
@@ -287,7 +319,6 @@ document.getElementById("otherImageFileInput")?.addEventListener("change", (e) =
     }
 });
 
-// Supabase Storage Upload Function
 async function uploadImageToSupabase(file, callback) {
     const btn = document.getElementById("savePostAutomationBtn");
     const originalText = btn.innerHTML;
@@ -312,7 +343,7 @@ async function uploadImageToSupabase(file, callback) {
 
         callback(publicUrlData.publicUrl);
     } catch (err) {
-        alert("Image Upload Failed! ⚠️ Did you run the SQL code to create the 'automation_images' bucket? Error: " + err.message);
+        alert("Image Upload Failed! ⚠️ Did you create the 'automation_images' storage bucket? Error: " + err.message);
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -332,7 +363,7 @@ async function processSmartAutoImageFetch(urlStr) {
 }
 
 // ==========================================
-// 6. DOM LISTENERS & SAVE LOGIC (Exact DB mapping)
+// 6. DOM LISTENERS & SAVE LOGIC (Swapped Title & Desc Correctly)
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadFacebookPageData();
@@ -362,7 +393,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("otherDesc")?.addEventListener("input", triggerLiveMirrorUpdate);
     document.getElementById("otherQuickReplyBtn")?.addEventListener("input", triggerLiveMirrorUpdate);
 
-    // Template Type Buttons Logic
     document.querySelectorAll(".template-type-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".template-type-btn").forEach(b => b.classList.remove('active'));
@@ -372,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ==========================================
-    // SAVE CONFIGURATION TO EXACT NEW DB SCHEMA
+    // SAVE CONFIGURATION TO DB (SWAPPED TITLE & DESC)
     // ==========================================
     document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
         if (!currentActivePostId || !currentFacebookPageId) {
@@ -386,7 +416,6 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.disabled = true;
 
         try {
-            // Mapping UI values strictly to SQL columns
             const templateType = currentSelectedTemplateType;
             let customImageData = base64CustomUploadedImage;
             let headline = "";
@@ -396,8 +425,11 @@ document.addEventListener("DOMContentLoaded", () => {
             let quickReplyTitle = "";
 
             if (templateType === 'media') {
-                headline = mediaCards[0]?.headline || "";
-                desc = mediaCards[0]?.desc || "";
+                // 🔥 SWAPPED TO MATCH YOUR EXACT DB REQUIREMENT:
+                // mediaCards[0].desc goes to fb_headline (Title in Card)
+                // mediaCards[0].headline goes to fb_desc (Description in Card)
+                headline = mediaCards[0]?.desc || ""; 
+                desc = mediaCards[0]?.headline || "";     
                 secondBtnTitle = mediaCards[0]?.btnTitle || "";
                 url = mediaCards[0]?.url || "";
                 customImageData = mediaCards[0]?.image || ""; 
@@ -413,19 +445,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 facebook_page_id: currentFacebookPageId,
                 fb_active_post_id: currentActivePostId,
                 
-                // Trigger Options
                 fb_trigger_type: document.getElementById("triggerMechanism")?.value || 'all',
                 fb_target_keywords: document.getElementById("targetKeywords")?.value || "",
                 fb_exclude_keywords: document.getElementById("excludeKeywords")?.value || "",
                 
-                // Config Options
                 fb_comment_reply_active: document.getElementById("commentAutoReplyCheck")?.checked || false,
                 fb_custom_comment_text: document.getElementById("customCommentText")?.value || "",
                 fb_dm_active: document.getElementById("sendDMCheck")?.checked || false,
                 fb_custom_engagement_text: document.getElementById("customEngagementText")?.value || "",
                 fb_btn_title: document.getElementById("engagementBtnTitle")?.value || "",
                 
-                // Media Template Options
                 fb_template_type: templateType,
                 fb_carousel_data: mediaCards,
                 fb_image_source_mode: document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual",
@@ -439,7 +468,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 fb_button_data: buttonTemplateBtns
             };
 
-            // Checking if record exists
             const { data: existing } = await supabaseClient
                 .from('facebook_posts_automation')
                 .select('id')
@@ -449,11 +477,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             let saveErr;
             if (existing) {
-                // Update
                 const { error: uErr } = await supabaseClient.from('facebook_posts_automation').update(payload).eq('id', existing.id);
                 saveErr = uErr;
             } else {
-                // Insert
                 const { error: iErr } = await supabaseClient.from('facebook_posts_automation').insert([payload]);
                 saveErr = iErr;
             }
