@@ -17,7 +17,7 @@ let currentFacebookPageId = "";
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
-// 🔥 NUMBERED PAGINATION STATE
+// 🔥 NUMBERED PAGINATION STATE (10 Posts per page)
 let allFetchedPosts = [];
 let currentPage = 1;
 const postsPerPage = 10;
@@ -33,20 +33,18 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. BULLETPROOF FETCH & RENDER POSTS
+// 3. SMART BATCH FETCH & RENDER POSTS (Gets 100+ Posts Safely)
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
     
-    // 🔥 SAFE CHECK: HTML ID இருக்கிறதா என்று செக் செய்கிறோம்
     if (!postsContainer) {
         console.error("❌ ERROR: 'postsContainer' div is missing in your HTML!");
         alert("HTML Error: Cannot find 'postsContainer' in your HTML.");
         return;
     }
 
-    // எடுத்த உடனே Loading காட்டுகிறோம்
-    postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Authenticating & Fetching Data...</p>";
+    postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your full post history safely... (Please wait)</p>";
 
     try {
         const { data, error } = await supabaseClient.auth.getSession();
@@ -57,7 +55,6 @@ async function loadFacebookPageData() {
 
         currentUserUuid = data.session.user.id;
         
-        // 🔥 SAFE EMAIL EXTRACTION (க்ராஷ் ஆகாமல் தடுத்தல்)
         const userEmail = data.session.user.email || "Admin";
         const userNameEl = document.getElementById("userName");
         const userEmailEl = document.getElementById("userEmail");
@@ -78,35 +75,55 @@ async function loadFacebookPageData() {
         liveCount = 0;
         schedCount = 0;
 
-        // 1️⃣ FETCH LIVE POSTS 
-        try {
-            const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=15&access_token=${profileData.facebook_page_access_token}`;
-            const liveRes = await fetch(livePostsUrl);
-            const liveJson = await liveRes.json();
+        // 🔥 HELPER FUNCTION: Fetch in small safe batches (25 at a time) up to max limit
+        async function fetchInBatches(baseUrl, maxPosts) {
+            let results = [];
+            let nextUrl = baseUrl;
+            let safetyCounter = 0; 
             
-            if (liveJson.error) {
-                console.error("Live Posts API Error:", liveJson.error.message);
-            } else if (liveJson.data && Array.isArray(liveJson.data)) {
-                liveJson.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); liveCount++; });
+            while (nextUrl && results.length < maxPosts && safetyCounter < 10) {
+                safetyCounter++;
+                try {
+                    let res = await fetch(nextUrl);
+                    let json = await res.json();
+                    
+                    if (json.error) {
+                        console.error("API Error:", json.error.message);
+                        break; 
+                    }
+                    if (json.data && Array.isArray(json.data)) {
+                        results.push(...json.data);
+                    }
+                    
+                    // Automatically get the next page URL provided by Facebook
+                    nextUrl = (json.paging && json.paging.next) ? json.paging.next : null;
+                } catch (e) {
+                    console.error("Fetch failed", e);
+                    break;
+                }
             }
-        } catch (err) {
-            console.error("Failed to fetch live posts:", err);
+            return results.slice(0, maxPosts); 
         }
 
-        // 2️⃣ FETCH SCHEDULED POSTS
-        try {
-            const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=10&access_token=${profileData.facebook_page_access_token}`;
-            const schedRes = await fetch(scheduledPostsUrl);
-            const schedJson = await schedRes.json();
-            
-            if (schedJson.error) {
-                console.error("Scheduled Posts API Error:", schedJson.error.message);
-            } else if (schedJson.data && Array.isArray(schedJson.data)) {
-                schedJson.data.forEach(p => { p.is_scheduled = true; allFetchedPosts.push(p); schedCount++; });
-            }
-        } catch (err) {
-            console.error("Failed to fetch scheduled posts:", err);
-        }
+        // 1️⃣ FETCH 100 LIVE POSTS (In batches of 25 to prevent 500 error)
+        const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=25&access_token=${profileData.facebook_page_access_token}`;
+        const fetchedLivePosts = await fetchInBatches(livePostsUrl, 100);
+        
+        fetchedLivePosts.forEach(p => { 
+            p.is_scheduled = false; 
+            allFetchedPosts.push(p); 
+            liveCount++; 
+        });
+
+        // 2️⃣ FETCH 50 SCHEDULED POSTS (In batches of 25)
+        const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=25&access_token=${profileData.facebook_page_access_token}`;
+        const fetchedSchedPosts = await fetchInBatches(scheduledPostsUrl, 50);
+        
+        fetchedSchedPosts.forEach(p => { 
+            p.is_scheduled = true; 
+            allFetchedPosts.push(p); 
+            schedCount++; 
+        });
 
         if (allFetchedPosts.length === 0) {
             postsContainer.innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts or videos found.</p>`;
@@ -129,7 +146,7 @@ function renderPostsPage(pageNumber) {
 
     currentPage = pageNumber;
     
-    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Loaded ${liveCount} Live Posts & ${schedCount} Scheduled Posts</p>`;
+    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Loaded ${liveCount} Live Posts/Videos & ${schedCount} Scheduled Posts</p>`;
 
     const startIndex = (pageNumber - 1) * postsPerPage;
     const endIndex = startIndex + postsPerPage;
