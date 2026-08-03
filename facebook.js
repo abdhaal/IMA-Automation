@@ -95,8 +95,9 @@ async function loadFacebookPageData() {
             return;
         }
 
-        allCombinedPosts.forEach(post => {
-            const mediaThumb = post.full_picture || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
+                allCombinedPosts.forEach(post => {
+            // 🔥 Fixed Image Fallback for Scheduled Posts
+            const mediaThumb = post.full_picture || post.picture || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
             const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Facebook Page Post");
             const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
             const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
@@ -121,6 +122,7 @@ async function loadFacebookPageData() {
             `;
             postsContainer.appendChild(card);
         });
+
 
         bindLinkButtons();
     } catch (gErr) { console.error(gErr); }
