@@ -37,7 +37,7 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. SMART FETCH (Load More Logic & Badges)
+// 3. SMART FETCH (Scheduled First & All Posts)
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -80,7 +80,7 @@ async function loadFacebookPageData() {
             }
         } catch(e) { console.error("Linked Posts Check Error:", e); }
 
-        // 🔥 INITIAL FETCH: முதலில் 20 போஸ்ட்கள்
+        // 🔥 INITIAL FETCH: 20 Posts (published_posts includes Images, Texts, Videos, Reels)
         const initialLiveUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=20&access_token=${profileData.facebook_page_access_token}`;
         const initialSchedUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=20&access_token=${profileData.facebook_page_access_token}`;
 
@@ -115,6 +115,18 @@ async function fetchAndAppendPosts(liveUrl, schedUrl) {
             nextFbSchedUrl = (json.paging && json.paging.next) ? json.paging.next : null;
         }
 
+        // 🔥 NEW: SORTING LOGIC (Scheduled Posts Always First, then by Newest Date)
+        allFetchedPosts.sort((a, b) => {
+            // 1. Scheduled vs Live
+            if (a.is_scheduled && !b.is_scheduled) return -1;
+            if (!a.is_scheduled && b.is_scheduled) return 1;
+            
+            // 2. Sort by date (Newest first)
+            const dateA = new Date(a.scheduled_publish_time || a.created_time).getTime();
+            const dateB = new Date(b.scheduled_publish_time || b.created_time).getTime();
+            return dateB - dateA;
+        });
+
         if (allFetchedPosts.length === 0) {
             document.getElementById("postsContainer").innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts or videos found.</p>`;
         } else {
@@ -148,9 +160,10 @@ function renderPostsPage(pageNumber) {
             }
         }
 
+        // Text only posts placeholder image
         if (!mediaThumb) mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; 
 
-        const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Video/Reel Post");
+        const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Media Post");
         const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
         const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
         const commentsCount = post.comments?.summary?.total_count || 0;
@@ -239,7 +252,7 @@ function renderPaginationControls() {
     }
 }
 
-// 🔥 Link Setup Click Action Fix
+// 🔥 Edit / Restore Data Functionality
 function bindLinkButtons() {
     document.querySelectorAll(".replyrush-btn").forEach(btn => {
         if (btn.classList.contains("load-more-btn")) return;
@@ -313,7 +326,7 @@ function bindLinkButtons() {
                     if(document.getElementById("customEngagementText")) document.getElementById("customEngagementText").value = "Hi 👋 Thanks for your comment!";
                     if(document.getElementById("engagementBtnTitle")) document.getElementById("engagementBtnTitle").value = "Send Link Now";
 
-                    // Reset Cards Fresh
+                     // Reset Cards Fresh
                     mediaCards = [{ image: postImg, headline: "Card 1 Headline", desc: "Template Description...", btnTitle: "Link 🔗", url: "" }];
                     base64CustomUploadedImage = postImg;
                     
@@ -623,7 +636,7 @@ async function processSmartAutoImageFetch(urlStr) {
             triggerLiveMirrorUpdate();
         }
     }
-}
+        }
 
 // ==========================================
 // 6. DOM LISTENERS & SAVE LOGIC
@@ -745,7 +758,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             alert("Facebook automation saved successfully! 🚀");
             
-            // 🔥 Save ஆனதும் Badge பச்சை நிறமாக மாறும்
+            // 🔥 AFTER SAVE: Immediately update the badge UI to 'Linked'
             if (!linkedPostsList.includes(String(currentActivePostId))) {
                 linkedPostsList.push(String(currentActivePostId));
                 renderPostsPage(currentPage); 
