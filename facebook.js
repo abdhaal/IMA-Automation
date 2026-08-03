@@ -17,7 +17,7 @@ let currentFacebookPageId = "";
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
-// 🔥 PAGINATION CURSORS (புதுசா சேர்த்தது)
+// 🔥 PAGINATION CURSORS
 let nextLiveCursor = null;
 let prevLiveCursor = null;
 
@@ -30,7 +30,7 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. FETCH AND RENDER POSTS (With Pagination 🚀)
+// 3. FETCH AND RENDER REAL FACEBOOK POSTS
 // ==========================================
 async function loadFacebookPageData(direction = 'init') {
     const postsContainer = document.getElementById("postsContainer");
@@ -45,7 +45,6 @@ async function loadFacebookPageData(direction = 'init') {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-        // Grid-க்கு ஏற்றபடி 100% அகலத்தில் Loading காட்ட grid-column சேர்க்கப்பட்டுள்ளது
         postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Loading Facebook posts...</p>";
 
         const { data: profileData, error: dbErr } = await supabaseClient
@@ -58,14 +57,12 @@ async function loadFacebookPageData(direction = 'init') {
 
         currentFacebookPageId = profileData.facebook_page_id;
 
-        // 🔥 PAGINATION API SETUP (ஒரு பேஜுக்கு 12 போஸ்ட்கள் மட்டும்)
+        // 🔥 PAGINATION API SETUP (12 Posts per page)
         let livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=12&access_token=${profileData.facebook_page_access_token}`;
 
-        // Next / Prev பட்டன் அழுத்தும்போது URL-ல் Cursor-ஐ இணைக்கிறோம்
         if (direction === 'next' && nextLiveCursor) livePostsUrl += `&after=${nextLiveCursor}`;
         if (direction === 'prev' && prevLiveCursor) livePostsUrl += `&before=${prevLiveCursor}`;
 
-        // Scheduled Posts-ஐ முதல் பக்கத்தில் மட்டும் காட்டினால் போதும்
         let scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=50&access_token=${profileData.facebook_page_access_token}`;
 
         const fetchPromises = [fetch(livePostsUrl)];
@@ -79,17 +76,15 @@ async function loadFacebookPageData(direction = 'init') {
 
         let allCombinedPosts = [];
 
-        // Scheduled போஸ்ட்களை முதலில் சேர்க்கிறோம்
         if (schedJson.data && Array.isArray(schedJson.data)) {
             schedJson.data.forEach(p => { p.is_scheduled = true; allCombinedPosts.push(p); });
         }
 
-        // Live போஸ்ட்களை சேர்க்கிறோம்
         if (liveJson.data && Array.isArray(liveJson.data)) {
             liveJson.data.forEach(p => { p.is_scheduled = false; allCombinedPosts.push(p); });
         }
 
-        // 🔥 FB API கொடுக்கும் அடுத்த பக்கத்திற்கான (Next Page) Cursors-ஐ சேமிக்கிறோம்
+        // Handle Cursors for Pagination
         if (liveJson.paging && liveJson.paging.cursors) {
             nextLiveCursor = liveJson.paging.cursors.after || null;
             prevLiveCursor = liveJson.paging.cursors.before || null;
@@ -144,15 +139,13 @@ async function loadFacebookPageData(direction = 'init') {
             postsContainer.appendChild(card);
         });
 
-        // ==========================================
-        // 🔥 APPEND PAGINATION BUTTONS (Prev & Next)
-        // ==========================================
+        // 🔥 APPEND PAGINATION BUTTONS
         const paginationDiv = document.createElement("div");
         paginationDiv.style.cssText = "display: flex; justify-content: center; gap: 15px; margin-top: 30px; margin-bottom: 20px; width: 100%; grid-column: 1 / -1;";
 
         const prevBtn = document.createElement("button");
         prevBtn.innerHTML = `<i class="fa-solid fa-arrow-left"></i> Previous`;
-        prevBtn.className = "replyrush-btn"; // Styles taken from your existing button class
+        prevBtn.className = "replyrush-btn"; 
         prevBtn.style.padding = "10px 25px";
         prevBtn.disabled = !prevLiveCursor || direction === 'init';
         if (prevBtn.disabled) prevBtn.style.opacity = "0.5";
@@ -176,8 +169,49 @@ async function loadFacebookPageData(direction = 'init') {
 }
 
 function bindLinkButtons() {
-    // ... [இதற்கு கீழே உள்ள பழைய கோடு (4. UI BUILDERS-லிருந்து) அப்படியே இருக்கும், எந்த மாற்றமும் தேவையில்லை] ...
-    
+    document.querySelectorAll(".replyrush-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            currentActivePostId = btn.getAttribute("data-post-id");
+            const titleElement = btn.closest(".post-card").querySelector("h4");
+            const title = titleElement ? titleElement.innerText : "Post";
+            const postImg = btn.getAttribute("data-img");
+            
+            mediaCards[0].image = postImg;
+            base64CustomUploadedImage = postImg;
+            activeCardIndex = 0;
+            
+            renderCarouselUI();
+            renderButtonTemplateUI();
+
+            const selectedPostTitleEl = document.getElementById("selectedPostTitle");
+            if (selectedPostTitleEl) selectedPostTitleEl.innerText = "Link Settings: " + title;
+            
+            const automationOptionsCard = document.getElementById("automationOptionsCard");
+            if (automationOptionsCard) {
+                automationOptionsCard.style.display = "grid";
+                automationOptionsCard.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            if (typeof window.toggleAccordion === 'function') {
+                window.toggleAccordion('triggerAcc');
+            }
+        });
+    });
+}
+
+window.toggleAccordion = function(accId) {
+    const content = document.getElementById(accId);
+    if (!content) return;
+    const isVisible = content.style.display === "block";
+    document.querySelectorAll(".accordion-content").forEach(el => { el.style.display = "none"; });
+    document.querySelectorAll(".accordion-header i").forEach(el => { el.className = "fa-solid fa-chevron-down"; });
+    if (!isVisible) {
+        content.style.display = "block";
+        const header = content.previousElementSibling;
+        if (header && header.querySelector("i")) { header.querySelector("i").className = "fa-solid fa-chevron-up"; }
+    }
+};
 
 // ==========================================
 // 4. UI BUILDERS (Tabs logic)
@@ -185,44 +219,60 @@ function bindLinkButtons() {
 function handleTemplateTypeSwitch(type) {
     currentSelectedTemplateType = type;
     
-    document.getElementById("mediaTemplateWrapper").style.display = (type === 'media') ? "block" : "none";
-    document.getElementById("buttonTemplateWrapper").style.display = (type === 'button') ? "block" : "none";
-    
+    const mediaWrapper = document.getElementById("mediaTemplateWrapper");
+    const btnWrapper = document.getElementById("buttonTemplateWrapper");
     const otherWrapper = document.getElementById("otherTemplatesWrapper");
+    
+    if (mediaWrapper) mediaWrapper.style.display = (type === 'media') ? "block" : "none";
+    if (btnWrapper) btnWrapper.style.display = (type === 'button') ? "block" : "none";
+    
     const oMedia = document.getElementById("otherMediaSourceBlock");
     const oQuick = document.getElementById("otherQuickReplyBlock");
     
-    if (type === 'media' || type === 'button') {
-        otherWrapper.style.display = "none";
-    } else {
-        otherWrapper.style.display = "flex";
-        if (type === 'text') {
-            oMedia.style.display = "none";
-            oQuick.style.display = "none";
-        } else if (type === 'quick') {
-            oMedia.style.display = "none";
-            oQuick.style.display = "block";
-        } else if (type === 'attach') {
-            oMedia.style.display = "block";
-            oQuick.style.display = "none";
+    if (otherWrapper) {
+        if (type === 'media' || type === 'button') {
+            otherWrapper.style.display = "none";
+        } else {
+            otherWrapper.style.display = "flex";
+            if (type === 'text') {
+                if (oMedia) oMedia.style.display = "none";
+                if (oQuick) oQuick.style.display = "none";
+            } else if (type === 'quick') {
+                if (oMedia) oMedia.style.display = "none";
+                if (oQuick) oQuick.style.display = "block";
+            } else if (type === 'attach') {
+                if (oMedia) oMedia.style.display = "block";
+                if (oQuick) oQuick.style.display = "none";
+            }
         }
     }
     triggerLiveMirrorUpdate();
 }
 
 function renderCarouselUI() {
-    document.getElementById('cardCount').innerText = mediaCards.length;
-    document.getElementById('carouselTabsContainer').innerHTML = mediaCards.map((c, i) => `
-        <div class="card-tab ${i === activeCardIndex ? 'active' : ''}" onclick="switchCard(${i})">
-            Card ${i+1} ${mediaCards.length > 1 ? `<i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-left:5px;" onclick="removeCard(${i}, event)"></i>` : ''}
-        </div>
-    `).join('');
+    const cardCountEl = document.getElementById('cardCount');
+    if (cardCountEl) cardCountEl.innerText = mediaCards.length;
+    
+    const tabsContainer = document.getElementById('carouselTabsContainer');
+    if (tabsContainer) {
+        tabsContainer.innerHTML = mediaCards.map((c, i) => `
+            <div class="card-tab ${i === activeCardIndex ? 'active' : ''}" onclick="switchCard(${i})">
+                Card ${i+1} ${mediaCards.length > 1 ? `<i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-left:5px;" onclick="removeCard(${i}, event)"></i>` : ''}
+            </div>
+        `).join('');
+    }
 
     const active = mediaCards[activeCardIndex];
-    document.getElementById('cardHeadline').value = active.headline;
-    document.getElementById('cardDesc').value = active.desc;
-    document.getElementById('cardBtnTitle').value = active.btnTitle;
-    document.getElementById('cardUrl').value = active.url;
+    const hEl = document.getElementById('cardHeadline');
+    const dEl = document.getElementById('cardDesc');
+    const bEl = document.getElementById('cardBtnTitle');
+    const uEl = document.getElementById('cardUrl');
+    
+    if (hEl) hEl.value = active.headline;
+    if (dEl) dEl.value = active.desc;
+    if (bEl) bEl.value = active.btnTitle;
+    if (uEl) uEl.value = active.url;
+    
     triggerLiveMirrorUpdate();
 }
 
@@ -244,15 +294,22 @@ document.getElementById('addCardBtn')?.addEventListener('click', () => {
 });
 
 function renderButtonTemplateUI() {
-    document.getElementById('btnCount').innerText = buttonTemplateBtns.length;
-    document.getElementById('btnTemplateText').value = buttonTemplateText;
-    document.getElementById('btnTemplateList').innerHTML = buttonTemplateBtns.map((b, i) => `
-        <div class="dynamic-btn-row">
-            <input type="text" placeholder="Button Title" value="${b.title}" oninput="updateBtnTitle(${i}, this.value)">
-            <input type="url" placeholder="URL Link" value="${b.url}" oninput="updateBtnUrl(${i}, this.value)">
-            ${buttonTemplateBtns.length > 1 ? `<button onclick="removeBtn(${i})"><i class="fa-solid fa-trash"></i></button>` : ''}
-        </div>
-    `).join('');
+    const btnCountEl = document.getElementById('btnCount');
+    if (btnCountEl) btnCountEl.innerText = buttonTemplateBtns.length;
+    
+    const txtEl = document.getElementById('btnTemplateText');
+    if (txtEl) txtEl.value = buttonTemplateText;
+    
+    const listEl = document.getElementById('btnTemplateList');
+    if (listEl) {
+        listEl.innerHTML = buttonTemplateBtns.map((b, i) => `
+            <div class="dynamic-btn-row">
+                <input type="text" placeholder="Button Title" value="${b.title}" oninput="updateBtnTitle(${i}, this.value)">
+                <input type="url" placeholder="URL Link" value="${b.url}" oninput="updateBtnUrl(${i}, this.value)">
+                ${buttonTemplateBtns.length > 1 ? `<button onclick="removeBtn(${i})"><i class="fa-solid fa-trash"></i></button>` : ''}
+            </div>
+        `).join('');
+    }
     triggerLiveMirrorUpdate();
 }
 
@@ -279,36 +336,45 @@ function triggerLiveMirrorUpdate() {
     const btnContainer = document.getElementById("previewButtonTemplateContainer");
     const simpleContainer = document.getElementById("previewSimpleContainer");
 
-    if (currentSelectedTemplateType === 'media') {
-        carouselContainer.style.display = "flex"; btnContainer.style.display = "none"; simpleContainer.style.display = "none";
-        carouselContainer.innerHTML = mediaCards.map(c => `
-            <div class="preview-carousel-card" style="scroll-snap-align: center;">
-                <div style="height: 140px; width: 100%; background: #1e293b;"><img src="${c.image}" style="width:100%; height:100%; object-fit:cover;"></div>
-                <div style="padding: 12px;">
-                    <h5 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">${c.headline || 'Headline'}</h5>
-                    <p style="margin: 0 0 10px 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">${c.desc || 'Description'}</p>
-                    <div style="text-align: center; color: #1877f2; font-weight: 600; font-size: 13px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">${c.btnTitle || 'Button'}</div>
-                </div>
-            </div>`).join('');
-    } else if (currentSelectedTemplateType === 'button') {
-        carouselContainer.style.display = "none"; btnContainer.style.display = "flex"; simpleContainer.style.display = "none";
-        document.getElementById("previewBtnTextBubble").innerText = buttonTemplateText || "Select an option:";
-        document.getElementById("previewBtnList").innerHTML = buttonTemplateBtns.map(b => `<div style="background: rgba(255,255,255,0.05); color: #1877f2; padding: 10px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.1);">${b.title || 'Button'}</div>`).join('');
-    } else {
-        carouselContainer.style.display = "none"; btnContainer.style.display = "none"; simpleContainer.style.display = "flex";
-        document.getElementById("previewSimpleTextBubble").innerText = document.getElementById("otherDesc")?.value || "Your text message goes here...";
-        
-        const imgSlot = document.getElementById("previewSimpleImgSlot");
-        if (currentSelectedTemplateType === 'attach') {
-            imgSlot.style.display = "block";
-            imgSlot.innerHTML = `<img src="${base64CustomUploadedImage}" style="width:100%; height:100%; object-fit:cover;">`;
-        } else imgSlot.style.display = "none";
-        
-        const quickBtn = document.getElementById("previewSimpleQuickBtn");
-        if (currentSelectedTemplateType === 'quick') {
-            quickBtn.style.display = "block";
-            quickBtn.innerText = document.getElementById("otherQuickReplyBtn")?.value || "Quick Reply";
-        } else quickBtn.style.display = "none";
+    if (carouselContainer && btnContainer && simpleContainer) {
+        if (currentSelectedTemplateType === 'media') {
+            carouselContainer.style.display = "flex"; btnContainer.style.display = "none"; simpleContainer.style.display = "none";
+            carouselContainer.innerHTML = mediaCards.map(c => `
+                <div class="preview-carousel-card" style="scroll-snap-align: center;">
+                    <div style="height: 140px; width: 100%; background: #1e293b;"><img src="${c.image}" style="width:100%; height:100%; object-fit:cover;"></div>
+                    <div style="padding: 12px;">
+                        <h5 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">${c.headline || 'Headline'}</h5>
+                        <p style="margin: 0 0 10px 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">${c.desc || 'Description'}</p>
+                        <div style="text-align: center; color: #1877f2; font-weight: 600; font-size: 13px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">${c.btnTitle || 'Button'}</div>
+                    </div>
+                </div>`).join('');
+        } else if (currentSelectedTemplateType === 'button') {
+            carouselContainer.style.display = "none"; btnContainer.style.display = "flex"; simpleContainer.style.display = "none";
+            const txtBubble = document.getElementById("previewBtnTextBubble");
+            if(txtBubble) txtBubble.innerText = buttonTemplateText || "Select an option:";
+            const btnList = document.getElementById("previewBtnList");
+            if(btnList) btnList.innerHTML = buttonTemplateBtns.map(b => `<div style="background: rgba(255,255,255,0.05); color: #1877f2; padding: 10px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.1);">${b.title || 'Button'}</div>`).join('');
+        } else {
+            carouselContainer.style.display = "none"; btnContainer.style.display = "none"; simpleContainer.style.display = "flex";
+            const simpleTxt = document.getElementById("previewSimpleTextBubble");
+            if (simpleTxt) simpleTxt.innerText = document.getElementById("otherDesc")?.value || "Your text message goes here...";
+            
+            const imgSlot = document.getElementById("previewSimpleImgSlot");
+            if (imgSlot) {
+                if (currentSelectedTemplateType === 'attach') {
+                    imgSlot.style.display = "block";
+                    imgSlot.innerHTML = `<img src="${base64CustomUploadedImage}" style="width:100%; height:100%; object-fit:cover;">`;
+                } else imgSlot.style.display = "none";
+            }
+            
+            const quickBtn = document.getElementById("previewSimpleQuickBtn");
+            if (quickBtn) {
+                if (currentSelectedTemplateType === 'quick') {
+                    quickBtn.style.display = "block";
+                    quickBtn.innerText = document.getElementById("otherQuickReplyBtn")?.value || "Quick Reply";
+                } else quickBtn.style.display = "none";
+            }
+        }
     }
 }
 
@@ -339,7 +405,7 @@ async function uploadImageToSupabase(file, callback) {
     const btn = document.getElementById("savePostAutomationBtn");
     const originalText = btn.innerHTML;
     
-    btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Uploading Image to Server...";
+    btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Uploading...";
     btn.disabled = true;
 
     try {
@@ -379,7 +445,7 @@ async function processSmartAutoImageFetch(urlStr) {
 }
 
 // ==========================================
-// 6. DOM LISTENERS & SAVE LOGIC (Swapped Title & Desc Correctly)
+// 6. DOM LISTENERS & SAVE LOGIC 
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadFacebookPageData();
@@ -417,9 +483,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ==========================================
-    // SAVE CONFIGURATION TO DB (SWAPPED TITLE & DESC)
-    // ==========================================
     document.getElementById("savePostAutomationBtn")?.addEventListener("click", async () => {
         if (!currentActivePostId || !currentFacebookPageId) {
             alert("⚠️ Please select a post first!");
@@ -441,9 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
             let quickReplyTitle = "";
 
             if (templateType === 'media') {
-                // 🔥 SWAPPED TO MATCH YOUR EXACT DB REQUIREMENT:
-                // mediaCards[0].desc goes to fb_headline (Title in Card)
-                // mediaCards[0].headline goes to fb_desc (Description in Card)
+                // Title/Desc properly swapped here based on your DB setup
                 headline = mediaCards[0]?.desc || ""; 
                 desc = mediaCards[0]?.headline || "";     
                 secondBtnTitle = mediaCards[0]?.btnTitle || "";
@@ -503,7 +564,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (saveErr) throw saveErr;
 
             alert("Facebook automation saved successfully! 🚀");
-            document.getElementById("automationOptionsCard").style.display = "none";
+            const automationOptionsCard = document.getElementById("automationOptionsCard");
+            if (automationOptionsCard) automationOptionsCard.style.display = "none";
             
         } catch (err) {
             console.error("Save Error:", err);
