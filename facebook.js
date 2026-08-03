@@ -95,10 +95,17 @@ async function loadFacebookPageData() {
             return;
         }
 
-                allCombinedPosts.forEach(post => {
-            // 🔥 Fixed Image Fallback for Scheduled Posts
-            const mediaThumb = post.full_picture || post.picture || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
-            const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Facebook Page Post");
+                        allCombinedPosts.forEach(post => {
+            // 🔥 Smart Thumbnail Fallback for Video / Scheduled Posts
+            let mediaThumb = post.full_picture || post.picture;
+            
+            // If it's a scheduled or video post without a picture, show a professional video placeholder
+            if (!mediaThumb || post.is_scheduled) {
+                // You can use a custom video placeholder image here
+                mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; // Video placeholder icon style
+            }
+
+            const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Video/Post" : "Facebook Page Post");
             const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
             const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
             
@@ -122,6 +129,7 @@ async function loadFacebookPageData() {
             `;
             postsContainer.appendChild(card);
         });
+
 
 
         bindLinkButtons();
