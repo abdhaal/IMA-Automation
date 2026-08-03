@@ -53,9 +53,9 @@ async function loadFacebookPageData() {
 
         currentFacebookPageId = profileData.facebook_page_id;
 
-        // Fetching Live Posts & Scheduled Posts simultaneously from Graph API
-        const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,created_time,comments.summary(total_count),likes.summary(total_count)&access_token=${profileData.facebook_page_access_token}`;
-        const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,created_time,scheduled_publish_time&access_token=${profileData.facebook_page_access_token}`;
+        // 🔥 UPDATE 1: Added 'attachments' and 'picture' to both API calls to dig out hidden video thumbnails
+        const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&access_token=${profileData.facebook_page_access_token}`;
+        const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&access_token=${profileData.facebook_page_access_token}`;
 
         const [liveRes, schedRes] = await Promise.all([
             fetch(livePostsUrl),
@@ -67,7 +67,6 @@ async function loadFacebookPageData() {
 
         let allCombinedPosts = [];
 
-        // Add Scheduled Posts with a Special Badge
         if (schedJson.data && Array.isArray(schedJson.data)) {
             schedJson.data.forEach(p => {
                 p.is_scheduled = true;
@@ -75,7 +74,6 @@ async function loadFacebookPageData() {
             });
         }
 
-        // Add Live Posts
         if (liveJson.data && Array.isArray(liveJson.data)) {
             liveJson.data.forEach(p => {
                 p.is_scheduled = false;
@@ -95,17 +93,24 @@ async function loadFacebookPageData() {
             return;
         }
 
-                        allCombinedPosts.forEach(post => {
-            // 🔥 Smart Thumbnail Fallback for Video / Scheduled Posts
+        allCombinedPosts.forEach(post => {
+            // 🔥 UPDATE 2: Smart Extraction of Video Thumbnails
             let mediaThumb = post.full_picture || post.picture;
-            
-            // If it's a scheduled or video post without a picture, show a professional video placeholder
-            if (!mediaThumb || post.is_scheduled) {
-                // You can use a custom video placeholder image here
-                mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; // Video placeholder icon style
+
+            // If it's a scheduled video, dig into attachments to find the hidden thumbnail
+            if (!mediaThumb && post.attachments && post.attachments.data && post.attachments.data.length > 0) {
+                const attachData = post.attachments.data[0];
+                if (attachData.media && attachData.media.image && attachData.media.image.src) {
+                    mediaThumb = attachData.media.image.src;
+                }
             }
 
-            const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Video/Post" : "Facebook Page Post");
+            // Final Fallback if Facebook completely hides it
+            if (!mediaThumb) {
+                mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; 
+            }
+
+            const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Facebook Page Post");
             const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
             const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
             
@@ -130,11 +135,10 @@ async function loadFacebookPageData() {
             postsContainer.appendChild(card);
         });
 
-
-
         bindLinkButtons();
     } catch (gErr) { console.error(gErr); }
 }
+
 
 function bindLinkButtons() {
     document.querySelectorAll(".replyrush-btn").forEach(btn => {
