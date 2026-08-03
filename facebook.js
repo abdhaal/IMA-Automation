@@ -17,10 +17,10 @@ let currentFacebookPageId = "";
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
-// 🔥 NUMBERED PAGINATION STATE (புதுசா சேர்த்தது)
+// 🔥 NUMBERED PAGINATION STATE (10 Posts per page)
 let allFetchedPosts = [];
 let currentPage = 1;
-const postsPerPage = 10; // ஒரு பேஜுக்கு 10 போஸ்ட்!
+const postsPerPage = 10;
 
 // ==========================================
 // 2. DYNAMIC STATE BUILDERS
@@ -31,7 +31,7 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. FETCH AND RENDER POSTS (1, 2, 3... Pagination)
+// 3. SAFE FETCH & RENDER POSTS (Live + Scheduled)
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -57,23 +57,36 @@ async function loadFacebookPageData() {
         }
 
         currentFacebookPageId = profileData.facebook_page_id;
-
-        // 🔥 FETCHING A LARGE BATCH TO DO LOCAL PAGINATION (100 Live + 50 Scheduled)
-        let livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=100&access_token=${profileData.facebook_page_access_token}`;
-        let scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=50&access_token=${profileData.facebook_page_access_token}`;
-
-        const [liveRes, schedRes] = await Promise.all([ fetch(livePostsUrl), fetch(scheduledPostsUrl) ]);
-        const liveJson = await liveRes.json();
-        const schedJson = await schedRes.json();
-
         allFetchedPosts = [];
 
-        if (schedJson.data && Array.isArray(schedJson.data)) {
-            schedJson.data.forEach(p => { p.is_scheduled = true; allFetchedPosts.push(p); });
+        // 1️⃣ FETCH LIVE POSTS SAFELY
+        try {
+            const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=100&access_token=${profileData.facebook_page_access_token}`;
+            const liveRes = await fetch(livePostsUrl);
+            const liveJson = await liveRes.json();
+            
+            if (liveJson.error) {
+                console.error("Live Posts API Error:", liveJson.error.message);
+            } else if (liveJson.data && Array.isArray(liveJson.data)) {
+                liveJson.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); });
+            }
+        } catch (err) {
+            console.error("Failed to fetch live posts:", err);
         }
 
-        if (liveJson.data && Array.isArray(liveJson.data)) {
-            liveJson.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); });
+        // 2️⃣ FETCH SCHEDULED POSTS SAFELY
+        try {
+            const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=50&access_token=${profileData.facebook_page_access_token}`;
+            const schedRes = await fetch(scheduledPostsUrl);
+            const schedJson = await schedRes.json();
+            
+            if (schedJson.error) {
+                console.error("Scheduled Posts API Error:", schedJson.error.message);
+            } else if (schedJson.data && Array.isArray(schedJson.data)) {
+                schedJson.data.forEach(p => { p.is_scheduled = true; allFetchedPosts.push(p); });
+            }
+        } catch (err) {
+            console.error("Failed to fetch scheduled posts:", err);
         }
 
         if (allFetchedPosts.length === 0) {
@@ -84,7 +97,10 @@ async function loadFacebookPageData() {
         // Render Page 1
         renderPostsPage(1);
 
-    } catch (gErr) { console.error(gErr); }
+    } catch (gErr) { 
+        console.error("Global Fetch Error:", gErr); 
+        postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px; grid-column: 1 / -1;'>Error loading posts. Please check console.</p>`;
+    }
 }
 
 // 🔥 CORE LOGIC TO RENDER EXACTLY 10 POSTS PER PAGE
@@ -147,7 +163,7 @@ function renderPaginationControls() {
     const postsContainer = document.getElementById("postsContainer");
     const totalPages = Math.ceil(allFetchedPosts.length / postsPerPage);
 
-    if (totalPages <= 1) return; // Only 1 page? No buttons needed.
+    if (totalPages <= 1) return;
 
     const paginationDiv = document.createElement("div");
     paginationDiv.style.cssText = "display: flex; justify-content: center; gap: 8px; margin-top: 30px; margin-bottom: 20px; width: 100%; grid-column: 1 / -1; flex-wrap: wrap;";
@@ -163,12 +179,10 @@ function renderPaginationControls() {
         pageBtn.style.transition = "all 0.3s";
 
         if (i === currentPage) {
-            // Active Page Button Style
-            pageBtn.style.background = "#3b82f6"; // Blue
+            pageBtn.style.background = "#3b82f6";
             pageBtn.style.color = "#ffffff";
             pageBtn.style.boxShadow = "0 4px 10px rgba(59, 130, 246, 0.4)";
         } else {
-            // Inactive Page Button Style
             pageBtn.style.background = "rgba(255, 255, 255, 0.1)";
             pageBtn.style.color = "#94a3b8";
         }
@@ -582,8 +596,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Save Error:", err);
             alert("Error saving configuration: " + err.message);
         } finally {
-            btn.innerHTML = originalText;
+            btn.innerHTML = originalTest;
             btn.disabled = false;
         }
     });
-});
+});   
