@@ -76,7 +76,7 @@ async function loadFacebookPageData() {
                 .eq('facebook_page_id', currentFacebookPageId);
             
             if (!linkedErr && linkedData) {
-                linkedPostsList = linkedData.map(item => item.fb_active_post_id);
+                linkedPostsList = linkedData.map(item => String(item.fb_active_post_id));
             }
         } catch(e) { console.error("Linked Posts Check Error:", e); }
 
@@ -157,7 +157,7 @@ function renderPostsPage(pageNumber) {
         const likesCount = post.likes?.summary?.total_count || 0;
 
         // 🔥 BADGE LOGIC
-        const isLinked = linkedPostsList.includes(post.id);
+        const isLinked = linkedPostsList.includes(String(post.id));
         const badgeHTML = isLinked 
             ? `<div style="position: absolute; top: 10px; left: 10px; background: rgba(16, 185, 129, 0.9); color: white; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fa-solid fa-circle-check"></i> Linked</div>` 
             : `<div style="position: absolute; top: 10px; left: 10px; background: rgba(239, 68, 68, 0.9); color: white; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fa-solid fa-link-slash"></i> Unlinked</div>`;
@@ -222,7 +222,7 @@ function renderPaginationControls() {
         
         const loadMoreBtn = document.createElement("button");
         loadMoreBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> Load More Posts`;
-        loadMoreBtn.className = "replyrush-btn"; 
+        loadMoreBtn.className = "replyrush-btn load-more-btn"; 
         loadMoreBtn.style.padding = "10px 25px";
         loadMoreBtn.style.background = "#10b981"; 
         loadMoreBtn.style.color = "#fff";
@@ -239,12 +239,12 @@ function renderPaginationControls() {
     }
 }
 
-// 🔥 Edit / Restore Data Functionality
+// 🔥 Link Setup Click Action Fix
 function bindLinkButtons() {
     document.querySelectorAll(".replyrush-btn").forEach(btn => {
-        if (btn.innerText.includes("Load More") || btn.innerText.includes("Fetching")) return;
+        if (btn.classList.contains("load-more-btn")) return;
 
-        btn.addEventListener("click", async (e) => {
+        btn.onclick = async (e) => {
             e.preventDefault();
             
             const originalBtnHtml = btn.innerHTML;
@@ -254,10 +254,10 @@ function bindLinkButtons() {
             currentActivePostId = btn.getAttribute("data-post-id");
             const titleElement = btn.closest(".post-card").querySelector("h4");
             const title = titleElement ? titleElement.innerText : "Post";
-            const postImg = btn.getAttribute("data-img");
+            const postImg = btn.getAttribute("data-img") || "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500";
 
             try {
-                // Check if automation exists
+                // Fetch saved config from Supabase
                 const { data: savedConfig } = await supabaseClient
                     .from('facebook_posts_automation')
                     .select('*')
@@ -266,23 +266,23 @@ function bindLinkButtons() {
                     .maybeSingle();
 
                 if (savedConfig) {
-                    // 🟢 LINKED POST: Restore data
-                    document.getElementById("triggerMechanism").value = savedConfig.fb_trigger_type || 'all';
-                    document.getElementById("targetKeywords").value = savedConfig.fb_target_keywords || "";
-                    document.getElementById("excludeKeywords").value = savedConfig.fb_exclude_keywords || "";
-                    document.getElementById("keywordInputWrapper").style.display = (savedConfig.fb_trigger_type === "keywords") ? "block" : "none";
+                    // 🟢 LINKED POST: Load saved data
+                    if(document.getElementById("triggerMechanism")) document.getElementById("triggerMechanism").value = savedConfig.fb_trigger_type || 'all';
+                    if(document.getElementById("targetKeywords")) document.getElementById("targetKeywords").value = savedConfig.fb_target_keywords || "";
+                    if(document.getElementById("excludeKeywords")) document.getElementById("excludeKeywords").value = savedConfig.fb_exclude_keywords || "";
+                    if(document.getElementById("keywordInputWrapper")) document.getElementById("keywordInputWrapper").style.display = (savedConfig.fb_trigger_type === "keywords") ? "block" : "none";
 
                     const cmtCheck = document.getElementById("commentAutoReplyCheck");
-                    if(cmtCheck) cmtCheck.checked = savedConfig.fb_comment_reply_active;
-                    document.getElementById("commentTextInputWrapper").style.display = savedConfig.fb_comment_reply_active ? "block" : "none";
-                    document.getElementById("customCommentText").value = savedConfig.fb_custom_comment_text || "";
+                    if(cmtCheck) cmtCheck.checked = savedConfig.fb_comment_reply_active ?? false;
+                    if(document.getElementById("commentTextInputWrapper")) document.getElementById("commentTextInputWrapper").style.display = savedConfig.fb_comment_reply_active ? "block" : "none";
+                    if(document.getElementById("customCommentText")) document.getElementById("customCommentText").value = savedConfig.fb_custom_comment_text || "";
 
                     const dmCheck = document.getElementById("sendDMCheck");
-                    if(dmCheck) dmCheck.checked = savedConfig.fb_dm_active;
-                    document.getElementById("engagementTextInputWrapper").style.display = savedConfig.fb_dm_active ? "block" : "none";
-                    document.getElementById("previewEngagementBubble").style.display = savedConfig.fb_dm_active ? "block" : "none";
-                    document.getElementById("customEngagementText").value = savedConfig.fb_custom_engagement_text || "";
-                    document.getElementById("engagementBtnTitle").value = savedConfig.fb_btn_title || "";
+                    if(dmCheck) dmCheck.checked = savedConfig.fb_dm_active ?? true;
+                    if(document.getElementById("engagementTextInputWrapper")) document.getElementById("engagementTextInputWrapper").style.display = savedConfig.fb_dm_active ? "block" : "none";
+                    if(document.getElementById("previewEngagementBubble")) document.getElementById("previewEngagementBubble").style.display = savedConfig.fb_dm_active ? "block" : "none";
+                    if(document.getElementById("customEngagementText")) document.getElementById("customEngagementText").value = savedConfig.fb_custom_engagement_text || "";
+                    if(document.getElementById("engagementBtnTitle")) document.getElementById("engagementBtnTitle").value = savedConfig.fb_btn_title || "";
 
                     // Cards Data Restore
                     let parsedCards = savedConfig.fb_carousel_data;
@@ -297,23 +297,23 @@ function bindLinkButtons() {
                     
                     handleTemplateTypeSwitch(savedConfig.fb_template_type || 'media');
                 } else {
-                    // 🔴 UNLINKED POST: Reset form
-                    document.getElementById("triggerMechanism").value = 'all';
-                    document.getElementById("keywordInputWrapper").style.display = "none";
-                    document.getElementById("targetKeywords").value = "";
-                    document.getElementById("excludeKeywords").value = "";
+                    // 🔴 UNLINKED POST: Reset form fresh
+                    if(document.getElementById("triggerMechanism")) document.getElementById("triggerMechanism").value = 'all';
+                    if(document.getElementById("keywordInputWrapper")) document.getElementById("keywordInputWrapper").style.display = "none";
+                    if(document.getElementById("targetKeywords")) document.getElementById("targetKeywords").value = "";
+                    if(document.getElementById("excludeKeywords")) document.getElementById("excludeKeywords").value = "";
                     
                     if(document.getElementById("commentAutoReplyCheck")) document.getElementById("commentAutoReplyCheck").checked = false;
-                    document.getElementById("commentTextInputWrapper").style.display = "none";
-                    document.getElementById("customCommentText").value = "";
+                    if(document.getElementById("commentTextInputWrapper")) document.getElementById("commentTextInputWrapper").style.display = "none";
+                    if(document.getElementById("customCommentText")) document.getElementById("customCommentText").value = "";
 
                     if(document.getElementById("sendDMCheck")) document.getElementById("sendDMCheck").checked = true; 
-                    document.getElementById("engagementTextInputWrapper").style.display = "block";
-                    document.getElementById("previewEngagementBubble").style.display = "block";
-                    document.getElementById("customEngagementText").value = "Hi 👋 Thanks for your comment!";
-                    document.getElementById("engagementBtnTitle").value = "Send Link Now";
+                    if(document.getElementById("engagementTextInputWrapper")) document.getElementById("engagementTextInputWrapper").style.display = "block";
+                    if(document.getElementById("previewEngagementBubble")) document.getElementById("previewEngagementBubble").style.display = "block";
+                    if(document.getElementById("customEngagementText")) document.getElementById("customEngagementText").value = "Hi 👋 Thanks for your comment!";
+                    if(document.getElementById("engagementBtnTitle")) document.getElementById("engagementBtnTitle").value = "Send Link Now";
 
-                    // Reset Cards
+                    // Reset Cards Fresh
                     mediaCards = [{ image: postImg, headline: "Card 1 Headline", desc: "Template Description...", btnTitle: "Link 🔗", url: "" }];
                     base64CustomUploadedImage = postImg;
                     
@@ -340,7 +340,7 @@ function bindLinkButtons() {
                 btn.innerHTML = originalBtnHtml;
                 btn.disabled = false;
             }
-        });
+        };
     });
 }
 
@@ -406,7 +406,7 @@ function renderCarouselUI() {
         `).join('');
     }
 
-    const active = mediaCards[activeCardIndex];
+    const active = mediaCards[activeCardIndex] || {};
     const hEl = document.getElementById('cardHeadline');
     const dEl = document.getElementById('cardDesc');
     const bEl = document.getElementById('cardBtnTitle');
@@ -432,12 +432,12 @@ window.removeCard = function(index, event) {
     }
 }
 
-// 🔥 New Card (Empty Image initially)
+// 🔥 Add New Empty Card Fix
 document.getElementById('addCardBtn')?.addEventListener('click', () => {
     mediaCards.push({ 
         image: "", 
         headline: `Card ${mediaCards.length + 1} Headline`, 
-        desc: "Description...", 
+        desc: "Template Description...", 
         btnTitle: "Link 🔗", 
         url: "" 
     });
@@ -448,8 +448,10 @@ document.getElementById('addCardBtn')?.addEventListener('click', () => {
 ['cardHeadline', 'cardDesc', 'cardBtnTitle', 'cardUrl'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', (e) => {
         const keyMap = { 'cardHeadline': 'headline', 'cardDesc': 'desc', 'cardBtnTitle': 'btnTitle', 'cardUrl': 'url' };
-        mediaCards[activeCardIndex][keyMap[id]] = e.target.value;
-        triggerLiveMirrorUpdate();
+        if(mediaCards[activeCardIndex]) {
+            mediaCards[activeCardIndex][keyMap[id]] = e.target.value;
+            triggerLiveMirrorUpdate();
+        }
     });
 });
 
@@ -503,7 +505,7 @@ function triggerLiveMirrorUpdate() {
             carouselContainer.style.display = "flex"; btnContainer.style.display = "none"; simpleContainer.style.display = "none";
             carouselContainer.innerHTML = mediaCards.map(c => `
                 <div class="preview-carousel-card" style="scroll-snap-align: center;">
-                    <div style="height: 140px; width: 100%; background: #1e293b;"><img src="${c.image}" style="width:100%; height:100%; object-fit:cover;"></div>
+                    <div style="height: 140px; width: 100%; background: #1e293b;"><img src="${c.image || 'https://via.placeholder.com/500x300?text=No+Image'}" style="width:100%; height:100%; object-fit:cover;"></div>
                     <div style="padding: 12px;">
                         <h5 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">${c.headline || 'Headline'}</h5>
                         <p style="margin: 0 0 10px 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">${c.desc || 'Description'}</p>
@@ -548,8 +550,10 @@ document.getElementById("cardUrl")?.addEventListener("input", (e) => {
 document.getElementById("manualImageFileInput")?.addEventListener("change", (e) => {
     if (e.target.files[0]) {
         uploadImageToSupabase(e.target.files[0], (publicUrl) => {
-            mediaCards[activeCardIndex].image = publicUrl;
-            triggerLiveMirrorUpdate();
+            if(mediaCards[activeCardIndex]) {
+                mediaCards[activeCardIndex].image = publicUrl;
+                triggerLiveMirrorUpdate();
+            }
         });
     }
 });
@@ -594,8 +598,10 @@ async function uploadImageToSupabase(file, callback) {
     }
 }
 
-// 🔥 Auto Fetch Individual Card Fix with Placeholder
+// 🔥 Individual Card Auto Fetch Logic
 async function processSmartAutoImageFetch(urlStr) {
+    if(!mediaCards[activeCardIndex]) return;
+    
     mediaCards[activeCardIndex].image = "https://placehold.co/500x300/1e293b/fff?text=Extracting+Image...";
     triggerLiveMirrorUpdate();
     
@@ -707,7 +713,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 fb_btn_title: document.getElementById("engagementBtnTitle")?.value || "",
                 
                 fb_template_type: templateType,
-                fb_carousel_data: mediaCards, // 👈 Saves unlimited cards data here
+                fb_carousel_data: mediaCards, 
                 fb_image_source_mode: document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual",
                 fb_custom_image_data: customImageData,
                 fb_headline: headline,
@@ -739,9 +745,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             alert("Facebook automation saved successfully! 🚀");
             
-            // 🔥 AFTER SAVE: Immediately update the badge UI to 'Linked'
-            if (!linkedPostsList.includes(currentActivePostId)) {
-                linkedPostsList.push(currentActivePostId);
+            // 🔥 Save ஆனதும் Badge பச்சை நிறமாக மாறும்
+            if (!linkedPostsList.includes(String(currentActivePostId))) {
+                linkedPostsList.push(String(currentActivePostId));
                 renderPostsPage(currentPage); 
             }
 
