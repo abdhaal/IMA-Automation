@@ -33,7 +33,7 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. SMART BATCH FETCH & RENDER POSTS (Gets 100+ Posts Safely)
+// 3. FETCH ALL POSTS (Unlimited / Up to 2000 Posts)
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -44,7 +44,7 @@ async function loadFacebookPageData() {
         return;
     }
 
-    postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your full post history safely... (Please wait)</p>";
+    postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching ALL your posts from Facebook... (This might take a few seconds)</p>";
 
     try {
         const { data, error } = await supabaseClient.auth.getSession();
@@ -75,13 +75,14 @@ async function loadFacebookPageData() {
         liveCount = 0;
         schedCount = 0;
 
-        // 🔥 HELPER FUNCTION: Fetch in small safe batches (25 at a time) up to max limit
-        async function fetchInBatches(baseUrl, maxPosts) {
+        // 🔥 HELPER FUNCTION: Loop continuously until ALL posts are fetched!
+        async function fetchInBatches(baseUrl, maxPosts = 2000) {
             let results = [];
             let nextUrl = baseUrl;
             let safetyCounter = 0; 
             
-            while (nextUrl && results.length < maxPosts && safetyCounter < 10) {
+            // This loop will run until Facebook says "No more posts" (or hits 2000 posts limit)
+            while (nextUrl && results.length < maxPosts && safetyCounter < 100) {
                 safetyCounter++;
                 try {
                     let res = await fetch(nextUrl);
@@ -95,19 +96,19 @@ async function loadFacebookPageData() {
                         results.push(...json.data);
                     }
                     
-                    // Automatically get the next page URL provided by Facebook
+                    // Get the 'Next Page' URL to keep pulling history
                     nextUrl = (json.paging && json.paging.next) ? json.paging.next : null;
                 } catch (e) {
                     console.error("Fetch failed", e);
                     break;
                 }
             }
-            return results.slice(0, maxPosts); 
+            return results; 
         }
 
-        // 1️⃣ FETCH 100 LIVE POSTS (In batches of 25 to prevent 500 error)
+        // 1️⃣ FETCH ALL LIVE POSTS (Grabs 25 at a time, loops automatically to get EVERYTHING)
         const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=25&access_token=${profileData.facebook_page_access_token}`;
-        const fetchedLivePosts = await fetchInBatches(livePostsUrl, 100);
+        const fetchedLivePosts = await fetchInBatches(livePostsUrl, 2000);
         
         fetchedLivePosts.forEach(p => { 
             p.is_scheduled = false; 
@@ -115,9 +116,9 @@ async function loadFacebookPageData() {
             liveCount++; 
         });
 
-        // 2️⃣ FETCH 50 SCHEDULED POSTS (In batches of 25)
+        // 2️⃣ FETCH ALL SCHEDULED POSTS 
         const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=25&access_token=${profileData.facebook_page_access_token}`;
-        const fetchedSchedPosts = await fetchInBatches(scheduledPostsUrl, 50);
+        const fetchedSchedPosts = await fetchInBatches(scheduledPostsUrl, 500);
         
         fetchedSchedPosts.forEach(p => { 
             p.is_scheduled = true; 
@@ -146,7 +147,7 @@ function renderPostsPage(pageNumber) {
 
     currentPage = pageNumber;
     
-    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Loaded ${liveCount} Live Posts/Videos & ${schedCount} Scheduled Posts</p>`;
+    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Loaded ALL ${liveCount} Live Posts/Videos & ${schedCount} Scheduled Posts</p>`;
 
     const startIndex = (pageNumber - 1) * postsPerPage;
     const endIndex = startIndex + postsPerPage;
