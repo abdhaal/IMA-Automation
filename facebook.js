@@ -21,6 +21,8 @@ let base64CustomUploadedImage = "";
 let allFetchedPosts = [];
 let currentPage = 1;
 const postsPerPage = 10;
+let liveCount = 0;
+let schedCount = 0;
 
 // ==========================================
 // 2. DYNAMIC STATE BUILDERS
@@ -31,7 +33,7 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. SAFE FETCH & RENDER POSTS (Live + Scheduled)
+// 3. SAFE FETCH & RENDER POSTS (Videos, Reels, Live, Scheduled)
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -46,7 +48,7 @@ async function loadFacebookPageData() {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching Facebook posts...</p>";
+        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching all posts, videos & scheduled items...</p>";
 
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles').select('facebook_page_access_token, facebook_page_id').eq('id', currentUserUuid).maybeSingle();
@@ -58,39 +60,42 @@ async function loadFacebookPageData() {
 
         currentFacebookPageId = profileData.facebook_page_id;
         allFetchedPosts = [];
+        liveCount = 0;
+        schedCount = 0;
 
-        // 1️⃣ FETCH LIVE POSTS SAFELY
+        // 1️⃣ FETCH LIVE POSTS (🔥 Changed to 'published_posts' to grab Videos & Reels!)
         try {
-            const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=100&access_token=${profileData.facebook_page_access_token}`;
+            const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=40&access_token=${profileData.facebook_page_access_token}`;
             const liveRes = await fetch(livePostsUrl);
             const liveJson = await liveRes.json();
             
             if (liveJson.error) {
                 console.error("Live Posts API Error:", liveJson.error.message);
+                alert("⚠️ Error fetching posts: " + liveJson.error.message);
             } else if (liveJson.data && Array.isArray(liveJson.data)) {
-                liveJson.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); });
+                liveJson.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); liveCount++; });
             }
         } catch (err) {
             console.error("Failed to fetch live posts:", err);
         }
 
-        // 2️⃣ FETCH SCHEDULED POSTS SAFELY
+        // 2️⃣ FETCH SCHEDULED POSTS
         try {
-            const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=50&access_token=${profileData.facebook_page_access_token}`;
+            const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=30&access_token=${profileData.facebook_page_access_token}`;
             const schedRes = await fetch(scheduledPostsUrl);
             const schedJson = await schedRes.json();
             
             if (schedJson.error) {
                 console.error("Scheduled Posts API Error:", schedJson.error.message);
             } else if (schedJson.data && Array.isArray(schedJson.data)) {
-                schedJson.data.forEach(p => { p.is_scheduled = true; allFetchedPosts.push(p); });
+                schedJson.data.forEach(p => { p.is_scheduled = true; allFetchedPosts.push(p); schedCount++; });
             }
         } catch (err) {
             console.error("Failed to fetch scheduled posts:", err);
         }
 
         if (allFetchedPosts.length === 0) {
-            postsContainer.innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts found.</p>`;
+            postsContainer.innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts or videos found.</p>`;
             return;
         }
 
@@ -109,19 +114,31 @@ function renderPostsPage(pageNumber) {
     if (!postsContainer) return;
 
     currentPage = pageNumber;
-    postsContainer.innerHTML = "";
+    
+    // Status Bar
+    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Loaded ${liveCount} Live Posts/Videos & ${schedCount} Scheduled Posts</p>`;
 
     const startIndex = (pageNumber - 1) * postsPerPage;
     const endIndex = startIndex + postsPerPage;
     const postsToShow = allFetchedPosts.slice(startIndex, endIndex);
 
     postsToShow.forEach(post => {
+        // 🔥 UPDATE 3: Ultra-Deep Video & Reel Thumbnail Extraction
         let mediaThumb = post.full_picture || post.picture;
 
         if (!mediaThumb && post.attachments && post.attachments.data && post.attachments.data.length > 0) {
             const attachData = post.attachments.data[0];
+            
+            // Level 1 Check
             if (attachData.media && attachData.media.image && attachData.media.image.src) {
                 mediaThumb = attachData.media.image.src;
+            } 
+            // Level 2 Check (For Reels and complex Video formats)
+            else if (attachData.subattachments && attachData.subattachments.data && attachData.subattachments.data.length > 0) {
+                const subAttach = attachData.subattachments.data[0];
+                if (subAttach.media && subAttach.media.image && subAttach.media.image.src) {
+                    mediaThumb = subAttach.media.image.src;
+                }
             }
         }
 
@@ -129,7 +146,7 @@ function renderPostsPage(pageNumber) {
             mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; 
         }
 
-        const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Facebook Page Post");
+        const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Video/Reel Post");
         const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
         const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
         
@@ -596,8 +613,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Save Error:", err);
             alert("Error saving configuration: " + err.message);
         } finally {
-            btn.innerHTML = originalTest;
+            btn.innerHTML = originalText;
             btn.disabled = false;
         }
     });
-});   
+});
