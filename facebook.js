@@ -33,7 +33,7 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. SAFE FETCH & RENDER POSTS (Videos, Reels, Live, Scheduled)
+// 3. SAFE FETCH & RENDER POSTS (Reduced Limits for FB Servers)
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
@@ -63,15 +63,15 @@ async function loadFacebookPageData() {
         liveCount = 0;
         schedCount = 0;
 
-        // 1️⃣ FETCH LIVE POSTS (🔥 Changed to 'published_posts' to grab Videos & Reels!)
+        // 1️⃣ FETCH LIVE POSTS (🔥 Reduced limit to 15 to prevent FB 500 Error)
         try {
-            const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=40&access_token=${profileData.facebook_page_access_token}`;
+            const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=15&access_token=${profileData.facebook_page_access_token}`;
             const liveRes = await fetch(livePostsUrl);
             const liveJson = await liveRes.json();
             
             if (liveJson.error) {
                 console.error("Live Posts API Error:", liveJson.error.message);
-                alert("⚠️ Error fetching posts: " + liveJson.error.message);
+                alert("⚠️ Error fetching Live posts: " + liveJson.error.message);
             } else if (liveJson.data && Array.isArray(liveJson.data)) {
                 liveJson.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); liveCount++; });
             }
@@ -79,9 +79,9 @@ async function loadFacebookPageData() {
             console.error("Failed to fetch live posts:", err);
         }
 
-        // 2️⃣ FETCH SCHEDULED POSTS
+        // 2️⃣ FETCH SCHEDULED POSTS (🔥 Reduced limit to 10)
         try {
-            const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=30&access_token=${profileData.facebook_page_access_token}`;
+            const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=10&access_token=${profileData.facebook_page_access_token}`;
             const schedRes = await fetch(scheduledPostsUrl);
             const schedJson = await schedRes.json();
             
@@ -123,17 +123,14 @@ function renderPostsPage(pageNumber) {
     const postsToShow = allFetchedPosts.slice(startIndex, endIndex);
 
     postsToShow.forEach(post => {
-        // 🔥 UPDATE 3: Ultra-Deep Video & Reel Thumbnail Extraction
         let mediaThumb = post.full_picture || post.picture;
 
         if (!mediaThumb && post.attachments && post.attachments.data && post.attachments.data.length > 0) {
             const attachData = post.attachments.data[0];
             
-            // Level 1 Check
             if (attachData.media && attachData.media.image && attachData.media.image.src) {
                 mediaThumb = attachData.media.image.src;
             } 
-            // Level 2 Check (For Reels and complex Video formats)
             else if (attachData.subattachments && attachData.subattachments.data && attachData.subattachments.data.length > 0) {
                 const subAttach = attachData.subattachments.data[0];
                 if (subAttach.media && subAttach.media.image && subAttach.media.image.src) {
@@ -617,4 +614,3 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.disabled = false;
         }
     });
-});
