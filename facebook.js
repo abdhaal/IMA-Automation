@@ -23,6 +23,7 @@ let currentPage = 1;
 const postsPerPage = 10;
 let liveCount = 0;
 let schedCount = 0;
+let linkedPostsList = []; // 🔥 புதுசா சேர்க்க வேண்டிய வரி
 
 // ==========================================
 // 2. DYNAMIC STATE BUILDERS
@@ -62,10 +63,27 @@ async function loadFacebookPageData() {
             return;
         }
 
-        currentFacebookPageId = profileData.facebook_page_id;
+                currentFacebookPageId = profileData.facebook_page_id;
         allFetchedPosts = [];
         liveCount = 0;
         schedCount = 0;
+        linkedPostsList = []; // Reset on load
+
+        // 🔥 NEW: எந்தெந்த போஸ்ட் லிங்க் ஆகிருக்குனு Database-ல இருந்து எடுக்கிறோம்
+        try {
+            const { data: linkedData, error: linkedErr } = await supabaseClient
+                .from('facebook_posts_automation')
+                .select('fb_active_post_id')
+                .eq('facebook_page_id', currentFacebookPageId);
+            
+            if (!linkedErr && linkedData) {
+                linkedPostsList = linkedData.map(item => item.fb_active_post_id);
+            }
+        } catch(e) { console.error("Linked Posts Check Error:", e); }
+
+        // 🔥 INITIAL FETCH: முதலில் 20 போஸ்ட்கள் மட்டும் (இது பழைய கோடு, அப்படியே இருக்கும்)
+        const initialLiveUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts...
+
 
         // 🔥 INITIAL FETCH: முதலில் 20 போஸ்ட்கள் மட்டும் (limit=20)
         const initialLiveUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=20&access_token=${profileData.facebook_page_access_token}`;
@@ -145,9 +163,19 @@ function renderPostsPage(pageNumber) {
         const commentsCount = post.comments?.summary?.total_count || 0;
         const likesCount = post.likes?.summary?.total_count || 0;
 
+        // 🔥 NEW: Linked ஆ, Unlinked ஆ என்று செக் செய்து Badge உருவாக்குதல்
+        const isLinked = linkedPostsList.includes(post.id);
+        const badgeHTML = isLinked 
+            ? `<div style="position: absolute; top: 10px; left: 10px; background: rgba(16, 185, 129, 0.9); color: white; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fa-solid fa-circle-check"></i> Linked</div>` 
+            : `<div style="position: absolute; top: 10px; left: 10px; background: rgba(239, 68, 68, 0.9); color: white; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fa-solid fa-link-slash"></i> Unlinked</div>`;
+
         const card = document.createElement("div");
         card.className = "post-card";
+        card.style.position = "relative"; // 🔥 Badge சரியாக அந்த போஸ்ட்டுக்குள் நிற்க இதைச் சேர்க்கணும்
+        
+        // 🔥 NEW: ${badgeHTML} என்பதை உள்ளே சேர்க்கிறோம்
         card.innerHTML = `
+            ${badgeHTML}
             <img src="${mediaThumb}" class="post-thumb" alt="thumb">
             <div class="post-meta-badges">
                 ${post.is_scheduled ? '<span class="meta-badge" style="background:#f59e0b; color:#fff; font-weight:bold;"><i class="fa-solid fa-clock"></i> Scheduled</span>' : `
@@ -161,7 +189,7 @@ function renderPostsPage(pageNumber) {
             </div>
         `;
         postsContainer.appendChild(card);
-    });
+      });
 
     renderPaginationControls();
     bindLinkButtons();
