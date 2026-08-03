@@ -17,7 +17,7 @@ let currentFacebookPageId = "";
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
-// 🔥 NUMBERED PAGINATION STATE (10 Posts per page)
+// 🔥 NUMBERED PAGINATION STATE
 let allFetchedPosts = [];
 let currentPage = 1;
 const postsPerPage = 10;
@@ -33,22 +33,37 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. SAFE FETCH & RENDER POSTS (Reduced Limits for FB Servers)
+// 3. BULLETPROOF FETCH & RENDER POSTS
 // ==========================================
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
-    if (!postsContainer) return;
+    
+    // 🔥 SAFE CHECK: HTML ID இருக்கிறதா என்று செக் செய்கிறோம்
+    if (!postsContainer) {
+        console.error("❌ ERROR: 'postsContainer' div is missing in your HTML!");
+        alert("HTML Error: Cannot find 'postsContainer' in your HTML.");
+        return;
+    }
+
+    // எடுத்த உடனே Loading காட்டுகிறோம்
+    postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Authenticating & Fetching Data...</p>";
 
     try {
         const { data, error } = await supabaseClient.auth.getSession();
-        if (error || !data || !data.session) { window.location.href = "login.html"; return; }
+        if (error || !data || !data.session) { 
+            window.location.href = "login.html"; 
+            return; 
+        }
 
         currentUserUuid = data.session.user.id;
         
-        if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
-        if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
-
-        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching all posts, videos & scheduled items...</p>";
+        // 🔥 SAFE EMAIL EXTRACTION (க்ராஷ் ஆகாமல் தடுத்தல்)
+        const userEmail = data.session.user.email || "Admin";
+        const userNameEl = document.getElementById("userName");
+        const userEmailEl = document.getElementById("userEmail");
+        
+        if (userEmailEl) userEmailEl.innerText = userEmail;
+        if (userNameEl) userNameEl.innerText = userEmail.includes("@") ? userEmail.split("@")[0] : userEmail;
 
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles').select('facebook_page_access_token, facebook_page_id').eq('id', currentUserUuid).maybeSingle();
@@ -63,7 +78,7 @@ async function loadFacebookPageData() {
         liveCount = 0;
         schedCount = 0;
 
-        // 1️⃣ FETCH LIVE POSTS (🔥 Reduced limit to 15 to prevent FB 500 Error)
+        // 1️⃣ FETCH LIVE POSTS 
         try {
             const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=15&access_token=${profileData.facebook_page_access_token}`;
             const liveRes = await fetch(livePostsUrl);
@@ -71,7 +86,6 @@ async function loadFacebookPageData() {
             
             if (liveJson.error) {
                 console.error("Live Posts API Error:", liveJson.error.message);
-                alert("⚠️ Error fetching Live posts: " + liveJson.error.message);
             } else if (liveJson.data && Array.isArray(liveJson.data)) {
                 liveJson.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); liveCount++; });
             }
@@ -79,7 +93,7 @@ async function loadFacebookPageData() {
             console.error("Failed to fetch live posts:", err);
         }
 
-        // 2️⃣ FETCH SCHEDULED POSTS (🔥 Reduced limit to 10)
+        // 2️⃣ FETCH SCHEDULED POSTS
         try {
             const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=10&access_token=${profileData.facebook_page_access_token}`;
             const schedRes = await fetch(scheduledPostsUrl);
@@ -104,7 +118,7 @@ async function loadFacebookPageData() {
 
     } catch (gErr) { 
         console.error("Global Fetch Error:", gErr); 
-        postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px; grid-column: 1 / -1;'>Error loading posts. Please check console.</p>`;
+        postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px; grid-column: 1 / -1;'>Error loading UI. See console.</p>`;
     }
 }
 
@@ -115,8 +129,7 @@ function renderPostsPage(pageNumber) {
 
     currentPage = pageNumber;
     
-    // Status Bar
-    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Loaded ${liveCount} Live Posts/Videos & ${schedCount} Scheduled Posts</p>`;
+    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Loaded ${liveCount} Live Posts & ${schedCount} Scheduled Posts</p>`;
 
     const startIndex = (pageNumber - 1) * postsPerPage;
     const endIndex = startIndex + postsPerPage;
@@ -172,7 +185,7 @@ function renderPostsPage(pageNumber) {
     bindLinkButtons();
 }
 
-// 🔥 NUMBER BUTTONS GENERATOR (1, 2, 3...)
+// 🔥 NUMBER BUTTONS GENERATOR
 function renderPaginationControls() {
     const postsContainer = document.getElementById("postsContainer");
     const totalPages = Math.ceil(allFetchedPosts.length / postsPerPage);
@@ -254,7 +267,7 @@ window.toggleAccordion = function(accId) {
 };
 
 // ==========================================
-// 4. UI BUILDERS (Tabs logic)
+// 4. UI BUILDERS
 // ==========================================
 function handleTemplateTypeSwitch(type) {
     currentSelectedTemplateType = type;
@@ -614,3 +627,4 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.disabled = false;
         }
     });
+});
