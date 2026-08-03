@@ -17,13 +17,16 @@ let currentFacebookPageId = "";
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
-// 🔥 NUMBERED PAGINATION STATE (10 Posts per page)
+// 🔥 PAGINATION & BADGE STATE
 let allFetchedPosts = [];
 let currentPage = 1;
-const postsPerPage = 10;
+const postsPerPage = 10; 
 let liveCount = 0;
 let schedCount = 0;
-let linkedPostsList = []; // 🔥 புதுசா சேர்க்க வேண்டிய வரி
+let linkedPostsList = []; // Linked Posts ID Array
+let nextFbLiveUrl = null;
+let nextFbSchedUrl = null;
+let isFetchingFb = false;
 
 // ==========================================
 // 2. DYNAMIC STATE BUILDERS
@@ -34,12 +37,8 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. SMART FETCH (Load More Logic & Pagination)
+// 3. SMART FETCH (Load More Logic & Badges)
 // ==========================================
-let nextFbLiveUrl = null;
-let nextFbSchedUrl = null;
-let isFetchingFb = false;
-
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
@@ -63,13 +62,13 @@ async function loadFacebookPageData() {
             return;
         }
 
-                currentFacebookPageId = profileData.facebook_page_id;
+        currentFacebookPageId = profileData.facebook_page_id;
         allFetchedPosts = [];
         liveCount = 0;
         schedCount = 0;
-        linkedPostsList = []; // Reset on load
+        linkedPostsList = [];
 
-        // 🔥 NEW: எந்தெந்த போஸ்ட் லிங்க் ஆகிருக்குனு Database-ல இருந்து எடுக்கிறோம்
+        // 🔥 FETCH LINKED POSTS IDs
         try {
             const { data: linkedData, error: linkedErr } = await supabaseClient
                 .from('facebook_posts_automation')
@@ -81,11 +80,7 @@ async function loadFacebookPageData() {
             }
         } catch(e) { console.error("Linked Posts Check Error:", e); }
 
-        // 🔥 INITIAL FETCH: முதலில் 20 போஸ்ட்கள் மட்டும் (இது பழைய கோடு, அப்படியே இருக்கும்)
-        const initialLiveUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts...
-
-
-        // 🔥 INITIAL FETCH: முதலில் 20 போஸ்ட்கள் மட்டும் (limit=20)
+        // 🔥 INITIAL FETCH: முதலில் 20 போஸ்ட்கள்
         const initialLiveUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=20&access_token=${profileData.facebook_page_access_token}`;
         const initialSchedUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=20&access_token=${profileData.facebook_page_access_token}`;
 
@@ -97,7 +92,6 @@ async function loadFacebookPageData() {
     }
 }
 
-// 🔥 HELPER FUNCTION: Facebook API-லிருந்து தேவையான போது மட்டும் Data வாங்குவது
 async function fetchAndAppendPosts(liveUrl, schedUrl) {
     if (isFetchingFb) return;
     isFetchingFb = true;
@@ -124,7 +118,6 @@ async function fetchAndAppendPosts(liveUrl, schedUrl) {
         if (allFetchedPosts.length === 0) {
             document.getElementById("postsContainer").innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts or videos found.</p>`;
         } else {
-            // புது டேட்டா வந்ததும் அதே பேஜில் (அல்லது 1வது பேஜில்) ரெண்டர் செய்
             renderPostsPage(currentPage > Math.ceil(allFetchedPosts.length / postsPerPage) ? 1 : currentPage);
         }
     } catch(e) { console.error(e); } 
@@ -163,7 +156,7 @@ function renderPostsPage(pageNumber) {
         const commentsCount = post.comments?.summary?.total_count || 0;
         const likesCount = post.likes?.summary?.total_count || 0;
 
-        // 🔥 NEW: Linked ஆ, Unlinked ஆ என்று செக் செய்து Badge உருவாக்குதல்
+        // 🔥 BADGE LOGIC:
         const isLinked = linkedPostsList.includes(post.id);
         const badgeHTML = isLinked 
             ? `<div style="position: absolute; top: 10px; left: 10px; background: rgba(16, 185, 129, 0.9); color: white; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fa-solid fa-circle-check"></i> Linked</div>` 
@@ -171,9 +164,7 @@ function renderPostsPage(pageNumber) {
 
         const card = document.createElement("div");
         card.className = "post-card";
-        card.style.position = "relative"; // 🔥 Badge சரியாக அந்த போஸ்ட்டுக்குள் நிற்க இதைச் சேர்க்கணும்
-        
-        // 🔥 NEW: ${badgeHTML} என்பதை உள்ளே சேர்க்கிறோம்
+        card.style.position = "relative"; // for badge layout
         card.innerHTML = `
             ${badgeHTML}
             <img src="${mediaThumb}" class="post-thumb" alt="thumb">
@@ -189,7 +180,7 @@ function renderPostsPage(pageNumber) {
             </div>
         `;
         postsContainer.appendChild(card);
-      });
+    });
 
     renderPaginationControls();
     bindLinkButtons();
@@ -224,16 +215,16 @@ function renderPaginationControls() {
         postsContainer.appendChild(paginationDiv);
     }
 
-    // 🔥 LOAD MORE BUTTON LOGIC (பழைய போஸ்ட்கள் இன்னும் இருந்தால் மட்டும் காட்டும்)
+    // 🔥 LOAD MORE BUTTON
     if (nextFbLiveUrl || nextFbSchedUrl) {
         const loadMoreDiv = document.createElement("div");
         loadMoreDiv.style.cssText = "display: flex; justify-content: center; width: 100%; grid-column: 1 / -1; padding-bottom: 30px;";
         
         const loadMoreBtn = document.createElement("button");
         loadMoreBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> Load More Posts`;
-        loadMoreBtn.className = "replyrush-btn"; // Existing style class
+        loadMoreBtn.className = "replyrush-btn"; 
         loadMoreBtn.style.padding = "10px 25px";
-        loadMoreBtn.style.background = "#10b981"; // Green color for distinction
+        loadMoreBtn.style.background = "#10b981"; 
         loadMoreBtn.style.color = "#fff";
         loadMoreBtn.style.border = "none";
         
@@ -250,7 +241,6 @@ function renderPaginationControls() {
 
 function bindLinkButtons() {
     document.querySelectorAll(".replyrush-btn").forEach(btn => {
-        // "Load More" பட்டனுக்கு click event சேரக்கூடாது என்பதற்காக இந்த செக்
         if (btn.innerText.includes("Load More") || btn.innerText.includes("Fetching")) return;
 
         btn.addEventListener("click", (e) => {
@@ -293,7 +283,7 @@ window.toggleAccordion = function(accId) {
         if (header && header.querySelector("i")) { header.querySelector("i").className = "fa-solid fa-chevron-up"; }
     }
 };
-                             
+
 // ==========================================
 // 4. UI BUILDERS
 // ==========================================
@@ -338,7 +328,7 @@ function renderCarouselUI() {
     if (tabsContainer) {
         tabsContainer.innerHTML = mediaCards.map((c, i) => `
             <div class="card-tab ${i === activeCardIndex ? 'active' : ''}" onclick="switchCard(${i})">
-                Card ${i+1} ${mediaCards.length > 1 ? `<i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-left:5px;" onclick="removeCard(${i}, event)"></i>` : ''}
+                Card ${i+1} <i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-left:5px;" onclick="removeCard(${i}, event)"></i>
             </div>
         `).join('');
     }
@@ -349,19 +339,28 @@ function renderCarouselUI() {
     const bEl = document.getElementById('cardBtnTitle');
     const uEl = document.getElementById('cardUrl');
     
-    if (hEl) hEl.value = active.headline;
-    if (dEl) dEl.value = active.desc;
-    if (bEl) bEl.value = active.btnTitle;
-    if (uEl) uEl.value = active.url;
+    if (hEl) hEl.value = active.headline || "";
+    if (dEl) dEl.value = active.desc || "";
+    if (bEl) bEl.value = active.btnTitle || "";
+    if (uEl) uEl.value = active.url || "";
     
     triggerLiveMirrorUpdate();
 }
 
 window.switchCard = function(index) { activeCardIndex = index; renderCarouselUI(); }
-window.removeCard = function(index, event) { event.stopPropagation(); mediaCards.splice(index, 1); if(activeCardIndex >= mediaCards.length) activeCardIndex = mediaCards.length - 1; renderCarouselUI(); }
+window.removeCard = function(index, event) { 
+    event.stopPropagation(); 
+    if(mediaCards.length > 1) { 
+        mediaCards.splice(index, 1); 
+        if(activeCardIndex >= mediaCards.length) activeCardIndex = mediaCards.length - 1; 
+        renderCarouselUI(); 
+    } else {
+        alert("At least 1 card is required!");
+    }
+}
+// 🔥 UNLIMITED CARDS FIX
 document.getElementById('addCardBtn')?.addEventListener('click', () => {
-    if(mediaCards.length >= 10) return alert("Maximum 10 cards allowed!");
-    mediaCards.push({ image: mediaCards[0].image, headline: `Card ${mediaCards.length + 1} Headline`, desc: "Template Description...", btnTitle: "Link 🔗", url: "" });
+    mediaCards.push({ image: mediaCards[0]?.image || "", headline: `Card ${mediaCards.length + 1} Headline`, desc: "Template Description...", btnTitle: "Link 🔗", url: "" });
     activeCardIndex = mediaCards.length - 1;
     renderCarouselUI();
 });
@@ -387,7 +386,7 @@ function renderButtonTemplateUI() {
             <div class="dynamic-btn-row">
                 <input type="text" placeholder="Button Title" value="${b.title}" oninput="updateBtnTitle(${i}, this.value)">
                 <input type="url" placeholder="URL Link" value="${b.url}" oninput="updateBtnUrl(${i}, this.value)">
-                ${buttonTemplateBtns.length > 1 ? `<button onclick="removeBtn(${i})"><i class="fa-solid fa-trash"></i></button>` : ''}
+                <button onclick="removeBtn(${i})"><i class="fa-solid fa-trash"></i></button>
             </div>
         `).join('');
     }
@@ -395,14 +394,17 @@ function renderButtonTemplateUI() {
 }
 
 document.getElementById('btnTemplateText')?.addEventListener('input', (e) => { buttonTemplateText = e.target.value; triggerLiveMirrorUpdate(); });
+// 🔥 UNLIMITED BUTTONS FIX
 document.getElementById('addTemplateBtn')?.addEventListener('click', () => {
-    if(buttonTemplateBtns.length >= 3) return alert("Maximum 3 buttons allowed!");
     buttonTemplateBtns.push({ title: `Button ${buttonTemplateBtns.length + 1}`, url: "" });
     renderButtonTemplateUI();
 });
 window.updateBtnTitle = function(i, val) { buttonTemplateBtns[i].title = val; triggerLiveMirrorUpdate(); }
 window.updateBtnUrl = function(i, val) { buttonTemplateBtns[i].url = val; }
-window.removeBtn = function(i) { buttonTemplateBtns.splice(i, 1); renderButtonTemplateUI(); }
+window.removeBtn = function(i) { 
+    if(buttonTemplateBtns.length > 1) { buttonTemplateBtns.splice(i, 1); renderButtonTemplateUI(); }
+    else { alert("At least 1 button is required!"); }
+}
 
 // ==========================================
 // 5. IMAGE UPLOAD & LIVE PREVIEW
@@ -613,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 fb_btn_title: document.getElementById("engagementBtnTitle")?.value || "",
                 
                 fb_template_type: templateType,
-                fb_carousel_data: mediaCards,
+                fb_carousel_data: mediaCards, // Unlimited cards data saved here!
                 fb_image_source_mode: document.querySelector("input[name='imageSourceToggle']:checked")?.value || "manual",
                 fb_custom_image_data: customImageData,
                 fb_headline: headline,
@@ -644,6 +646,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (saveErr) throw saveErr;
 
             alert("Facebook automation saved successfully! 🚀");
+            
+            // 🔥 AFTER SAVE: Immediately update the badge UI to 'Linked'
+            if (!linkedPostsList.includes(currentActivePostId)) {
+                linkedPostsList.push(currentActivePostId);
+                renderPostsPage(currentPage); // Re-render to show Green badge!
+            }
+
             const automationOptionsCard = document.getElementById("automationOptionsCard");
             if (automationOptionsCard) automationOptionsCard.style.display = "none";
             
