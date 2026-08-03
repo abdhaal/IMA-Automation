@@ -17,6 +17,10 @@ let currentFacebookPageId = "";
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
+// 🔥 PAGINATION CURSORS (புதுசா சேர்த்தது)
+let nextLiveCursor = null;
+let prevLiveCursor = null;
+
 // ==========================================
 // 2. DYNAMIC STATE BUILDERS
 // ==========================================
@@ -26,9 +30,9 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. FETCH AND RENDER REAL FACEBOOK POSTS (Includes Scheduled & Live Posts)
+// 3. FETCH AND RENDER POSTS (With Pagination 🚀)
 // ==========================================
-async function loadFacebookPageData() {
+async function loadFacebookPageData(direction = 'init') {
     const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
 
@@ -41,63 +45,69 @@ async function loadFacebookPageData() {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching live & scheduled Facebook posts...</p>";
+        // Grid-க்கு ஏற்றபடி 100% அகலத்தில் Loading காட்ட grid-column சேர்க்கப்பட்டுள்ளது
+        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Loading Facebook posts...</p>";
 
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles').select('facebook_page_access_token, facebook_page_id').eq('id', currentUserUuid).maybeSingle();
 
         if (dbErr || !profileData || !profileData.facebook_page_id) {
-            postsContainer.innerHTML = `<div style='text-align:center; width:100%; padding:40px; color:#94a3b8;'><i class="fa-brands fa-facebook" style="font-size: 40px; color: #1877f2; margin-bottom: 15px;"></i><p>Your Facebook Page is not linked yet.</p></div>`;
+            postsContainer.innerHTML = `<div style='text-align:center; width:100%; padding:40px; color:#94a3b8; grid-column: 1 / -1;'><i class="fa-brands fa-facebook" style="font-size: 40px; color: #1877f2; margin-bottom: 15px;"></i><p>Your Facebook Page is not linked yet.</p></div>`;
             return;
         }
 
         currentFacebookPageId = profileData.facebook_page_id;
 
-        // 🔥 UPDATE 1: Added 'attachments' and 'picture' to both API calls to dig out hidden video thumbnails
-        const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&access_token=${profileData.facebook_page_access_token}`;
-        const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&access_token=${profileData.facebook_page_access_token}`;
+        // 🔥 PAGINATION API SETUP (ஒரு பேஜுக்கு 12 போஸ்ட்கள் மட்டும்)
+        let livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=12&access_token=${profileData.facebook_page_access_token}`;
 
-        const [liveRes, schedRes] = await Promise.all([
-            fetch(livePostsUrl),
-            fetch(scheduledPostsUrl)
-        ]);
+        // Next / Prev பட்டன் அழுத்தும்போது URL-ல் Cursor-ஐ இணைக்கிறோம்
+        if (direction === 'next' && nextLiveCursor) livePostsUrl += `&after=${nextLiveCursor}`;
+        if (direction === 'prev' && prevLiveCursor) livePostsUrl += `&before=${prevLiveCursor}`;
 
-        const liveJson = await liveRes.json();
-        const schedJson = await schedRes.json();
+        // Scheduled Posts-ஐ முதல் பக்கத்தில் மட்டும் காட்டினால் போதும்
+        let scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=50&access_token=${profileData.facebook_page_access_token}`;
+
+        const fetchPromises = [fetch(livePostsUrl)];
+        if (direction === 'init') fetchPromises.push(fetch(scheduledPostsUrl));
+
+        const responses = await Promise.all(fetchPromises);
+        const liveJson = await responses[0].json();
+        
+        let schedJson = { data: [] };
+        if (responses[1]) schedJson = await responses[1].json();
 
         let allCombinedPosts = [];
 
+        // Scheduled போஸ்ட்களை முதலில் சேர்க்கிறோம்
         if (schedJson.data && Array.isArray(schedJson.data)) {
-            schedJson.data.forEach(p => {
-                p.is_scheduled = true;
-                allCombinedPosts.push(p);
-            });
+            schedJson.data.forEach(p => { p.is_scheduled = true; allCombinedPosts.push(p); });
         }
 
+        // Live போஸ்ட்களை சேர்க்கிறோம்
         if (liveJson.data && Array.isArray(liveJson.data)) {
-            liveJson.data.forEach(p => {
-                p.is_scheduled = false;
-                allCombinedPosts.push(p);
-            });
+            liveJson.data.forEach(p => { p.is_scheduled = false; allCombinedPosts.push(p); });
         }
 
-        if (liveJson.error && schedJson.error) {
-            postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px;'>API Error: ${liveJson.error.message}</p>`; 
-            return;
+        // 🔥 FB API கொடுக்கும் அடுத்த பக்கத்திற்கான (Next Page) Cursors-ஐ சேமிக்கிறோம்
+        if (liveJson.paging && liveJson.paging.cursors) {
+            nextLiveCursor = liveJson.paging.cursors.after || null;
+            prevLiveCursor = liveJson.paging.cursors.before || null;
+        } else {
+            nextLiveCursor = null;
+            prevLiveCursor = null;
         }
 
         postsContainer.innerHTML = "";
         
         if (allCombinedPosts.length === 0) {
-            postsContainer.innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px;'>No posts found on this Facebook page.</p>`;
+            postsContainer.innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts found.</p>`;
             return;
         }
 
         allCombinedPosts.forEach(post => {
-            // 🔥 UPDATE 2: Smart Extraction of Video Thumbnails
             let mediaThumb = post.full_picture || post.picture;
 
-            // If it's a scheduled video, dig into attachments to find the hidden thumbnail
             if (!mediaThumb && post.attachments && post.attachments.data && post.attachments.data.length > 0) {
                 const attachData = post.attachments.data[0];
                 if (attachData.media && attachData.media.image && attachData.media.image.src) {
@@ -105,7 +115,6 @@ async function loadFacebookPageData() {
                 }
             }
 
-            // Final Fallback if Facebook completely hides it
             if (!mediaThumb) {
                 mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; 
             }
@@ -135,47 +144,40 @@ async function loadFacebookPageData() {
             postsContainer.appendChild(card);
         });
 
+        // ==========================================
+        // 🔥 APPEND PAGINATION BUTTONS (Prev & Next)
+        // ==========================================
+        const paginationDiv = document.createElement("div");
+        paginationDiv.style.cssText = "display: flex; justify-content: center; gap: 15px; margin-top: 30px; margin-bottom: 20px; width: 100%; grid-column: 1 / -1;";
+
+        const prevBtn = document.createElement("button");
+        prevBtn.innerHTML = `<i class="fa-solid fa-arrow-left"></i> Previous`;
+        prevBtn.className = "replyrush-btn"; // Styles taken from your existing button class
+        prevBtn.style.padding = "10px 25px";
+        prevBtn.disabled = !prevLiveCursor || direction === 'init';
+        if (prevBtn.disabled) prevBtn.style.opacity = "0.5";
+        prevBtn.onclick = () => loadFacebookPageData('prev');
+
+        const nextBtn = document.createElement("button");
+        nextBtn.innerHTML = `Next <i class="fa-solid fa-arrow-right"></i>`;
+        nextBtn.className = "replyrush-btn";
+        nextBtn.style.padding = "10px 25px";
+        nextBtn.disabled = !nextLiveCursor;
+        if (nextBtn.disabled) nextBtn.style.opacity = "0.5";
+        nextBtn.onclick = () => loadFacebookPageData('next');
+
+        paginationDiv.appendChild(prevBtn);
+        paginationDiv.appendChild(nextBtn);
+        
+        postsContainer.appendChild(paginationDiv);
+
         bindLinkButtons();
     } catch (gErr) { console.error(gErr); }
 }
 
-
 function bindLinkButtons() {
-    document.querySelectorAll(".replyrush-btn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            currentActivePostId = btn.getAttribute("data-post-id");
-            const title = btn.closest(".post-card").querySelector("h4").innerText;
-            const postImg = btn.getAttribute("data-img");
-            
-            mediaCards[0].image = postImg;
-            base64CustomUploadedImage = postImg;
-            activeCardIndex = 0;
-            
-            renderCarouselUI();
-            renderButtonTemplateUI();
-
-            document.getElementById("selectedPostTitle").innerText = "Link Settings: " + title;
-            document.getElementById("automationOptionsCard").style.display = "grid";
-            document.getElementById("automationOptionsCard").scrollIntoView({ behavior: 'smooth' });
-            
-            window.toggleAccordion('triggerAcc');
-        });
-    });
-}
-
-window.toggleAccordion = function(accId) {
-    const content = document.getElementById(accId);
-    if (!content) return;
-    const isVisible = content.style.display === "block";
-    document.querySelectorAll(".accordion-content").forEach(el => { el.style.display = "none"; });
-    document.querySelectorAll(".accordion-header i").forEach(el => { el.className = "fa-solid fa-chevron-down"; });
-    if (!isVisible) {
-        content.style.display = "block";
-        const header = content.previousElementSibling;
-        if (header && header.querySelector("i")) { header.querySelector("i").className = "fa-solid fa-chevron-up"; }
-    }
-};
+    // ... [இதற்கு கீழே உள்ள பழைய கோடு (4. UI BUILDERS-லிருந்து) அப்படியே இருக்கும், எந்த மாற்றமும் தேவையில்லை] ...
+    
 
 // ==========================================
 // 4. UI BUILDERS (Tabs logic)
