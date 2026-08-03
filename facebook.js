@@ -33,37 +33,29 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. FETCH ALL POSTS (Unlimited / Up to 2000 Posts)
+// 3. SMART FETCH (Load More Logic & Pagination)
 // ==========================================
+let nextFbLiveUrl = null;
+let nextFbSchedUrl = null;
+let isFetchingFb = false;
+
 async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
-    
-    if (!postsContainer) {
-        console.error("❌ ERROR: 'postsContainer' div is missing in your HTML!");
-        alert("HTML Error: Cannot find 'postsContainer' in your HTML.");
-        return;
-    }
+    if (!postsContainer) return;
 
-    postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching ALL your posts from Facebook... (This might take a few seconds)</p>";
+    postsContainer.innerHTML = "<p id='fbLoadingMsg' style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching your posts...</p>";
 
     try {
         const { data, error } = await supabaseClient.auth.getSession();
-        if (error || !data || !data.session) { 
-            window.location.href = "login.html"; 
-            return; 
-        }
+        if (error || !data || !data.session) { window.location.href = "login.html"; return; }
 
         currentUserUuid = data.session.user.id;
-        
         const userEmail = data.session.user.email || "Admin";
-        const userNameEl = document.getElementById("userName");
-        const userEmailEl = document.getElementById("userEmail");
         
-        if (userEmailEl) userEmailEl.innerText = userEmail;
-        if (userNameEl) userNameEl.innerText = userEmail.includes("@") ? userEmail.split("@")[0] : userEmail;
+        if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = userEmail;
+        if (document.getElementById("userName")) document.getElementById("userName").innerText = userEmail.includes("@") ? userEmail.split("@")[0] : userEmail;
 
-        const { data: profileData, error: dbErr } = await supabaseClient
-            .from('profiles').select('facebook_page_access_token, facebook_page_id').eq('id', currentUserUuid).maybeSingle();
+        const { data: profileData, error: dbErr } = await supabaseClient.from('profiles').select('facebook_page_access_token, facebook_page_id').eq('id', currentUserUuid).maybeSingle();
 
         if (dbErr || !profileData || !profileData.facebook_page_id) {
             postsContainer.innerHTML = `<div style='text-align:center; width:100%; padding:40px; color:#94a3b8; grid-column: 1 / -1;'><i class="fa-brands fa-facebook" style="font-size: 40px; color: #1877f2; margin-bottom: 15px;"></i><p>Your Facebook Page is not linked yet.</p></div>`;
@@ -75,79 +67,58 @@ async function loadFacebookPageData() {
         liveCount = 0;
         schedCount = 0;
 
-        // 🔥 HELPER FUNCTION: Loop continuously until ALL posts are fetched!
-        async function fetchInBatches(baseUrl, maxPosts = 2000) {
-            let results = [];
-            let nextUrl = baseUrl;
-            let safetyCounter = 0; 
-            
-            // This loop will run until Facebook says "No more posts" (or hits 2000 posts limit)
-            while (nextUrl && results.length < maxPosts && safetyCounter < 100) {
-                safetyCounter++;
-                try {
-                    let res = await fetch(nextUrl);
-                    let json = await res.json();
-                    
-                    if (json.error) {
-                        console.error("API Error:", json.error.message);
-                        break; 
-                    }
-                    if (json.data && Array.isArray(json.data)) {
-                        results.push(...json.data);
-                    }
-                    
-                    // Get the 'Next Page' URL to keep pulling history
-                    nextUrl = (json.paging && json.paging.next) ? json.paging.next : null;
-                } catch (e) {
-                    console.error("Fetch failed", e);
-                    break;
-                }
-            }
-            return results; 
-        }
+        // 🔥 INITIAL FETCH: முதலில் 20 போஸ்ட்கள் மட்டும் (limit=20)
+        const initialLiveUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=20&access_token=${profileData.facebook_page_access_token}`;
+        const initialSchedUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=20&access_token=${profileData.facebook_page_access_token}`;
 
-        // 1️⃣ FETCH ALL LIVE POSTS (Grabs 25 at a time, loops automatically to get EVERYTHING)
-        const livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/published_posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=25&access_token=${profileData.facebook_page_access_token}`;
-        const fetchedLivePosts = await fetchInBatches(livePostsUrl, 2000);
-        
-        fetchedLivePosts.forEach(p => { 
-            p.is_scheduled = false; 
-            allFetchedPosts.push(p); 
-            liveCount++; 
-        });
-
-        // 2️⃣ FETCH ALL SCHEDULED POSTS 
-        const scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=25&access_token=${profileData.facebook_page_access_token}`;
-        const fetchedSchedPosts = await fetchInBatches(scheduledPostsUrl, 500);
-        
-        fetchedSchedPosts.forEach(p => { 
-            p.is_scheduled = true; 
-            allFetchedPosts.push(p); 
-            schedCount++; 
-        });
-
-        if (allFetchedPosts.length === 0) {
-            postsContainer.innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts or videos found.</p>`;
-            return;
-        }
-
-        // Render Page 1
-        renderPostsPage(1);
+        await fetchAndAppendPosts(initialLiveUrl, initialSchedUrl);
 
     } catch (gErr) { 
         console.error("Global Fetch Error:", gErr); 
-        postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px; grid-column: 1 / -1;'>Error loading UI. See console.</p>`;
+        postsContainer.innerHTML = `<p style='color:#ef4444; text-align:center; padding:20px; grid-column: 1 / -1;'>Error loading posts.</p>`;
     }
 }
 
-// 🔥 CORE LOGIC TO RENDER EXACTLY 10 POSTS PER PAGE
+// 🔥 HELPER FUNCTION: Facebook API-லிருந்து தேவையான போது மட்டும் Data வாங்குவது
+async function fetchAndAppendPosts(liveUrl, schedUrl) {
+    if (isFetchingFb) return;
+    isFetchingFb = true;
+
+    try {
+        if (liveUrl) {
+            let res = await fetch(liveUrl);
+            let json = await res.json();
+            if (json.data) {
+                json.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); liveCount++; });
+            }
+            nextFbLiveUrl = (json.paging && json.paging.next) ? json.paging.next : null;
+        }
+
+        if (schedUrl) {
+            let res = await fetch(schedUrl);
+            let json = await res.json();
+            if (json.data) {
+                json.data.forEach(p => { p.is_scheduled = true; allFetchedPosts.push(p); schedCount++; });
+            }
+            nextFbSchedUrl = (json.paging && json.paging.next) ? json.paging.next : null;
+        }
+
+        if (allFetchedPosts.length === 0) {
+            document.getElementById("postsContainer").innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts or videos found.</p>`;
+        } else {
+            // புது டேட்டா வந்ததும் அதே பேஜில் (அல்லது 1வது பேஜில்) ரெண்டர் செய்
+            renderPostsPage(currentPage > Math.ceil(allFetchedPosts.length / postsPerPage) ? 1 : currentPage);
+        }
+    } catch(e) { console.error(e); } 
+    finally { isFetchingFb = false; }
+}
+
 function renderPostsPage(pageNumber) {
     const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
 
     currentPage = pageNumber;
-    
-    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Loaded ALL ${liveCount} Live Posts/Videos & ${schedCount} Scheduled Posts</p>`;
+    postsContainer.innerHTML = `<p style='color:#3b82f6; font-size:14px; text-align:center; width:100%; padding-bottom:15px; grid-column: 1 / -1; font-weight:600;'><i class="fa-solid fa-circle-check"></i> Showing ${allFetchedPosts.length} Loaded Posts</p>`;
 
     const startIndex = (pageNumber - 1) * postsPerPage;
     const endIndex = startIndex + postsPerPage;
@@ -158,26 +129,19 @@ function renderPostsPage(pageNumber) {
 
         if (!mediaThumb && post.attachments && post.attachments.data && post.attachments.data.length > 0) {
             const attachData = post.attachments.data[0];
-            
             if (attachData.media && attachData.media.image && attachData.media.image.src) {
                 mediaThumb = attachData.media.image.src;
-            } 
-            else if (attachData.subattachments && attachData.subattachments.data && attachData.subattachments.data.length > 0) {
+            } else if (attachData.subattachments && attachData.subattachments.data && attachData.subattachments.data.length > 0) {
                 const subAttach = attachData.subattachments.data[0];
-                if (subAttach.media && subAttach.media.image && subAttach.media.image.src) {
-                    mediaThumb = subAttach.media.image.src;
-                }
+                if (subAttach.media && subAttach.media.image && subAttach.media.image.src) { mediaThumb = subAttach.media.image.src; }
             }
         }
 
-        if (!mediaThumb) {
-            mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; 
-        }
+        if (!mediaThumb) mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; 
 
         const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Video/Reel Post");
         const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
         const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
-        
         const commentsCount = post.comments?.summary?.total_count || 0;
         const likesCount = post.likes?.summary?.total_count || 0;
 
@@ -203,44 +167,64 @@ function renderPostsPage(pageNumber) {
     bindLinkButtons();
 }
 
-// 🔥 NUMBER BUTTONS GENERATOR
 function renderPaginationControls() {
     const postsContainer = document.getElementById("postsContainer");
     const totalPages = Math.ceil(allFetchedPosts.length / postsPerPage);
 
-    if (totalPages <= 1) return;
+    if (totalPages > 1) {
+        const paginationDiv = document.createElement("div");
+        paginationDiv.style.cssText = "display: flex; justify-content: center; gap: 8px; margin-top: 30px; margin-bottom: 20px; width: 100%; grid-column: 1 / -1; flex-wrap: wrap;";
 
-    const paginationDiv = document.createElement("div");
-    paginationDiv.style.cssText = "display: flex; justify-content: center; gap: 8px; margin-top: 30px; margin-bottom: 20px; width: 100%; grid-column: 1 / -1; flex-wrap: wrap;";
+        for (let i = 1; i <= totalPages; i++) {
+            const pageBtn = document.createElement("button");
+            pageBtn.innerText = i;
+            pageBtn.style.padding = "8px 15px";
+            pageBtn.style.borderRadius = "8px";
+            pageBtn.style.border = "none";
+            pageBtn.style.fontWeight = "bold";
+            pageBtn.style.cursor = "pointer";
+            pageBtn.style.transition = "all 0.3s";
 
-    for (let i = 1; i <= totalPages; i++) {
-        const pageBtn = document.createElement("button");
-        pageBtn.innerText = i;
-        pageBtn.style.padding = "8px 15px";
-        pageBtn.style.borderRadius = "8px";
-        pageBtn.style.border = "none";
-        pageBtn.style.fontWeight = "bold";
-        pageBtn.style.cursor = "pointer";
-        pageBtn.style.transition = "all 0.3s";
-
-        if (i === currentPage) {
-            pageBtn.style.background = "#3b82f6";
-            pageBtn.style.color = "#ffffff";
-            pageBtn.style.boxShadow = "0 4px 10px rgba(59, 130, 246, 0.4)";
-        } else {
-            pageBtn.style.background = "rgba(255, 255, 255, 0.1)";
-            pageBtn.style.color = "#94a3b8";
+            if (i === currentPage) {
+                pageBtn.style.background = "#3b82f6"; pageBtn.style.color = "#ffffff"; pageBtn.style.boxShadow = "0 4px 10px rgba(59, 130, 246, 0.4)";
+            } else {
+                pageBtn.style.background = "rgba(255, 255, 255, 0.1)"; pageBtn.style.color = "#94a3b8";
+            }
+            pageBtn.onclick = () => renderPostsPage(i);
+            paginationDiv.appendChild(pageBtn);
         }
-
-        pageBtn.onclick = () => renderPostsPage(i);
-        paginationDiv.appendChild(pageBtn);
+        postsContainer.appendChild(paginationDiv);
     }
-    
-    postsContainer.appendChild(paginationDiv);
+
+    // 🔥 LOAD MORE BUTTON LOGIC (பழைய போஸ்ட்கள் இன்னும் இருந்தால் மட்டும் காட்டும்)
+    if (nextFbLiveUrl || nextFbSchedUrl) {
+        const loadMoreDiv = document.createElement("div");
+        loadMoreDiv.style.cssText = "display: flex; justify-content: center; width: 100%; grid-column: 1 / -1; padding-bottom: 30px;";
+        
+        const loadMoreBtn = document.createElement("button");
+        loadMoreBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> Load More Posts`;
+        loadMoreBtn.className = "replyrush-btn"; // Existing style class
+        loadMoreBtn.style.padding = "10px 25px";
+        loadMoreBtn.style.background = "#10b981"; // Green color for distinction
+        loadMoreBtn.style.color = "#fff";
+        loadMoreBtn.style.border = "none";
+        
+        loadMoreBtn.onclick = () => {
+            loadMoreBtn.innerHTML = `<i class='fa-solid fa-spinner fa-spin'></i> Fetching...`;
+            loadMoreBtn.disabled = true;
+            fetchAndAppendPosts(nextFbLiveUrl, nextFbSchedUrl);
+        };
+        
+        loadMoreDiv.appendChild(loadMoreBtn);
+        postsContainer.appendChild(loadMoreDiv);
+    }
 }
 
 function bindLinkButtons() {
     document.querySelectorAll(".replyrush-btn").forEach(btn => {
+        // "Load More" பட்டனுக்கு click event சேரக்கூடாது என்பதற்காக இந்த செக்
+        if (btn.innerText.includes("Load More") || btn.innerText.includes("Fetching")) return;
+
         btn.addEventListener("click", (e) => {
             e.preventDefault();
             currentActivePostId = btn.getAttribute("data-post-id");
@@ -264,9 +248,7 @@ function bindLinkButtons() {
                 automationOptionsCard.scrollIntoView({ behavior: 'smooth' });
             }
             
-            if (typeof window.toggleAccordion === 'function') {
-                window.toggleAccordion('triggerAcc');
-            }
+            if (typeof window.toggleAccordion === 'function') window.toggleAccordion('triggerAcc');
         });
     });
 }
@@ -283,7 +265,7 @@ window.toggleAccordion = function(accId) {
         if (header && header.querySelector("i")) { header.querySelector("i").className = "fa-solid fa-chevron-up"; }
     }
 };
-
+                             
 // ==========================================
 // 4. UI BUILDERS
 // ==========================================
