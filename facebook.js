@@ -17,9 +17,10 @@ let currentFacebookPageId = "";
 let currentSelectedTemplateType = "media";
 let base64CustomUploadedImage = ""; 
 
-// 🔥 PAGINATION CURSORS
-let nextLiveCursor = null;
-let prevLiveCursor = null;
+// 🔥 NUMBERED PAGINATION STATE (புதுசா சேர்த்தது)
+let allFetchedPosts = [];
+let currentPage = 1;
+const postsPerPage = 10; // ஒரு பேஜுக்கு 10 போஸ்ட்!
 
 // ==========================================
 // 2. DYNAMIC STATE BUILDERS
@@ -30,9 +31,9 @@ let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
 // ==========================================
-// 3. FETCH AND RENDER REAL FACEBOOK POSTS
+// 3. FETCH AND RENDER POSTS (1, 2, 3... Pagination)
 // ==========================================
-async function loadFacebookPageData(direction = 'init') {
+async function loadFacebookPageData() {
     const postsContainer = document.getElementById("postsContainer");
     if (!postsContainer) return;
 
@@ -45,7 +46,7 @@ async function loadFacebookPageData(direction = 'init') {
         if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = data.session.user.email;
         if (document.getElementById("userName")) document.getElementById("userName").innerText = data.session.user.email.split("@")[0];
 
-        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Loading Facebook posts...</p>";
+        postsContainer.innerHTML = "<p style='color:#94a3b8; font-size:14px; text-align:center; width:100%; padding:20px; grid-column: 1 / -1;'><i class='fa-solid fa-spinner fa-spin'></i> Fetching Facebook posts...</p>";
 
         const { data: profileData, error: dbErr } = await supabaseClient
             .from('profiles').select('facebook_page_access_token, facebook_page_id').eq('id', currentUserUuid).maybeSingle();
@@ -57,115 +58,126 @@ async function loadFacebookPageData(direction = 'init') {
 
         currentFacebookPageId = profileData.facebook_page_id;
 
-        // 🔥 PAGINATION API SETUP (12 Posts per page)
-        let livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=12&access_token=${profileData.facebook_page_access_token}`;
-
-        if (direction === 'next' && nextLiveCursor) livePostsUrl += `&after=${nextLiveCursor}`;
-        if (direction === 'prev' && prevLiveCursor) livePostsUrl += `&before=${prevLiveCursor}`;
-
+        // 🔥 FETCHING A LARGE BATCH TO DO LOCAL PAGINATION (100 Live + 50 Scheduled)
+        let livePostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/posts?fields=id,message,full_picture,picture,attachments,created_time,comments.summary(total_count),likes.summary(total_count)&limit=100&access_token=${profileData.facebook_page_access_token}`;
         let scheduledPostsUrl = `https://graph.facebook.com/v20.0/${profileData.facebook_page_id}/scheduled_posts?fields=id,message,full_picture,picture,attachments,created_time,scheduled_publish_time&limit=50&access_token=${profileData.facebook_page_access_token}`;
 
-        const fetchPromises = [fetch(livePostsUrl)];
-        if (direction === 'init') fetchPromises.push(fetch(scheduledPostsUrl));
+        const [liveRes, schedRes] = await Promise.all([ fetch(livePostsUrl), fetch(scheduledPostsUrl) ]);
+        const liveJson = await liveRes.json();
+        const schedJson = await schedRes.json();
 
-        const responses = await Promise.all(fetchPromises);
-        const liveJson = await responses[0].json();
-        
-        let schedJson = { data: [] };
-        if (responses[1]) schedJson = await responses[1].json();
-
-        let allCombinedPosts = [];
+        allFetchedPosts = [];
 
         if (schedJson.data && Array.isArray(schedJson.data)) {
-            schedJson.data.forEach(p => { p.is_scheduled = true; allCombinedPosts.push(p); });
+            schedJson.data.forEach(p => { p.is_scheduled = true; allFetchedPosts.push(p); });
         }
 
         if (liveJson.data && Array.isArray(liveJson.data)) {
-            liveJson.data.forEach(p => { p.is_scheduled = false; allCombinedPosts.push(p); });
+            liveJson.data.forEach(p => { p.is_scheduled = false; allFetchedPosts.push(p); });
         }
 
-        // Handle Cursors for Pagination
-        if (liveJson.paging && liveJson.paging.cursors) {
-            nextLiveCursor = liveJson.paging.cursors.after || null;
-            prevLiveCursor = liveJson.paging.cursors.before || null;
-        } else {
-            nextLiveCursor = null;
-            prevLiveCursor = null;
-        }
-
-        postsContainer.innerHTML = "";
-        
-        if (allCombinedPosts.length === 0) {
+        if (allFetchedPosts.length === 0) {
             postsContainer.innerHTML = `<p style='color:#94a3b8; text-align:center; padding:20px; grid-column: 1 / -1;'>No posts found.</p>`;
             return;
         }
 
-        allCombinedPosts.forEach(post => {
-            let mediaThumb = post.full_picture || post.picture;
+        // Render Page 1
+        renderPostsPage(1);
 
-            if (!mediaThumb && post.attachments && post.attachments.data && post.attachments.data.length > 0) {
-                const attachData = post.attachments.data[0];
-                if (attachData.media && attachData.media.image && attachData.media.image.src) {
-                    mediaThumb = attachData.media.image.src;
-                }
-            }
-
-            if (!mediaThumb) {
-                mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; 
-            }
-
-            const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Facebook Page Post");
-            const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
-            const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
-            
-            const commentsCount = post.comments?.summary?.total_count || 0;
-            const likesCount = post.likes?.summary?.total_count || 0;
-
-            const card = document.createElement("div");
-            card.className = "post-card";
-            card.innerHTML = `
-                <img src="${mediaThumb}" class="post-thumb" alt="thumb">
-                <div class="post-meta-badges">
-                    ${post.is_scheduled ? '<span class="meta-badge" style="background:#f59e0b; color:#fff; font-weight:bold;"><i class="fa-solid fa-clock"></i> Scheduled</span>' : `
-                        <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#1877f2;"></i> ${commentsCount}</span>
-                        <span class="meta-badge"><i class="fa-solid fa-thumbs-up" style="color:#1877f2;"></i> ${likesCount}</span>
-                    `}
-                </div>
-                <div class="post-details">
-                    <div><h4>${captionText}</h4><p><i class="fa-solid fa-calendar"></i> ${formattedDate}</p></div>
-                    <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}"><i class="fa-solid fa-link"></i> Link Post Setup</button>
-                </div>
-            `;
-            postsContainer.appendChild(card);
-        });
-
-        // 🔥 APPEND PAGINATION BUTTONS
-        const paginationDiv = document.createElement("div");
-        paginationDiv.style.cssText = "display: flex; justify-content: center; gap: 15px; margin-top: 30px; margin-bottom: 20px; width: 100%; grid-column: 1 / -1;";
-
-        const prevBtn = document.createElement("button");
-        prevBtn.innerHTML = `<i class="fa-solid fa-arrow-left"></i> Previous`;
-        prevBtn.className = "replyrush-btn"; 
-        prevBtn.style.padding = "10px 25px";
-        prevBtn.disabled = !prevLiveCursor || direction === 'init';
-        if (prevBtn.disabled) prevBtn.style.opacity = "0.5";
-        prevBtn.onclick = () => loadFacebookPageData('prev');
-
-        const nextBtn = document.createElement("button");
-        nextBtn.innerHTML = `Next <i class="fa-solid fa-arrow-right"></i>`;
-        nextBtn.className = "replyrush-btn";
-        nextBtn.style.padding = "10px 25px";
-        nextBtn.disabled = !nextLiveCursor;
-        if (nextBtn.disabled) nextBtn.style.opacity = "0.5";
-        nextBtn.onclick = () => loadFacebookPageData('next');
-
-        paginationDiv.appendChild(prevBtn);
-        paginationDiv.appendChild(nextBtn);
-        
-        postsContainer.appendChild(paginationDiv);
-
-        bindLinkButtons();
     } catch (gErr) { console.error(gErr); }
+}
+
+// 🔥 CORE LOGIC TO RENDER EXACTLY 10 POSTS PER PAGE
+function renderPostsPage(pageNumber) {
+    const postsContainer = document.getElementById("postsContainer");
+    if (!postsContainer) return;
+
+    currentPage = pageNumber;
+    postsContainer.innerHTML = "";
+
+    const startIndex = (pageNumber - 1) * postsPerPage;
+    const endIndex = startIndex + postsPerPage;
+    const postsToShow = allFetchedPosts.slice(startIndex, endIndex);
+
+    postsToShow.forEach(post => {
+        let mediaThumb = post.full_picture || post.picture;
+
+        if (!mediaThumb && post.attachments && post.attachments.data && post.attachments.data.length > 0) {
+            const attachData = post.attachments.data[0];
+            if (attachData.media && attachData.media.image && attachData.media.image.src) {
+                mediaThumb = attachData.media.image.src;
+            }
+        }
+
+        if (!mediaThumb) {
+            mediaThumb = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500"; 
+        }
+
+        const captionText = post.message ? post.message.substring(0, 55) + "..." : (post.is_scheduled ? "Scheduled Post" : "Facebook Page Post");
+        const rawDate = post.is_scheduled ? post.scheduled_publish_time : post.created_time;
+        const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
+        
+        const commentsCount = post.comments?.summary?.total_count || 0;
+        const likesCount = post.likes?.summary?.total_count || 0;
+
+        const card = document.createElement("div");
+        card.className = "post-card";
+        card.innerHTML = `
+            <img src="${mediaThumb}" class="post-thumb" alt="thumb">
+            <div class="post-meta-badges">
+                ${post.is_scheduled ? '<span class="meta-badge" style="background:#f59e0b; color:#fff; font-weight:bold;"><i class="fa-solid fa-clock"></i> Scheduled</span>' : `
+                    <span class="meta-badge"><i class="fa-solid fa-comment" style="color:#1877f2;"></i> ${commentsCount}</span>
+                    <span class="meta-badge"><i class="fa-solid fa-thumbs-up" style="color:#1877f2;"></i> ${likesCount}</span>
+                `}
+            </div>
+            <div class="post-details">
+                <div><h4>${captionText}</h4><p><i class="fa-solid fa-calendar"></i> ${formattedDate}</p></div>
+                <button class="replyrush-btn" data-post-id="${post.id}" data-img="${mediaThumb}"><i class="fa-solid fa-link"></i> Link Setup</button>
+            </div>
+        `;
+        postsContainer.appendChild(card);
+    });
+
+    renderPaginationControls();
+    bindLinkButtons();
+}
+
+// 🔥 NUMBER BUTTONS GENERATOR (1, 2, 3...)
+function renderPaginationControls() {
+    const postsContainer = document.getElementById("postsContainer");
+    const totalPages = Math.ceil(allFetchedPosts.length / postsPerPage);
+
+    if (totalPages <= 1) return; // Only 1 page? No buttons needed.
+
+    const paginationDiv = document.createElement("div");
+    paginationDiv.style.cssText = "display: flex; justify-content: center; gap: 8px; margin-top: 30px; margin-bottom: 20px; width: 100%; grid-column: 1 / -1; flex-wrap: wrap;";
+
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement("button");
+        pageBtn.innerText = i;
+        pageBtn.style.padding = "8px 15px";
+        pageBtn.style.borderRadius = "8px";
+        pageBtn.style.border = "none";
+        pageBtn.style.fontWeight = "bold";
+        pageBtn.style.cursor = "pointer";
+        pageBtn.style.transition = "all 0.3s";
+
+        if (i === currentPage) {
+            // Active Page Button Style
+            pageBtn.style.background = "#3b82f6"; // Blue
+            pageBtn.style.color = "#ffffff";
+            pageBtn.style.boxShadow = "0 4px 10px rgba(59, 130, 246, 0.4)";
+        } else {
+            // Inactive Page Button Style
+            pageBtn.style.background = "rgba(255, 255, 255, 0.1)";
+            pageBtn.style.color = "#94a3b8";
+        }
+
+        pageBtn.onclick = () => renderPostsPage(i);
+        paginationDiv.appendChild(pageBtn);
+    }
+    
+    postsContainer.appendChild(paginationDiv);
 }
 
 function bindLinkButtons() {
@@ -445,7 +457,7 @@ async function processSmartAutoImageFetch(urlStr) {
 }
 
 // ==========================================
-// 6. DOM LISTENERS & SAVE LOGIC 
+// 6. DOM LISTENERS & SAVE LOGIC
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     loadFacebookPageData();
@@ -504,7 +516,6 @@ document.addEventListener("DOMContentLoaded", () => {
             let quickReplyTitle = "";
 
             if (templateType === 'media') {
-                // Title/Desc properly swapped here based on your DB setup
                 headline = mediaCards[0]?.desc || ""; 
                 desc = mediaCards[0]?.headline || "";     
                 secondBtnTitle = mediaCards[0]?.btnTitle || "";
