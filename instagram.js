@@ -34,6 +34,41 @@ let activeCardIndex = 0;
 let buttonTemplateText = "Please select an option below:";
 let buttonTemplateBtns = [{ title: "Button 1", url: "" }];
 
+// 🔗 A. SIDEBAR NAVIGATIONS
+    const navLinks = [
+        { id: "dashboardBtn", url: "dashboard.html" },
+        { id: "instagramBtn", url: "instagram.html" },
+        { id: "facebookBtn", url: "facebook.html" },
+        { id: "automationBtn", url: "automation.html" },
+        { id: "commentsBtn", url: "comments.html" },
+        { id: "autodmBtn", url: "autodm.html" },
+        { id: "keywordsBtn", url: "keywords.html" },
+        { id: "analyticsBtn", url: "analytics.html" },
+        { id: "settingsBtn", url: "settings.html" }
+    ];
+
+    navLinks.forEach(link => {
+        const btn = document.getElementById(link.id);
+        if (btn) {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.location.href = link.url;
+            });
+        }
+    });
+
+    // 🚪 B. LOGOUT BUTTON
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (confirm("Logout from your account?")) {
+                await supabaseClient.auth.signOut();
+                window.location.href = "login.html";
+            }
+        });
+    }
+
 // ==========================================
 // 3. SMART FETCH (Load More Logic & Badges for Instagram)
 // ==========================================
