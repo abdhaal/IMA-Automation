@@ -759,7 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 fb_exclude_keywords: document.getElementById("excludeKeywords")?.value || "",
                 
                 fb_comment_reply_active: document.getElementById("commentAutoReplyCheck")?.checked || false,
-                fb_quick_reply_title: document.getElementById("customCommentText")?.value || "",
+                fb_custom_Comment_Text: document.getElementById("customCommentText")?.value || "",
                 fb_dm_active: document.getElementById("sendDMCheck")?.checked || false,
                 fb_custom_engagement_text: document.getElementById("customEngagementText")?.value || "",
                 fb_btn_title: document.getElementById("engagementBtnTitle")?.value || "",
