@@ -38,7 +38,7 @@ background:#365dff;
 border-radius:20px;
 }
 
-/* ================= Sidebar (260px Exact Match) ================= */
+/* ================= Sidebar (260px Match) ================= */
 .sidebar{
 width:260px;
 height:100vh;
@@ -91,18 +91,14 @@ text-align:center;
 font-size:18px;
 }
 
-.sidebar ul li a:hover{
-background:linear-gradient(90deg,#2563eb,#7c3aed);
-color:#fff;
+.sidebar ul li a:hover,
+.sidebar ul li.active a {
+background:linear-gradient(90deg,#2563eb,#7c3aed) !important;
+color:#fff !important;
 transform:translateX(6px);
 box-shadow:0 10px 25px rgba(37,99,235,.35);
 }
 
-/* ஃபேஸ்புக் பக்கத்தில் இந்த மெனு ஆக்டிவ்வாக இருக்க வேண்டிய அசல் ஸ்டைல் */
-.sidebar ul li.active a{
-background:linear-gradient(90deg,#2563eb,#7c3aed) !important;
-color:#fff !important;
-}
 
 /* ============== Main Area ============== */
 .main{
